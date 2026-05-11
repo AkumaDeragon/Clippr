@@ -117,11 +117,6 @@
     </div>
     <div class="profile-title">歡迎來到 Clappr</div>
     <div class="profile-sub">請先設定您的身份，團隊成員才知道誰在編輯</div>
-    <!-- 目前劇組成員預覽 -->
-    <div class="profile-crew-preview" id="profile-crew-preview">
-      <div class="profile-crew-label">劇組成員</div>
-      <div class="profile-crew-grid" id="profile-crew-grid"><div style="color:rgba(255,255,255,0.3);font-size:11px">載入中…</div></div>
-    </div>
     <div class="profile-form">
       <div class="profile-field">
         <label class="profile-label">您的姓名</label>
@@ -376,19 +371,19 @@
       </div>
 
       <div class="stats-grid compact-stats">
-        <div class="stat-card">
+        <div class="stat-card stat-card-clickable" onclick="goScenesFilter('all')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')goScenesFilter('all')">
           <div class="label">總場景數</div>
           <div class="value" id="st-total">14</div>
           <div class="sub">已規劃場景</div>
           <div class="corner-deco">▤</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card stat-card-clickable" onclick="goScenesFilter('done')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')goScenesFilter('done')">
           <div class="label">已完成</div>
           <div class="value green" id="st-done">0</div>
           <div class="sub">NG 率 <span id="ng-rate">—</span></div>
           <div class="corner-deco">✓</div>
         </div>
-        <div class="stat-card stat-focus">
+        <div class="stat-card stat-focus stat-card-clickable" onclick="goScenesFilter('current')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')goScenesFilter('current')">
           <div class="label">拍攝中</div>
           <div class="value gold" id="st-curr">1</div>
           <div class="sub">Scene <span id="curr-scene-id">S01</span></div>
@@ -594,7 +589,7 @@
             <button class="editor-btn" onclick="insertTag('CUT TO:')">CUT TO</button>
             <button class="editor-btn" onclick="insertTag('DISSOLVE TO:')">DISSOLVE</button>
           </div>
-          <textarea class="script-textarea" id="script-text" placeholder="✏ 可編輯 — 在這裡輸入劇本內容…"></textarea>
+          <textarea class="script-textarea" id="script-text" placeholder="唯讀狀態 · 請先按上方 ✎ 編輯再修改…"></textarea>
         </div>
         <div class="script-sidebar-panel">
           <div class="script-meta-card">
@@ -602,10 +597,8 @@
             <div class="card-body">
               <div class="meta-row">
                 <div class="meta-label">場景</div>
-                <select class="meta-select" id="script-scene-sel">
-                  <option>S01 大廈入口</option>
-                  <option>S02 主管辦公室</option>
-                  <option>S03 會議室</option>
+                <select class="meta-select" id="script-scene-sel" onchange="loadScriptSceneContent()">
+                  <option value="">尚未建立場景</option>
                 </select>
               </div>
               <div class="meta-row">
@@ -698,39 +691,81 @@
       <div class="page-header">
         <div>
           <div class="page-title">通告 <span>單</span></div>
-          <div class="page-subtitle">每日拍攝通告與行程安排</div>
+          <div class="page-subtitle">會自動讀取場景、地點、演員與狀態；需要改時才按筆，避免誤觸。</div>
         </div>
-        <div class="page-actions">
+        <div class="page-actions callsheet-page-actions">
           <button class="btn btn-outline" onclick="toast('已複製通告單連結','🔗')">分享連結</button>
-          <button class="btn btn-gold" onclick="toast('通告單已列印','🖨️')">列印通告單</button>
+          <button class="btn btn-outline" onclick="resetCallsheetFromScenes()">↻ 依場景重排</button>
+          <button class="btn btn-outline callsheet-global-edit-shortcut" onclick="enableCallsheetEdit()">✎ 編輯</button>
+          <button class="btn btn-outline" onclick="quickAddCallsheetRow()">＋ 新增行程</button>
+          <button class="btn btn-outline" onclick="createNewCallsheetDay()">＋ 新增一天</button>
+          <button class="btn btn-gold" onclick="window.print ? window.print() : toast('通告單已列印','🖨️')">列印通告單</button>
         </div>
       </div>
-      <div class="weather-warning">⚠ 氣象預報：明日下午 2 點後有陣雨，請外景組提前備好防雨措施。</div>
+
+      <div class="callsheet-safe-bar" id="callsheet-safe-bar">
+        <div>
+          <div class="safe-edit-title">Call Sheet Edit Lock</div>
+          <div class="safe-edit-status" id="callsheet-lock-status">唯讀 · 按「✎ 編輯通告單」才可修改</div>
+        </div>
+        <div class="safe-edit-actions">
+          <button class="btn btn-outline btn-sm" id="callsheet-edit-btn" onclick="enableCallsheetEdit()">✎ 編輯通告單</button>
+          <button class="btn btn-outline btn-sm" id="callsheet-add-row-btn" onclick="addManualCallsheetRow()" style="display:none">＋ 新增行程</button>
+          <button class="btn btn-outline btn-sm" id="callsheet-cancel-btn" onclick="cancelCallsheetEdit()" style="display:none">取消</button>
+          <button class="btn btn-gold btn-sm" id="callsheet-save-btn" onclick="saveCallsheetEdit()" style="display:none">💾 儲存通告單</button>
+        </div>
+      </div>
+
+      <div class="callsheet-day-tabs" id="callsheet-day-tabs"></div>
+      <div class="callsheet-pager" id="callsheet-pager-top"></div>
+
+      <div class="callsheet-meta-grid" id="callsheet-meta-grid">
+        <div class="callsheet-meta-field">
+          <div class="callsheet-field-head"><span>拍攝日</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-day')">✎</button></div>
+          <input id="cs-day" class="callsheet-input" readonly>
+        </div>
+        <div class="callsheet-meta-field">
+          <div class="callsheet-field-head"><span>日期</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-date')">✎</button></div>
+          <input id="cs-date" class="callsheet-input" type="date" readonly>
+        </div>
+        <div class="callsheet-meta-field wide">
+          <div class="callsheet-field-head"><span>通告標題</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-title')">✎</button></div>
+          <input id="cs-title" class="callsheet-input" readonly>
+        </div>
+        <div class="callsheet-meta-field wide">
+          <div class="callsheet-field-head"><span>集合地點</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-meet')">✎</button></div>
+          <input id="cs-meet" class="callsheet-input" readonly>
+        </div>
+        <div class="callsheet-meta-field wide">
+          <div class="callsheet-field-head"><span>天氣 / 注意事項</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-weather')">✎</button></div>
+          <input id="cs-weather" class="callsheet-input" readonly>
+        </div>
+        <div class="callsheet-meta-field wide">
+          <div class="callsheet-field-head"><span>製作備注</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-note')">✎</button></div>
+          <input id="cs-note" class="callsheet-input" readonly>
+        </div>
+      </div>
+
+      <div class="weather-warning" id="callsheet-warning">⚠ 通告單會跟場景資料同步；若時間要微調，請按「編輯通告單」。</div>
       <div class="callsheet-card">
         <div class="callsheet-header">
           <div>
-            <div class="callsheet-day">D-08 ／ 2025.03.15 SAT</div>
-            <div style="font-size:14px;font-weight:500;color:var(--text-primary);margin-top:2px">第八拍攝日</div>
+            <div class="callsheet-day" id="callsheet-day-label">—</div>
+            <div id="callsheet-title-label" style="font-size:14px;font-weight:500;color:var(--text-primary);margin-top:2px">拍攝通告</div>
           </div>
           <div style="text-align:right">
             <div style="font-size:10px;color:var(--text-muted)">集合地點</div>
-            <div style="font-size:13px;color:var(--text-primary)">台北市信義路五段 7 號 B1</div>
+            <div id="callsheet-location-label" style="font-size:13px;color:var(--text-primary)">—</div>
           </div>
         </div>
-        <table class="callsheet-table">
-          <thead><tr><th>時間</th><th>場景</th><th>地點</th><th>演員</th><th>工作人員</th><th>備注</th></tr></thead>
+        <table class="callsheet-table" id="callsheet-table">
+          <thead><tr><th>時間</th><th>場景 / 行程</th><th>地點</th><th>演員</th><th>工作人員</th><th>備注</th><th>操作</th></tr></thead>
           <tbody>
-            <tr><td class="time-col">07:30</td><td>製作組集合 / 場地佈置</td><td>大廈外景</td><td>—</td><td>攝影組、美術組、燈光組</td><td>道具確認</td></tr>
-            <tr><td class="time-col">08:30</td><td>S01 大廈入口</td><td>EXT</td><td>李主任、張助理</td><td>全組</td><td>主要戲份</td></tr>
-            <tr><td class="time-col">10:30</td><td>S02 主管辦公室</td><td>INT 3F</td><td>李主任、陳副理</td><td>攝影、燈光</td><td>特寫鏡頭優先</td></tr>
-            <tr><td class="time-col">12:00</td><td colspan="5" style="text-align:center;color:var(--text-muted)">── 午餐休息 60分鐘 ──</td></tr>
-            <tr><td class="time-col">13:00</td><td>S03 會議室</td><td>INT 5F</td><td>全體主要演員</td><td>全組</td><td>簽約場景，注意連戲</td></tr>
-            <tr><td class="time-col">15:30</td><td>S04 餐廳外景</td><td>EXT</td><td>李主任、女主角</td><td>攝影、錄音</td><td>便裝造型</td></tr>
-            <tr><td class="time-col">17:30</td><td>黃金時刻備用鏡</td><td>EXT 屋頂</td><td>李主任</td><td>攝影組</td><td>17:42 黃金時刻</td></tr>
-            <tr><td class="time-col">19:00</td><td colspan="5" style="text-align:center;color:var(--text-muted)">── 收工 ──</td></tr>
+            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:34px">通告單會依照目前專案場景自動生成</td></tr>
           </tbody>
         </table>
       </div>
+      <div class="callsheet-pager bottom" id="callsheet-pager-bottom"></div>
     </section>
 
     <!-- ═══ EQUIPMENT ═══ -->
@@ -754,13 +789,24 @@
     <section id="page-scene-detail" class="page scene-detail-page">
       <div class="page-header">
         <div>
-          <button class="btn btn-outline btn-sm" onclick="backFromSceneDetail()" style="margin-bottom:6px">← 返回場景列表</button>
           <div class="page-title" id="sdp-title">場景 <span>詳情</span></div>
           <div class="page-subtitle" id="sdp-subtitle">—</div>
+          <div class="sdp-status-hint">狀態可隨時切換；按錯「已拍完」後，可以直接改成「未拍完」或「還沒拍」。</div>
         </div>
-        <div class="page-actions">
-          <button class="btn btn-green" onclick="markSceneDoneFromPage()">✓ 完成此場景</button>
-          <button class="btn btn-danger btn-sm" id="sdp-skip-btn" onclick="toggleSkipSceneFromPage()">暫緩</button>
+        <div class="sdp-header-actions">
+          <button class="btn btn-outline sdp-back-btn" type="button" onclick="backToSceneListFromDetail()">← 返回場景列表</button>
+          <div class="sdp-status-panel" aria-label="場景狀態控制">
+            <div class="sdp-status-panel-top">
+              <span class="sdp-status-panel-label">場景狀態</span>
+              <span class="sdp-status-current" id="sdp-status-current">—</span>
+            </div>
+            <div class="page-actions sdp-status-actions">
+              <button class="btn btn-green" id="sdp-done-btn" onclick="setSceneStatusFromPage('done')">✓ 已拍完</button>
+              <button class="btn btn-outline" id="sdp-current-btn" onclick="setSceneStatusFromPage('current')">↩ 未拍完</button>
+              <button class="btn btn-outline" id="sdp-skip-btn" onclick="setSceneStatusFromPage('skip')">⏭ 先跳過</button>
+              <button class="btn btn-outline" id="sdp-pending-btn" onclick="setSceneStatusFromPage('pending')">○ 還沒拍</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -780,7 +826,7 @@
                 <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-dialogue-save-btn" onclick="saveSceneDialogue()">💾 儲存</button>
               </div>
             </div>
-            <textarea class="sdp-dialogue-area" id="sdp-dialogue" placeholder="在這裡輸入台詞…
+            <textarea class="sdp-dialogue-area sdp-readonly" id="sdp-dialogue" readonly placeholder="在這裡輸入台詞…
 
 [角色名]
 台詞內容
@@ -798,10 +844,10 @@
                 <span id="sdp-script-status" class="sdp-edit-status">唯讀 · 按「編輯」才可修改</span>
                 <button class="btn btn-outline btn-sm" id="sdp-script-edit-btn" onclick="enableSceneFieldEdit('script')">✎ 編輯</button>
                 <button class="btn btn-outline btn-sm sdp-edit-only" id="sdp-script-cancel-btn" onclick="cancelSceneFieldEdit('script')">取消</button>
-                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-script-save-btn" onclick="saveSceneScript()">儲存</button>
+                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-script-save-btn" onclick="saveSceneScript()">💾 儲存</button>
               </div>
             </div>
-            <textarea class="sdp-script-area" id="sdp-script-text" placeholder="場景動作說明、場面描述…
+            <textarea class="sdp-script-area sdp-readonly" id="sdp-script-text" readonly placeholder="場景動作說明、場面描述…
 
 INT./EXT. 地點 — 日/夜
 
@@ -846,10 +892,10 @@ INT./EXT. 地點 — 日/夜
                 <span id="sdp-notes-status" class="sdp-edit-status">唯讀</span>
                 <button class="btn btn-outline btn-sm" id="sdp-notes-edit-btn" onclick="enableSceneFieldEdit('notes')">✎ 編輯</button>
                 <button class="btn btn-outline btn-sm sdp-edit-only" id="sdp-notes-cancel-btn" onclick="cancelSceneFieldEdit('notes')">取消</button>
-                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-notes-save-btn" onclick="saveSceneNotes()">儲存</button>
+                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-notes-save-btn" onclick="saveSceneNotes()">💾 儲存</button>
               </div>
             </div>
-            <textarea class="notes-area" id="sdp-notes" placeholder="導演指示或備注…" style="min-height:100px;resize:vertical"></textarea>
+            <textarea class="notes-area sdp-readonly" id="sdp-notes" readonly placeholder="導演指示或備注…" style="min-height:100px;resize:vertical"></textarea>
             <div class="sdp-safe-hint">備注也必須先按「編輯」才可以輸入。</div>
           </div>
         </div>
@@ -1676,7 +1722,7 @@ function openDetail(sid) {
     { key: '日/夜景', val: s.daynight === 'DAY' ? '日景' : s.daynight === 'NIGHT' ? '夜景' : s.daynight === 'DUSK' ? '黃昏' : '黎明' },
     { key: '地點', val: s.loc || '—' },
     { key: '頁碼', val: `P.${s.page || '—'}` },
-    { key: '狀態', val: s.status === 'done' ? '✓ 完成' : s.status === 'current' ? '● 拍攝中' : s.status === 'skip' ? '暫緩' : '待拍' },
+    { key: '狀態', val: s.status === 'done' ? '✓ 已拍完' : s.status === 'current' ? '● 未拍完' : s.status === 'skip' ? '⏭ 先跳過' : '○ 還沒拍' },
   ].map(item => `<div class="sdp-info-item"><div class="info-key">${item.key}</div><div class="info-val">${item.val}</div></div>`).join('');
 
   // Cast
@@ -1711,15 +1757,21 @@ function openDetail(sid) {
   // Notes
   document.getElementById('sdp-notes').value = s.notes || '';
 
-  const skipBtn = document.getElementById('sdp-skip-btn');
-  if(skipBtn){
-    skipBtn.textContent = s.status === 'skip' ? '取消暫緩' : '暫緩';
-    skipBtn.className = s.status === 'skip' ? 'btn btn-green btn-sm' : 'btn btn-danger btn-sm';
-  }
+  updateSceneDetailStatusButtons(s);
 
   // Switch to detail page
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-scene-detail').classList.add('active');
+}
+
+
+function backToSceneListFromDetail() {
+  // 返回固定回「場景進度」列表，不再照來源頁亂跳。
+  setAllSceneFieldsReadOnly?.();
+  _sceneFieldEditing = { dialogue:false, script:false, notes:false };
+  _currentSDP = null;
+  const scenesNav = Array.from(document.querySelectorAll('.nav-item')).find(el => (el.textContent || '').includes('場景進度'));
+  switchPage('scenes', scenesNav || null);
 }
 
 function backFromSceneDetail() {
@@ -1747,7 +1799,7 @@ function saveSceneNotes() {
     const s = scenes.find(x => x.id === _currentSDP);
     if (s) {
       s.notes = document.getElementById('sdp-notes').value;
-      persistSave();
+      saveCurrentProjectState();
       syncSceneToDB(s);
       broadcastChange('更新場景備注 ' + _currentSDP);
       setSceneFieldReadOnly('notes', true);
@@ -1756,69 +1808,134 @@ function saveSceneNotes() {
   }
 }
 
-function markSceneDoneFromPage() {
-  if (_currentSDP) {
-    markSceneDone(_currentSDP);
-    backFromSceneDetail();
+function refreshSceneViews(){
+  renderStats();
+  renderDashScenes();
+  renderFullScenes();
+  renderScenesStatCards();
+  renderSceneDots();
+  buildShotSelect();
+  buildScriptSceneSelect(true);
+  renderCallsheet();
+  renderTicker();
+  renderHomeProjects();
+  renderHomeAnnouncements();
+}
+
+function updateSceneDetailStatusButtons(scene){
+  if(!scene) return;
+  const statusTextMap = {
+    done: '目前：已拍完',
+    current: '目前：未拍完',
+    skip: '目前：先跳過',
+    pending: '目前：還沒拍'
+  };
+  const currentStatus = document.getElementById('sdp-status-current');
+  if(currentStatus) currentStatus.textContent = statusTextMap[scene.status] || '目前：還沒拍';
+
+  const doneBtn = document.getElementById('sdp-done-btn');
+  const currentBtn = document.getElementById('sdp-current-btn');
+  const skipBtn = document.getElementById('sdp-skip-btn');
+  const pendingBtn = document.getElementById('sdp-pending-btn');
+  const map = {done: doneBtn, current: currentBtn, skip: skipBtn, pending: pendingBtn};
+
+  [doneBtn, currentBtn, skipBtn, pendingBtn].forEach(btn=>{
+    if(!btn) return;
+    btn.classList.remove('active-status-btn');
+    btn.removeAttribute('disabled');
+    btn.setAttribute('aria-pressed','false');
+    btn.title = '可以直接點擊切換狀態，防止誤觸後卡死';
+  });
+
+  const active = map[scene.status] || pendingBtn;
+  if(active){
+    active.classList.add('active-status-btn');
+    active.setAttribute('aria-pressed','true');
   }
 }
 
-function skipSceneFromPage() {
-  if (_currentSDP) {
-    skipScene(_currentSDP);
-    backFromSceneDetail();
+function setSceneStatus(sid, status){
+  const s=scenes.find(x=>x.id===sid);
+  if(!s) return null;
+
+  // 狀態按鈕要能反悔：已拍完後仍可改成「未拍完 / 還沒拍 / 先跳過」。
+  if(status === 'done'){
+    if(s.status !== 'done'){
+      const doneCount = scenes.filter(x => x.status === 'done').length;
+      s.shootOrder = doneCount + 1;
+    }
+    s.status = 'done';
+  } else if(status === 'current'){
+    scenes.forEach(x => {
+      if(x.id !== sid && x.status === 'current'){
+        x.status = 'pending';
+        delete x.shootOrder;
+        syncSceneToDB(x);
+      }
+    });
+    s.status = 'current';
+    delete s.shootOrder;
+  } else if(status === 'skip'){
+    s.status = 'skip';
+    delete s.shootOrder;
+  } else {
+    s.status = 'pending';
+    delete s.shootOrder;
   }
+
+  // 如果目前沒有拍攝中，才自動補下一個待拍場景；但不要覆蓋使用者剛剛手動改的狀態。
+  if(status === 'done' || status === 'skip'){
+    const hasCurrent = scenes.some(x=>x.status==='current');
+    if(!hasCurrent){
+      const next=scenes.find(x=>x.id!==sid && x.status==='pending');
+      if(next){ next.status='current'; syncSceneToDB(next); }
+    }
+  }
+
+  saveCurrentProjectState();
+  refreshSceneViews();
+  syncSceneToDB(s);
+  return s;
 }
+
+function setSceneStatusFromPage(status){
+  if(!_currentSDP) return;
+  const labelMap = { done:'已拍完', current:'未拍完', skip:'先跳過', pending:'還沒拍' };
+  const iconMap = { done:'✅', current:'●', skip:'⏭', pending:'○' };
+  const label = labelMap[status] || '還沒拍';
+  const s = setSceneStatus(_currentSDP, status);
+  if(!s) return;
+  updateSceneDetailStatusButtons(s);
+  openDetail(_currentSDP);
+  toast(`${s.id} 已設為「${label}」`, iconMap[status] || '○');
+  broadcastChange(`${s.id} 狀態改為 ${label}`);
+}
+
+function markSceneDoneFromPage() { setSceneStatusFromPage('done'); }
+function skipSceneFromPage() { setSceneStatusFromPage('skip'); }
 
 function markSceneDone(sid){
-  const s=scenes.find(x=>x.id===sid);
-  if(!s)return;
-  const doneCount = scenes.filter(x => x.status === 'done').length;
-  s.shootOrder = doneCount + 1;
-  s.status='done';
-  const next=scenes.find(x=>x.status==='pending');
-  if(next) next.status='current';
-  renderStats();renderDashScenes();renderFullScenes();renderTicker();
+  const s = setSceneStatus(sid, 'done');
+  if(!s) return;
   toast(`場景 ${sid} 完成！`,'🎬');
-  persistSave();
-  syncSceneToDB(s);
-  if(next) syncSceneToDB(next);
   broadcastChange('完成場景 ' + sid);
 }
 
 function skipScene(sid){
-  const s=scenes.find(x=>x.id===sid);
-  if(s){
-    s.status='skip';
-    renderStats();renderDashScenes();renderFullScenes();renderScenesStatCards();renderSceneDots();
-    toast(`場景 ${sid} 已暫緩`,'⏭');
-    persistSave();
-    syncSceneToDB(s);
-    broadcastChange('暫緩場景 ' + sid);
-  }
+  const s = setSceneStatus(sid, 'skip');
+  if(!s) return;
+  toast(`場景 ${sid} 已先跳過`,'⏭');
+  broadcastChange('先跳過場景 ' + sid);
 }
 
 function resumeScene(sid){
-  const s=scenes.find(x=>x.id===sid);
+  const s = setSceneStatus(sid, 'pending');
   if(!s) return;
-  const hasCurrent = scenes.some(x=>x.id!==sid && x.status==='current');
-  s.status = hasCurrent ? 'pending' : 'current';
-  delete s.shootOrder;
-  renderStats();renderDashScenes();renderFullScenes();renderScenesStatCards();renderSceneDots();
-  toast(`場景 ${sid} 已取消暫緩`,'↩');
-  persistSave();
-  syncSceneToDB(s);
-  broadcastChange('取消暫緩場景 ' + sid);
+  toast(`場景 ${sid} 已改回還沒拍`,'↩');
+  broadcastChange('改回還沒拍 ' + sid);
 }
 
-function toggleSkipSceneFromPage(){
-  if(!_currentSDP) return;
-  const s=scenes.find(x=>x.id===_currentSDP);
-  if(!s) return;
-  if(s.status==='skip') resumeScene(_currentSDP);
-  else skipScene(_currentSDP);
-  openDetail(_currentSDP);
-}
+function toggleSkipSceneFromPage(){ setSceneStatusFromPage('skip'); }
 
 // ── keep backward compat (old closeDetail) ──
 function closeDetail() { if (_currentSDP) backFromSceneDetail(); }
@@ -1844,8 +1961,8 @@ function init(){
       replaceArray(announcements, clone(p.announcements||[]));
       replaceArray(crew, clone(p.crew||[]));
       replaceArray(equipment, clone(p.equipment||[]));
-      const scriptEl = document.getElementById('script-text');
-      if(scriptEl) scriptEl.value = p.script || '';
+      scenes.forEach(normalizeSceneTextFields);
+      if(p.script && scenes.length && !scenes.some(x=>x.sceneScript)){ scenes[0].sceneScript = p.script; }
     }
   }
 
@@ -1854,6 +1971,8 @@ function init(){
   renderFullScenes();
   renderShots();
   buildShotSelect();
+  buildScriptSceneSelect(false);
+  renderCallsheet();
   renderAnnouncements();
   renderCrew();
   renderEquip();
@@ -1963,6 +2082,13 @@ function filterScenesBy(filter){
     t.classList.toggle('active-tab', t.dataset.filter===filter);
   });
   renderScenes();
+}
+
+function goScenesFilter(filter){
+  switchPage('scenes', document.querySelector('.nav-item[onclick*="scenes"]'));
+  filterScenesBy(filter || 'all');
+  const target = document.getElementById('page-scenes');
+  if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function renderScenes(){
@@ -2077,20 +2203,81 @@ function toggleShot(sid,i){
 // ══════════════════════════════════════════
 //  SCRIPT
 // ══════════════════════════════════════════
-function saveScript(){
-  const author=getEditor();
-  const note=document.getElementById('script-note').value.trim()||'儲存修改';
-  const now=new Date();
-  editLog.unshift({author,time:formatTime(now),date:formatDate(now),note});
-  const el=document.getElementById('edit-entries');
-  el.innerHTML=editLog.slice(0,10).map(e=>`<div class="edit-entry"><span class="edit-author">${e.author}</span><span class="edit-time">${e.date} ${e.time}</span><span class="edit-note">${e.note}</span></div>`).join('');
-  document.getElementById('history-card').style.display='block';
-  document.getElementById('script-note').value='';
-  persistSave();
-  toast(`劇本已儲存 — ${author}`,'💾');
-  broadcastChange('更新劇本');
+function normalizeSceneTextFields(scene){
+  if(!scene) return scene;
+  if(scene.dialogue === undefined) scene.dialogue = '';
+  if(scene.sceneScript === undefined) scene.sceneScript = '';
+  return scene;
 }
 
+function getSelectedScriptScene(){
+  const sel = document.getElementById('script-scene-sel');
+  const sid = sel && sel.value ? sel.value : (scenes.find(x=>x.status==='current')?.id || scenes[0]?.id || '');
+  return scenes.find(x=>x.id===sid) || scenes[0] || null;
+}
+
+function buildScriptSceneSelect(keepCurrent=true){
+  const sel = document.getElementById('script-scene-sel');
+  if(!sel) return;
+  const old = keepCurrent ? sel.value : '';
+  const preferred = old || scenes.find(x=>x.status==='current')?.id || scenes[0]?.id || '';
+  if(!scenes.length){
+    sel.innerHTML = '<option value="">尚未建立場景</option>';
+    sel.disabled = true;
+    const ta = document.getElementById('script-text');
+    if(ta) ta.value = '';
+    return;
+  }
+  sel.disabled = false;
+  sel.innerHTML = scenes.map(scene => `<option value="${scene.id}">${scene.id} — ${scene.name}</option>`).join('');
+  sel.value = scenes.some(scene=>scene.id===preferred) ? preferred : scenes[0].id;
+  loadScriptSceneContent(false);
+}
+
+function loadScriptSceneContent(showToast=false){
+  const scene = getSelectedScriptScene();
+  const ta = document.getElementById('script-text');
+  if(!ta) return;
+  if(!scene){ ta.value = ''; return; }
+  normalizeSceneTextFields(scene);
+  // 舊版如果只有全專案 script，第一次進來會先帶進目前選到的場景，避免內容消失。
+  const project = getCurrentProject && getCurrentProject();
+  if(!scene.sceneScript && project && project.script && !project._scriptMigrated){
+    scene.sceneScript = project.script;
+    project._scriptMigrated = true;
+  }
+  ta.value = scene.sceneScript || '';
+  const note = document.getElementById('script-note');
+  if(note && safeEditGroups.script?.locked) note.value = '';
+  if(showToast) toast(`已切換到 ${scene.id} — ${scene.name}`, '📄');
+}
+
+function saveScript(){
+  const scene = getSelectedScriptScene();
+  const ta = document.getElementById('script-text');
+  if(!scene){ toast('請先新增場景，才能儲存劇本', '⚠'); return; }
+  normalizeSceneTextFields(scene);
+  scene.sceneScript = ta ? ta.value : '';
+  const p = getCurrentProject && getCurrentProject();
+  if(p){
+    ensureProjectData(p);
+    p.script = scene.sceneScript; // 保留舊欄位相容
+  }
+  const author=getEditor();
+  const note=document.getElementById('script-note').value.trim()||`儲存 ${scene.id} 劇本`;
+  const now=new Date();
+  editLog.unshift({author,time:formatTime(now),date:formatDate(now),note:`${scene.id} — ${note}`});
+  const el=document.getElementById('edit-entries');
+  if(el) el.innerHTML=editLog.slice(0,10).map(e=>`<div class="edit-entry"><span class="edit-author">${e.author}</span><span class="edit-time">${e.date} ${e.time}</span><span class="edit-note">${e.note}</span></div>`).join('');
+  const history=document.getElementById('history-card');
+  if(history) history.style.display='block';
+  document.getElementById('script-note').value='';
+  saveCurrentProjectState();
+  syncSceneToDB(scene);
+  toast(`${scene.id} 劇本已儲存 — ${author}`,'💾');
+  broadcastChange(`更新 ${scene.id} 劇本`);
+  if(safeEditGroups.script) setSafeEditLocked('script', true);
+}
 function toggleHistory(){
   const c=document.getElementById('history-card');
   c.style.display=c.style.display==='none'?'block':'none';
@@ -2098,6 +2285,8 @@ function toggleHistory(){
 
 function insertTag(tag){
   const ta=document.getElementById('script-text');
+  if(!ta) return;
+  if(ta.readOnly){ toast('請先按 ✎ 編輯，才能插入格式標籤', '✎'); return; }
   const s=ta.selectionStart, e=ta.selectionEnd;
   ta.value=ta.value.slice(0,s)+tag+ta.value.slice(e);
   ta.selectionStart=ta.selectionEnd=s+tag.length;
@@ -2209,6 +2398,486 @@ function renderEquip(){
 }
 
 // ══════════════════════════════════════════
+//  CALLSHEET — 可真正操作的通告單
+//  邏輯：自動讀場景；按筆才解鎖；可新增行程；儲存後鎖回，避免誤觸。
+// ══════════════════════════════════════════
+let _callsheetEditing = false;
+let _callsheetDraft = null;
+
+function htmlEscape(v){
+  return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function todayISO(offsetDays = 0){
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function addDaysISO(iso, days){
+  const base = iso ? new Date(iso + 'T00:00:00') : new Date();
+  if(Number.isNaN(base.getTime())) return todayISO(days);
+  base.setDate(base.getDate() + days);
+  const y = base.getFullYear();
+  const m = String(base.getMonth()+1).padStart(2,'0');
+  const d = String(base.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function addMinutesToTime(time, mins){
+  const [h,m] = String(time || '08:00').split(':').map(Number);
+  const total = Math.max(0, (Number.isFinite(h)?h:8)*60 + (Number.isFinite(m)?m:0) + mins);
+  return `${String(Math.floor(total/60)%24).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+}
+
+function sceneStatusText(status){
+  if(status === 'done') return '已拍完';
+  if(status === 'current') return '未拍完 / 拍攝中';
+  if(status === 'skip') return '先跳過';
+  return '還沒拍';
+}
+
+function getCallsheetBadgeClass(status){
+  if(status === 'done') return 'badge-done';
+  if(status === 'current') return 'badge-current';
+  if(status === 'skip') return 'badge-skip';
+  return 'badge-pending';
+}
+
+function makeDefaultCallsheet(dayIndex = 0, base = {}){
+  const p = getCurrentProject() || {};
+  const firstLoc = scenes.find(s => s.loc && s.loc !== '—')?.loc || '';
+  const dayNumber = dayIndex + 1;
+  return {
+    day: base.day || `D-${String(dayNumber).padStart(2,'0')}`,
+    date: base.date || todayISO(dayIndex),
+    title: base.title || `《${p.name || '未命名專案'}》拍攝通告`,
+    meetingLocation: base.meetingLocation || firstLoc || '尚未設定集合地點',
+    weather: base.weather || '請在正式拍攝前更新天氣、交通與安全注意事項',
+    note: base.note || '器材、妝髮、演員與交通請依現場製片確認。',
+    rows: Array.isArray(base.rows) ? base.rows : []
+  };
+}
+
+function normalizeProjectCallsheets(p){
+  if(!p) return null;
+  ensureProjectData(p);
+  if(!Array.isArray(p.callsheetDays)){
+    const old = p.callsheet && typeof p.callsheet === 'object' ? p.callsheet : {};
+    p.callsheetDays = [makeDefaultCallsheet(0, old)];
+    p.activeCallsheetIndex = 0;
+  }
+  if(!p.callsheetDays.length) p.callsheetDays.push(makeDefaultCallsheet(0));
+  p.callsheetDays = p.callsheetDays.map((cs, i) => makeDefaultCallsheet(i, cs || {}));
+  if(!Number.isInteger(p.activeCallsheetIndex)) p.activeCallsheetIndex = 0;
+  p.activeCallsheetIndex = Math.max(0, Math.min(p.activeCallsheetIndex, p.callsheetDays.length - 1));
+  p.callsheet = p.callsheetDays[p.activeCallsheetIndex];
+  return p.callsheetDays;
+}
+
+function getActiveCallsheetIndex(){
+  const p = getCurrentProject();
+  if(!p) return 0;
+  normalizeProjectCallsheets(p);
+  return p.activeCallsheetIndex || 0;
+}
+
+function getOrCreateCallsheet(){
+  const p = getCurrentProject();
+  if(!p) return null;
+  const days = normalizeProjectCallsheets(p);
+  const cs = days[p.activeCallsheetIndex || 0];
+  syncCallsheetRowsWithScenes(cs);
+  p.callsheet = cs;
+  return cs;
+}
+
+function makeCallsheetRowFromScene(scene, index, existing){
+  const startTime = existing?.time || addMinutesToTime('08:00', index * 75);
+  const cast = Array.isArray(scene.cast) && scene.cast.length ? scene.cast.join('、') : '—';
+  const location = scene.loc && scene.loc !== '—' ? scene.loc : `${scene.inout || '—'} / ${scene.daynight || '—'}`;
+  return {
+    id: existing?.id || `scene-${scene.id}`,
+    sceneId: scene.id,
+    manual: false,
+    locked: false,
+    time: startTime,
+    title: `${scene.id} — ${scene.name || '未命名場景'}`,
+    location,
+    cast,
+    crew: existing?.crew || '全組',
+    note: existing?.note || scene.notes || sceneStatusText(scene.status),
+    status: scene.status || 'pending'
+  };
+}
+
+function syncCallsheetRowsWithScenes(cs){
+  if(!cs) return;
+  const oldRows = Array.isArray(cs.rows) ? cs.rows : [];
+  const oldByScene = new Map(oldRows.filter(r => r.sceneId).map(r => [r.sceneId, r]));
+  const manualRows = oldRows.filter(r => r.manual && !['crew-call','wrap'].includes(r.id));
+  const sceneRows = scenes.map((scene, index) => makeCallsheetRowFromScene(scene, index, oldByScene.get(scene.id)));
+  const crewCall = oldRows.find(r=>r.id==='crew-call') || {};
+  const wrap = oldRows.find(r=>r.id==='wrap') || {};
+  cs.rows = [
+    { id:'crew-call', manual:true, locked:true, time:crewCall.time || '07:30', title:crewCall.title || '全組集合 / 場地佈置', location:crewCall.location || cs.meetingLocation || '集合地點', cast:crewCall.cast || '—', crew:crewCall.crew || '全組', note:crewCall.note || '器材、場地、妝髮確認', status:'manual' },
+    ...sceneRows,
+    ...manualRows,
+    { id:'wrap', manual:true, locked:true, time:wrap.time || '19:00', title:wrap.title || '收工 / 備份素材', location:wrap.location || cs.meetingLocation || '現場', cast:wrap.cast || '—', crew:wrap.crew || '全組', note:wrap.note || '素材備份、器材歸位', status:'manual' }
+  ];
+}
+
+function cloneCallsheet(cs){ return JSON.parse(JSON.stringify(cs || {})); }
+function getActiveCallsheet(){ return _callsheetEditing && _callsheetDraft ? _callsheetDraft : getOrCreateCallsheet(); }
+
+function setCallsheetInputsLocked(locked){
+  ['cs-day','cs-date','cs-title','cs-meet','cs-weather','cs-note'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.readOnly = locked;
+    el.classList.toggle('callsheet-readonly', locked);
+  });
+  document.querySelectorAll('#callsheet-table input').forEach(el => {
+    el.readOnly = locked;
+    el.classList.toggle('callsheet-readonly', locked);
+  });
+  document.querySelectorAll('.callsheet-row-delete,.callsheet-row-move').forEach(btn => btn.style.display = locked ? 'none' : 'inline-flex');
+}
+
+function updateCallsheetLockUI(){
+  const bar = document.getElementById('callsheet-safe-bar');
+  const status = document.getElementById('callsheet-lock-status');
+  const edit = document.getElementById('callsheet-edit-btn');
+  const add = document.getElementById('callsheet-add-row-btn');
+  const cancel = document.getElementById('callsheet-cancel-btn');
+  const save = document.getElementById('callsheet-save-btn');
+  bar?.classList.toggle('editing', _callsheetEditing);
+  if(status) status.textContent = _callsheetEditing ? '編輯中 · 這一天可修改；按「💾 儲存」後鎖回唯讀' : '唯讀 · 點任一個「✎」才可修改，避免誤觸';
+  if(edit) edit.style.display = _callsheetEditing ? 'none' : 'inline-flex';
+  if(add) add.style.display = _callsheetEditing ? 'inline-flex' : 'none';
+  if(cancel) cancel.style.display = _callsheetEditing ? 'inline-flex' : 'none';
+  if(save) save.style.display = _callsheetEditing ? 'inline-flex' : 'none';
+  document.querySelectorAll('.mini-pencil,.callsheet-global-edit-shortcut').forEach(btn => btn.style.display = _callsheetEditing ? 'none' : 'inline-flex');
+}
+
+function renderCallsheetDayTabs(){
+  const wrap = document.getElementById('callsheet-day-tabs');
+  const p = getCurrentProject();
+  if(!wrap || !p) return;
+  const days = normalizeProjectCallsheets(p);
+  const active = p.activeCallsheetIndex || 0;
+  wrap.innerHTML = days.map((cs, i) => `
+    <button class="callsheet-day-tab ${i===active?'active':''}" type="button" onclick="switchCallsheetDay(${i})">
+      <strong>${htmlEscape(cs.day || `D-${String(i+1).padStart(2,'0')}`)}</strong>
+      <span>${htmlEscape(cs.date || '')}</span>
+    </button>
+  `).join('') + `<button class="callsheet-day-tab add" type="button" onclick="createNewCallsheetDay()">＋ 新增一天</button>`;
+}
+
+function renderCallsheetPager(){
+  const p = getCurrentProject();
+  if(!p) return;
+  const days = normalizeProjectCallsheets(p);
+  const active = p.activeCallsheetIndex || 0;
+  const html = `
+    <button class="callsheet-page-btn" type="button" onclick="prevCallsheetDay()" ${active<=0?'disabled':''}>← 上一頁</button>
+    <div class="callsheet-page-count">第 ${active + 1} 頁 / 共 ${days.length} 頁</div>
+    <button class="callsheet-page-btn" type="button" onclick="nextCallsheetDay()" ${active>=days.length-1?'disabled':''}>下一頁 →</button>
+    <button class="callsheet-page-btn add" type="button" onclick="createNewCallsheetDay()">＋ 新增下一頁</button>
+  `;
+  ['callsheet-pager-top','callsheet-pager-bottom'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = html;
+  });
+}
+
+function renderCallsheetMetaFields(cs){
+  const grid = document.getElementById('callsheet-meta-grid');
+  if(!grid) return;
+  const fields = [
+    {id:'cs-day', key:'day', label:'拍攝日', value:cs.day || '', type:'text'},
+    {id:'cs-date', key:'date', label:'日期', value:cs.date || '', type:'date'},
+    {id:'cs-title', key:'title', label:'通告標題', value:cs.title || '', wide:true, type:'text'},
+    {id:'cs-meet', key:'meetingLocation', label:'集合地點', value:cs.meetingLocation || '', wide:true, type:'text'},
+    {id:'cs-weather', key:'weather', label:'天氣 / 注意事項', value:cs.weather || '', wide:true, type:'text'},
+    {id:'cs-note', key:'note', label:'製作備注', value:cs.note || '', wide:true, type:'text'}
+  ];
+  grid.innerHTML = fields.map(f => {
+    const body = _callsheetEditing
+      ? `<input id="${f.id}" class="callsheet-input" type="${f.type}" value="${htmlEscape(f.value)}">`
+      : `<div class="callsheet-meta-value" onclick="enableCallsheetEditAndFocus('${f.id}')">${htmlEscape(f.value || '—')}</div>`;
+    const pencil = _callsheetEditing ? '' : `<button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('${f.id}')">✎</button>`;
+    return `<div class="callsheet-meta-field ${f.wide?'wide':''}">
+      <div class="callsheet-field-head"><span>${f.label}</span>${pencil}</div>
+      ${body}
+    </div>`;
+  }).join('');
+}
+
+
+function renderCallsheet(){
+  const cs = getActiveCallsheet();
+  const table = document.getElementById('callsheet-table');
+  if(!cs || !table) return;
+
+  renderCallsheetDayTabs();
+  renderCallsheetPager();
+  renderCallsheetMetaFields(cs);
+  const day = document.getElementById('callsheet-day-label');
+  const title = document.getElementById('callsheet-title-label');
+  const locLabel = document.getElementById('callsheet-location-label');
+  const warning = document.getElementById('callsheet-warning');
+  if(day) day.textContent = `${cs.day || 'D-01'} ／ ${cs.date || todayISO()}`;
+  if(title) title.textContent = cs.title || '拍攝通告';
+  if(locLabel) locLabel.textContent = cs.meetingLocation || '尚未設定集合地點';
+  if(warning){
+    warning.innerHTML = _callsheetEditing
+      ? '✎ 編輯中：可以直接改這一天的通告單。改完按「💾 儲存通告單」會自動鎖回。'
+      : '⚠ 目前是唯讀。要修改任何欄位，直接按旁邊的「✎ 編輯」。';
+  }
+
+  const rows = (cs.rows || []).map((row, i) => {
+    const safeScene = htmlEscape(row.sceneId || '');
+    const sceneButton = row.sceneId ? `<button class="callsheet-scene-link" type="button" onclick="openDetail('${safeScene}')">查看場景</button>` : '';
+    const deleteBtn = (!row.locked && row.manual) ? `<button class="btn btn-danger btn-sm callsheet-row-delete" type="button" onclick="deleteCallsheetRow('${htmlEscape(row.id)}')">刪除</button>` : '';
+    const moveBtns = (!row.locked) ? `<button class="btn btn-outline btn-sm callsheet-row-move" type="button" onclick="moveCallsheetRow(${i},-1)">↑</button><button class="btn btn-outline btn-sm callsheet-row-move" type="button" onclick="moveCallsheetRow(${i},1)">↓</button>` : '';
+    const editBtn = `<button class="btn btn-outline btn-sm callsheet-row-edit" type="button" onclick="enableCallsheetEditAndFocus('tr[data-row-id=&quot;${htmlEscape(row.id)}&quot;] input')">✎ 編輯</button>`;
+    const saveBtn = `<button class="btn btn-gold btn-sm callsheet-row-save" type="button" onclick="saveCallsheetEdit()">💾 儲存</button>`;
+    const statusBadge = row.sceneId ? `<span class="badge ${getCallsheetBadgeClass(row.status)}">${sceneStatusText(row.status)}</span>` : `<span class="badge badge-pending">手動</span>`;
+    const rowActions = _callsheetEditing ? `${moveBtns}${deleteBtn}${saveBtn}` : editBtn;
+    const cell = (field, extraClass='', placeholder='') => _callsheetEditing
+      ? `<input class="callsheet-cell-input ${extraClass}" data-cs-field="${field}" data-cs-index="${i}" value="${htmlEscape(row[field])}" placeholder="${placeholder}">`
+      : `<div class="callsheet-cell-view ${extraClass}" onclick="enableCallsheetEditAndFocus('tr[data-row-id=&quot;${htmlEscape(row.id)}&quot;] input[data-cs-field=&quot;${field}&quot;]')">${htmlEscape(row[field] || '—')}</div>`;
+    return `<tr data-row-id="${htmlEscape(row.id)}">
+      <td>${cell('time','time-col','08:00')}</td>
+      <td>
+        ${cell('title','strong','場景 / 行程')}
+        <div class="callsheet-row-sub">${statusBadge}${sceneButton}</div>
+      </td>
+      <td>${cell('location','','地點')}</td>
+      <td>${cell('cast','','演員')}</td>
+      <td>${cell('crew','','工作人員')}</td>
+      <td>${cell('note','','備注')}</td>
+      <td><div class="callsheet-actions-cell">${rowActions}</div></td>
+    </tr>`;
+  }).join('');
+
+  table.innerHTML = `<thead><tr><th>時間</th><th>場景 / 行程</th><th>地點</th><th>演員</th><th>工作人員</th><th>備注</th><th>操作</th></tr></thead><tbody>${rows}</tbody>`;
+  setCallsheetInputsLocked(!_callsheetEditing);
+  updateCallsheetLockUI();
+}
+
+function enableCallsheetEdit(){
+  if(_callsheetEditing) return;
+  _callsheetDraft = cloneCallsheet(getOrCreateCallsheet());
+  _callsheetEditing = true;
+  renderCallsheet();
+  toast('通告單已解鎖，可以修改了', '✎');
+}
+
+function enableCallsheetEditAndFocus(targetId){
+  enableCallsheetEdit();
+  setTimeout(() => {
+    const el = document.getElementById(targetId) || document.querySelector(targetId);
+    if(el){ el.focus(); if(el.select) el.select(); }
+  }, 0);
+}
+
+function readCallsheetFormIntoDraft(){
+  if(!_callsheetDraft) return;
+  _callsheetDraft.day = document.getElementById('cs-day')?.value || 'D-01';
+  _callsheetDraft.date = document.getElementById('cs-date')?.value || todayISO();
+  _callsheetDraft.title = document.getElementById('cs-title')?.value || '拍攝通告';
+  _callsheetDraft.meetingLocation = document.getElementById('cs-meet')?.value || '尚未設定集合地點';
+  _callsheetDraft.weather = document.getElementById('cs-weather')?.value || '';
+  _callsheetDraft.note = document.getElementById('cs-note')?.value || '';
+  document.querySelectorAll('#callsheet-table input[data-cs-field]').forEach(input => {
+    const idx = Number(input.dataset.csIndex);
+    const field = input.dataset.csField;
+    if(_callsheetDraft.rows[idx]) _callsheetDraft.rows[idx][field] = input.value;
+  });
+}
+
+function commitCallsheetDraft(showToast = true){
+  if(!_callsheetEditing || !_callsheetDraft) return;
+  readCallsheetFormIntoDraft();
+  const p = getCurrentProject();
+  if(p){
+    normalizeProjectCallsheets(p);
+    p.callsheetDays[p.activeCallsheetIndex || 0] = cloneCallsheet(_callsheetDraft);
+    p.callsheet = p.callsheetDays[p.activeCallsheetIndex || 0];
+  }
+  _callsheetEditing = false;
+  _callsheetDraft = null;
+  persistSave();
+  renderCallsheet();
+  broadcastChange('更新通告單');
+  if(showToast) toast('通告單已儲存，並自動鎖回唯讀', '💾');
+}
+
+function saveCallsheetEdit(){ commitCallsheetDraft(true); }
+
+function cancelCallsheetEdit(){
+  _callsheetEditing = false;
+  _callsheetDraft = null;
+  renderCallsheet();
+  toast('已取消通告單編輯，沒有儲存變更', '↩');
+}
+
+function addManualCallsheetRow(){
+  if(!_callsheetEditing) return;
+  readCallsheetFormIntoDraft();
+  const id = 'manual-' + Date.now();
+  const rows = _callsheetDraft.rows || [];
+  const insertAt = Math.max(1, rows.length - 1);
+  rows.splice(insertAt, 0, { id, manual:true, locked:false, time:'', title:'新增行程', location:_callsheetDraft.meetingLocation || '', cast:'—', crew:'全組', note:'', status:'manual' });
+  _callsheetDraft.rows = rows;
+  renderCallsheet();
+  const newInput = document.querySelector(`tr[data-row-id="${id}"] input[data-cs-field="time"]`);
+  newInput?.focus();
+  toast('已新增行程，填完記得按儲存', '＋');
+}
+
+function quickAddCallsheetRow(){
+  if(!_callsheetEditing){
+    enableCallsheetEdit();
+    setTimeout(addManualCallsheetRow, 0);
+  }else{
+    addManualCallsheetRow();
+  }
+}
+
+function deleteCallsheetRow(rowId){
+  if(!_callsheetEditing || !_callsheetDraft) return;
+  readCallsheetFormIntoDraft();
+  _callsheetDraft.rows = (_callsheetDraft.rows || []).filter(r => r.id !== rowId || r.locked);
+  renderCallsheet();
+  toast('已刪除手動行程，記得按儲存', '🗑');
+}
+
+function moveCallsheetRow(index, dir){
+  if(!_callsheetEditing || !_callsheetDraft) return;
+  readCallsheetFormIntoDraft();
+  const rows = _callsheetDraft.rows || [];
+  const target = index + dir;
+  if(target < 0 || target >= rows.length) return;
+  if(rows[index]?.locked || rows[target]?.locked) return;
+  [rows[index], rows[target]] = [rows[target], rows[index]];
+  renderCallsheet();
+  toast('行程順序已調整，記得按儲存', '↕');
+}
+
+function resetCallsheetFromScenes(){
+  const p = getCurrentProject();
+  if(!p) return;
+  normalizeProjectCallsheets(p);
+  const idx = p.activeCallsheetIndex || 0;
+  const keep = p.callsheetDays[idx] || {};
+  p.callsheetDays[idx] = makeDefaultCallsheet(idx, {
+    day: keep.day || `D-${String(idx+1).padStart(2,'0')}`,
+    date: keep.date || todayISO(idx),
+    title: keep.title || `《${p.name || '未命名專案'}》拍攝通告`,
+    meetingLocation: keep.meetingLocation || scenes.find(s=>s.loc && s.loc !== '—')?.loc || '尚未設定集合地點',
+    weather: keep.weather || '請在正式拍攝前更新天氣、交通與安全注意事項',
+    note: keep.note || '器材、妝髮、演員與交通請依現場製片確認。',
+    rows: []
+  });
+  syncCallsheetRowsWithScenes(p.callsheetDays[idx]);
+  p.callsheet = p.callsheetDays[idx];
+  _callsheetEditing = false;
+  _callsheetDraft = null;
+  persistSave();
+  renderCallsheet();
+  toast('已依目前場景重新產生這一天的通告單', '↻');
+}
+
+function createNewCallsheetDay(){
+  const p = getCurrentProject();
+  if(!p) return;
+  if(_callsheetEditing) commitCallsheetDraft(false);
+  const days = normalizeProjectCallsheets(p);
+  const last = days[days.length - 1] || makeDefaultCallsheet(0);
+  const nextIndex = days.length;
+  const next = makeDefaultCallsheet(nextIndex, {
+    day: `D-${String(nextIndex + 1).padStart(2,'0')}`,
+    date: addDaysISO(last.date, 1),
+    title: last.title || `《${p.name || '未命名專案'}》拍攝通告`,
+    meetingLocation: last.meetingLocation || '尚未設定集合地點',
+    weather: last.weather || '',
+    note: last.note || '',
+    rows: []
+  });
+  syncCallsheetRowsWithScenes(next);
+  days.push(next);
+  p.activeCallsheetIndex = nextIndex;
+  p.callsheet = next;
+  persistSave();
+  renderCallsheet();
+  toast(`已新增 ${next.day}，可以開始編輯`, '＋');
+}
+
+function switchCallsheetDay(index){
+  const p = getCurrentProject();
+  if(!p) return;
+  if(_callsheetEditing) commitCallsheetDraft(false);
+  normalizeProjectCallsheets(p);
+  p.activeCallsheetIndex = Math.max(0, Math.min(index, p.callsheetDays.length - 1));
+  p.callsheet = p.callsheetDays[p.activeCallsheetIndex];
+  persistSave();
+  renderCallsheet();
+}
+
+function prevCallsheetDay(){
+  const p = getCurrentProject();
+  if(!p) return;
+  normalizeProjectCallsheets(p);
+  switchCallsheetDay(Math.max(0, (p.activeCallsheetIndex || 0) - 1));
+}
+
+function nextCallsheetDay(){
+  const p = getCurrentProject();
+  if(!p) return;
+  normalizeProjectCallsheets(p);
+  const active = p.activeCallsheetIndex || 0;
+  if(active >= p.callsheetDays.length - 1){
+    createNewCallsheetDay();
+  }else{
+    switchCallsheetDay(active + 1);
+  }
+}
+
+function refreshCallsheetFromScenesSilently(){
+  const p = getCurrentProject();
+  if(!p) return;
+  ensureProjectData(p);
+  const cs = getOrCreateCallsheet();
+  if(cs){ syncCallsheetRowsWithScenes(cs); p.callsheet = cs; persistSave(); }
+}
+
+// 再補一層事件綁定：即使瀏覽器沒有吃到 inline onclick，通告單也能操作。
+function bindCallsheetButtons(){
+  const bind = (id, fn) => {
+    const el = document.getElementById(id);
+    if(el && !el.dataset.callsheetBound){ el.dataset.callsheetBound = '1'; el.addEventListener('click', fn); }
+  };
+  bind('callsheet-edit-btn', enableCallsheetEdit);
+  bind('callsheet-add-row-btn', addManualCallsheetRow);
+  bind('callsheet-cancel-btn', cancelCallsheetEdit);
+  bind('callsheet-save-btn', saveCallsheetEdit);
+}
+setTimeout(bindCallsheetButtons, 0);
+
+document.addEventListener('click', (e) => {
+  const input = e.target.closest('.callsheet-input, .callsheet-cell-input');
+  if(input && !_callsheetEditing){
+    toast('要修改通告單，請先按旁邊的 ✎ 編輯', '✎');
+  }
+});
+
+// ══════════════════════════════════════════
 //  TICKER
 // ══════════════════════════════════════════
 function renderTicker(){
@@ -2281,10 +2950,10 @@ function addScene(){
     inout:document.getElementById('sc-inout').value,
     daynight:document.getElementById('sc-daynight').value,
     cast:document.getElementById('sc-cast').value.split(',').map(s=>s.trim()).filter(Boolean),
-    status:'pending',notes:document.getElementById('sc-note').value.trim(),page:scenes.length+1
+    status:'pending',notes:document.getElementById('sc-note').value.trim(),dialogue:'',sceneScript:'',page:scenes.length+1
   });
   shots[id]=[{id:`${id}-A`,type:'主鏡 (MS)',angle:'正面平拍',lens:'50mm',note:'',done:false}];
-  renderStats();renderDashScenes();renderFullScenes();buildShotSelect();renderTicker();
+  renderStats();renderDashScenes();renderFullScenes();renderScenesStatCards();renderSceneDots();buildShotSelect();buildScriptSceneSelect(true);renderCallsheet();renderTicker();
   closeModal('modal-scene');
   toast(`場景 ${id} 已新增`,'➕');
   persistSave();
@@ -2328,6 +2997,7 @@ function addShot(){
     done:false
   });
   renderShots();
+  saveCurrentProjectState();
   closeModal('modal-shot');
   toast('鏡頭已新增','⊡');
   const newShot = shots[sid][shots[sid].length-1];
@@ -2378,9 +3048,9 @@ function saveProject(){
     spec:document.getElementById('p-spec').value
   };
   if(mode==='create'){
-    const id='proj-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+    const id='proj-' + String(Math.floor(1000 + Math.random() * 9000));
     projects.forEach(p=>p.active=false);
-    projects.push({...data,id,active:true,scenes:[],shots:{},announcements:[],crew:[],equipment:clone(equipment),script:''});
+    projects.push({...data,id,active:true,scenes:[],shots:{},announcements:[],crew:[],equipment:[],callsheet:{},script:''});
     currentProjectId=id;
     persistSave();
     loadProjectState(getCurrentProject());
@@ -2424,6 +3094,8 @@ function switchPage(id,el){
   if(page) page.classList.add('active');
   if(id==='scenes'){renderScenes();renderScenesStatCards();renderSceneDots();}
   if(id==='shots'){buildShotSelect();}
+  if(id==='script'){buildScriptSceneSelect(true); initSafeEditMode(); setSafeEditLocked('script', true);}
+  if(id==='callsheet')renderCallsheet();
   if(id==='crew')renderCrew();
   if(id==='equipment')renderEquip();
 }
@@ -2573,7 +3245,7 @@ async function loadAllFromDB(){
       id: r.scene_id, name: r.name, loc: r.loc,
       inout: r.inout, daynight: r.daynight,
       cast: Array.isArray(r.cast) ? r.cast : (r.cast ? r.cast.split(',') : []),
-      status: r.status, notes: r.notes, page: r.page
+      status: r.status, notes: r.notes, dialogue: r.dialogue || '', sceneScript: r.scene_script || r.sceneScript || '', shootOrder: r.shoot_order || r.shootOrder, page: r.page
     }));
   }
 
@@ -2612,8 +3284,9 @@ async function loadAllFromDB(){
   }
 
   // 重新渲染所有區塊
+  scenes.forEach(normalizeSceneTextFields);
   renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots();
-  buildShotSelect(); renderAnnouncements(); renderAnnStats();
+  buildShotSelect(); buildScriptSceneSelect(true); renderCallsheet(); renderAnnouncements(); renderAnnStats();
   renderCrew(); renderTicker(); renderActivity();
 }
 
@@ -2727,6 +3400,9 @@ async function syncSceneToDB(scene){
     cast:      scene.cast,
     status:    scene.status,
     notes:     scene.notes || '',
+    dialogue:  scene.dialogue || '',
+    scene_script: scene.sceneScript || '',
+    shoot_order: scene.shootOrder || null,
     page:      scene.page || 0
   }, { onConflict: 'project_id,scene_id' });
 }
@@ -2876,6 +3552,8 @@ function mobileTab(pageId, el){
   if(pageId === 'dashboard'){ renderStats(); renderDashScenes(); renderActivity(); }
   if(pageId === 'scenes'){ renderScenes(); renderScenesStatCards(); renderSceneDots(); }
   if(pageId === 'shots'){ buildShotSelect(); renderShots(); }
+  if(pageId === 'script'){ buildScriptSceneSelect(true); initSafeEditMode(); setSafeEditLocked('script', true); }
+  if(pageId === 'callsheet'){ renderCallsheet(); }
   if(pageId === 'announce'){ renderAnnouncements(); renderAnnStats(); }
   if(pageId === 'crew'){ renderCrew(); }
 }
@@ -2921,20 +3599,27 @@ function getCurrentProject(){ return projects.find(p=>p.id===currentProjectId) |
 
 function ensureProjectData(p){
   if(!p) return;
-  if(!p.scenes){
-    p.scenes=[];
-    p.shots={};
-    p.announcements=[];
-    p.crew=[];
-    p.equipment=[];
-    p.script='';
-  }
+  if(!Array.isArray(p.scenes)) p.scenes=[];
+  if(!p.shots || typeof p.shots !== 'object') p.shots={};
+  if(!Array.isArray(p.announcements)) p.announcements=[];
+  if(!Array.isArray(p.crew)) p.crew=[];
+  if(!Array.isArray(p.equipment)) p.equipment=[];
+  if(!p.callsheet || typeof p.callsheet !== 'object') p.callsheet={};
+  if(typeof p.script !== 'string') p.script='';
 }
 
 function saveCurrentProjectState(){
   const p=getCurrentProject();
   if(!p) return;
   ensureProjectData(p);
+  const selectedScriptScene = getSelectedScriptScene && getSelectedScriptScene();
+  const scriptEl = document.getElementById('script-text');
+  if(selectedScriptScene && scriptEl){
+    normalizeSceneTextFields(selectedScriptScene);
+    selectedScriptScene.sceneScript = scriptEl.value || '';
+    p.script = selectedScriptScene.sceneScript;
+  }
+  scenes.forEach(normalizeSceneTextFields);
   p.scenes=clone(scenes);
   p.shots=clone(shots);
   p.announcements=clone(announcements);
@@ -2954,10 +3639,11 @@ function loadProjectState(p){
   replaceArray(announcements, clone(p.announcements||[]));
   replaceArray(crew, clone(p.crew||[]));
   replaceArray(equipment, clone(p.equipment||[]));
-  const script=document.getElementById('script-text');
-  if(script) script.value=p.script||'';
+  scenes.forEach(normalizeSceneTextFields);
+  const legacyScript = p.script || '';
+  if(legacyScript && scenes.length && !scenes.some(x=>x.sceneScript)){ scenes[0].sceneScript = legacyScript; }
   applyProjectMeta(p);
-  renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots(); buildShotSelect(); renderAnnouncements(); renderCrew(); renderEquip(); renderTicker(); renderActivity();
+  renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots(); buildShotSelect(); buildScriptSceneSelect(false); renderCallsheet(); renderAnnouncements(); renderCrew(); renderEquip(); renderTicker(); renderActivity();
 }
 
 function projectSummary(p){
@@ -3030,12 +3716,42 @@ function copyProjectCode(id){
 }
 
 async function joinSharedProject(){
-  const code = (prompt('請輸入專案碼（像加入房間一樣）：') || '').trim();
+  const code = (prompt('請輸入專案碼（格式：proj-1234）：') || '').trim();
   if(!code) return;
+
+  // Validate format
+  if(!/^proj-\d{4}$/.test(code)){
+    alert('專案碼格式不正確，請輸入像「proj-1234」這樣的格式。');
+    return;
+  }
+
+  // If Supabase is connected, verify the project actually exists
+  if(supabase){
+    setSyncStatus('驗證專案碼…', false);
+    try {
+      const { data: scenesData, error: scenesError } = await supabase
+        .from('scenes').select('project_id').eq('project_id', code).limit(1);
+      if(scenesError) throw scenesError;
+      const { data: crewData, error: crewError } = await supabase
+        .from('crew').select('project_id').eq('project_id', code).limit(1);
+      if(crewError) throw crewError;
+      const exists = (scenesData && scenesData.length > 0) || (crewData && crewData.length > 0);
+      if(!exists){
+        setSyncStatus('未連線', false);
+        alert('找不到專案碼「' + code + '」，請確認碼是否正確。');
+        return;
+      }
+    } catch(e) {
+      setSyncStatus('驗證失敗', false);
+      alert('無法驗證專案碼，請檢查網路連線後再試。');
+      return;
+    }
+  }
+
   saveCurrentProjectState();
   let p = projects.find(x=>x.id===code);
   if(!p){
-    p = { id: code, name: '同步專案', type:'FILM', prod:'', dir:'', days:45, spec:'4K / 25fps', active:true, scenes:[], shots:{}, announcements:[], crew:[], equipment:[], script:'' };
+    p = { id: code, name: '同步專案', type:'FILM', prod:'', dir:'', days:45, spec:'4K / 25fps', active:true, scenes:[], shots:{}, announcements:[], crew:[], equipment:[], callsheet:{}, script:'' };
     projects.push(p);
   }
   projects.forEach(x=>x.active=x.id===code);
@@ -3172,7 +3888,7 @@ function saveSceneDialogue(){
   const s=scenes.find(x=>x.id===_currentSDP);
   if(s){
     s.dialogue = document.getElementById('sdp-dialogue')?.value || '';
-    persistSave();
+    saveCurrentProjectState();
     syncSceneToDB(s);
     broadcastChange('更新台詞 ' + _currentSDP);
     setSceneFieldReadOnly('dialogue', true);
@@ -3185,7 +3901,7 @@ function saveSceneScript(){
   const s=scenes.find(x=>x.id===_currentSDP);
   if(s){
     s.sceneScript = document.getElementById('sdp-script-text')?.value || '';
-    persistSave();
+    saveCurrentProjectState();
     syncSceneToDB(s);
     broadcastChange('更新場景指示 ' + _currentSDP);
     setSceneFieldReadOnly('script', true);
@@ -3199,6 +3915,7 @@ openDetail = function(sid){
   _origOpenDetail(sid);
   const s = scenes.find(x=>x.id===sid);
   if(!s) return;
+  normalizeSceneTextFields(s);
   const dEl = document.getElementById('sdp-dialogue');
   const sEl = document.getElementById('sdp-script-text');
   if(dEl) dEl.value = s.dialogue || '';
@@ -3228,10 +3945,12 @@ function setSceneFieldReadOnly(kind, readOnly=true){
     el.readOnly = readOnly;
     el.classList.toggle('sdp-readonly', readOnly);
   }
-  if(status) status.textContent = readOnly ? (kind==='notes' ? '唯讀' : '唯讀 · 按「編輯」才可修改') : '編輯中 · 可修改';
-  if(editBtn) editBtn.style.display = readOnly ? '' : 'none';
-  if(cancelBtn) cancelBtn.style.display = readOnly ? 'none' : '';
-  if(saveBtn) saveBtn.style.display = readOnly ? 'none' : '';
+  if(status) status.textContent = readOnly ? '唯讀 · 按「編輯」才可修改' : '編輯中 · 按「儲存」後會自動鎖回';
+  if(editBtn) editBtn.style.display = readOnly ? 'inline-flex' : 'none';
+  // 注意：取消 / 儲存按鈕本身有 .sdp-edit-only { display:none }，
+  // 所以進入編輯狀態時一定要指定 inline-flex，不能只設成空字串。
+  if(cancelBtn) cancelBtn.style.display = readOnly ? 'none' : 'inline-flex';
+  if(saveBtn) saveBtn.style.display = readOnly ? 'none' : 'inline-flex';
   _sceneFieldEditing[kind] = !readOnly;
 }
 function setAllSceneFieldsReadOnly(){
@@ -3253,6 +3972,17 @@ function cancelSceneFieldEdit(kind){
   setSceneFieldReadOnly(kind, true);
   toast('已取消編輯，沒有儲存變更', '↩');
 }
+
+
+
+// 場景詳情也要防誤觸：點到唯讀文字區時，提醒必須先按筆。
+document.addEventListener('pointerdown', function(e){
+  const field = e.target.closest('#sdp-dialogue, #sdp-script-text, #sdp-notes');
+  if(!field) return;
+  if(field.readOnly){
+    toast('請先按 ✎ 編輯，改完按 💾 儲存後會自動鎖回唯讀', '✎');
+  }
+}, true);
 
 // ══════════════════════════════════════════
 //  PROFILE CREW PREVIEW
@@ -3412,7 +4142,7 @@ function deleteScene(sid) {
     if (idx !== -1) scenes.splice(idx, 1);
     delete shots[sid];
     renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots();
-    buildShotSelect(); renderTicker();
+    buildShotSelect(); buildScriptSceneSelect(true); renderCallsheet(); renderTicker();
     persistSave();
     toast(`場景 ${sid} 已刪除`, '🗑');
     broadcastChange('刪除場景 ' + sid);
@@ -3469,6 +4199,234 @@ function deleteProject(id) {
     toast(`已退出專案《${p.name}》`, '🚪');
   });
 }
+
+
+
+// ══════════════════════════════════════════
+//  GLOBAL SAFE EDIT MODE — 全站防誤按編輯鎖
+//  流程：不能編輯 → 按筆編輯 → 按儲存 → 回到不能編輯
+// ══════════════════════════════════════════
+const safeEditGroups = {};
+const safeEditOriginalSaves = {};
+const safeEditTargets = [
+  {
+    key: 'script',
+    root: '#page-script .script-layout',
+    title: '劇本共編',
+    saveLabel: '儲存修改',
+    saveAction: () => saveScript(),
+    fields: ['#script-text', '#script-note'],
+    toolButtons: ['#page-script .editor-btn'],
+    saveButtons: ['#page-script .page-actions .btn-gold', '#page-script .script-meta-card .btn-gold']
+  },
+  {
+    key: 'settings-collab',
+    root: '#page-settings .settings-card:nth-of-type(1)',
+    title: '共編設定',
+    saveLabel: '儲存設定',
+    saveAction: () => {
+      const name = (document.getElementById('settings-editor-name')?.value || '').trim();
+      if(name) setCurrentEditor(name);
+      toast('共編設定已儲存', '👥');
+    },
+    fields: ['#settings-editor-name', '#settings-sync-mode']
+  },
+  {
+    key: 'settings-project',
+    root: '#page-settings .settings-card:nth-of-type(2)',
+    title: '專案參數',
+    saveLabel: '儲存專案參數',
+    saveAction: () => saveSettingsProject(),
+    fields: ['#sp-name', '#sp-type', '#sp-spec', '#sp-dir', '#sp-prod', '#sp-days'],
+    saveButtons: ['#page-settings .settings-card:nth-of-type(2) .btn-gold']
+  },
+  {
+    key: 'settings-personal',
+    root: '#page-settings .settings-card:nth-of-type(3)',
+    title: '個人設定',
+    saveLabel: '儲存個人設定',
+    saveAction: () => savePersonalSettings(),
+    fields: ['#sp-myname', '#sp-myrole'],
+    toolButtons: ['#sp-role-grid .profile-role-btn'],
+    saveButtons: ['#page-settings .settings-card:nth-of-type(3) .btn-gold']
+  },
+  {
+    key: 'project-modal',
+    root: '#modal-project .modal',
+    title: '專案設定',
+    saveLabel: '儲存設定',
+    saveAction: () => saveProject(),
+    fields: ['#p-name', '#p-type', '#p-prod', '#p-dir', '#p-spec', '#p-days'],
+    saveButtons: ['#modal-project .modal-footer .btn-gold']
+  }
+];
+
+function safeEditGetEls(selectors){
+  const out = [];
+  (selectors || []).forEach(sel => document.querySelectorAll(sel).forEach(el => out.push(el)));
+  return [...new Set(out)];
+}
+function safeEditSnapshot(group){
+  group.snapshot = new Map();
+  safeEditGetEls(group.fields).forEach(el => group.snapshot.set(el, el.value));
+}
+function safeEditRestore(group){
+  if(!group.snapshot) return;
+  group.snapshot.forEach((value, el) => { if(el) el.value = value; });
+}
+function setSafeEditLocked(key, locked=true){
+  const group = safeEditGroups[key];
+  if(!group) return;
+  group.locked = locked;
+  const root = document.querySelector(group.root);
+  if(root) root.classList.toggle('safe-edit-locked', locked);
+
+  safeEditGetEls(group.fields).forEach(el => {
+    if(el.dataset.safeAlwaysReadonly === '1') return;
+    if(el.tagName === 'SELECT') el.disabled = locked;
+    else el.readOnly = locked;
+    el.classList.toggle('safe-readonly', locked);
+  });
+
+  safeEditGetEls(group.toolButtons).forEach(btn => {
+    btn.disabled = locked;
+    btn.classList.toggle('safe-tool-disabled', locked);
+  });
+  safeEditGetEls(group.saveButtons).forEach(btn => {
+    btn.style.display = locked ? 'none' : '';
+  });
+
+  const bar = document.querySelector(`[data-safe-edit-bar="${key}"]`);
+  if(bar){
+    bar.classList.toggle('editing', !locked);
+    const status = bar.querySelector('.safe-edit-status');
+    const editBtn = bar.querySelector('.safe-edit-pencil');
+    const cancelBtn = bar.querySelector('.safe-edit-cancel');
+    const saveBtn = bar.querySelector('.safe-edit-save');
+    if(status) status.textContent = locked ? '唯讀 · 按筆才可修改' : '編輯中 · 按儲存後會自動鎖回';
+    if(editBtn) editBtn.style.display = locked ? '' : 'none';
+    if(cancelBtn) cancelBtn.style.display = locked ? 'none' : '';
+    if(saveBtn) saveBtn.style.display = locked ? 'none' : '';
+  }
+}
+function enableSafeEdit(key){
+  const group = safeEditGroups[key];
+  if(!group) return;
+  safeEditSnapshot(group);
+  setSafeEditLocked(key, false);
+  const first = safeEditGetEls(group.fields).find(el => !el.disabled && !el.readOnly);
+  first?.focus();
+}
+function cancelSafeEdit(key){
+  const group = safeEditGroups[key];
+  if(!group) return;
+  safeEditRestore(group);
+  setSafeEditLocked(key, true);
+  toast('已取消編輯，沒有儲存變更', '↩');
+}
+function saveSafeEdit(key){
+  const group = safeEditGroups[key];
+  if(!group) return;
+  if(group.saveAction) group.saveAction();
+  setSafeEditLocked(key, true);
+  safeEditSnapshot(group);
+}
+function injectSafeEditBar(group){
+  const root = document.querySelector(group.root);
+  if(!root || root.querySelector(`[data-safe-edit-bar="${group.key}"]`)) return;
+  const bar = document.createElement('div');
+  bar.className = 'safe-edit-bar';
+  bar.dataset.safeEditBar = group.key;
+  bar.innerHTML = `
+    <div>
+      <div class="safe-edit-title">${group.title}</div>
+      <div class="safe-edit-status">唯讀 · 按筆才可修改</div>
+    </div>
+    <div class="safe-edit-actions">
+      <button class="btn btn-outline btn-sm safe-edit-pencil" type="button" onclick="enableSafeEdit('${group.key}')">✎ 編輯</button>
+      <button class="btn btn-outline btn-sm safe-edit-cancel" type="button" onclick="cancelSafeEdit('${group.key}')" style="display:none">取消</button>
+      <button class="btn btn-gold btn-sm safe-edit-save" type="button" onclick="saveSafeEdit('${group.key}')" style="display:none">💾 ${group.saveLabel}</button>
+    </div>`;
+  root.insertBefore(bar, root.firstChild);
+}
+function initSafeEditMode(){
+  safeEditTargets.forEach(cfg => {
+    const root = document.querySelector(cfg.root);
+    if(!root) return;
+    safeEditGroups[cfg.key] = cfg;
+    safeEditGetEls(cfg.fields).forEach(el => {
+      if(el.readOnly && !el.id?.startsWith('p-') && !el.id?.startsWith('sp-')) el.dataset.safeAlwaysReadonly = '1';
+    });
+    injectSafeEditBar(cfg);
+    setSafeEditLocked(cfg.key, true);
+  });
+}
+
+// 包住原本儲存：使用原本按鈕或其他地方呼叫儲存時，也會自動鎖回去。
+const _safeOrigSaveScript = saveScript;
+saveScript = function(){
+  _safeOrigSaveScript();
+  if(safeEditGroups.script) setSafeEditLocked('script', true);
+};
+const _safeOrigSaveSettingsProject = saveSettingsProject;
+saveSettingsProject = function(){
+  _safeOrigSaveSettingsProject();
+  if(safeEditGroups['settings-project']) setSafeEditLocked('settings-project', true);
+};
+const _safeOrigSavePersonalSettings = savePersonalSettings;
+savePersonalSettings = function(){
+  _safeOrigSavePersonalSettings();
+  if(safeEditGroups['settings-personal']) setSafeEditLocked('settings-personal', true);
+};
+const _safeOrigSaveProject = saveProject;
+saveProject = function(){
+  _safeOrigSaveProject();
+  if(safeEditGroups['project-modal']) setSafeEditLocked('project-modal', true);
+};
+
+const _safeOrigOpenNewProjectModal = openNewProjectModal;
+openNewProjectModal = function(){
+  _safeOrigOpenNewProjectModal();
+  setTimeout(() => {
+    initSafeEditMode();
+    const bar = document.querySelector('[data-safe-edit-bar="project-modal"]');
+    if(bar) bar.style.display = 'none';
+    setSafeEditLocked('project-modal', false);
+  }, 0);
+};
+
+const _safeOrigOpenProjectModal = openProjectModal;
+openProjectModal = function(){
+  _safeOrigOpenProjectModal();
+  setTimeout(() => {
+    initSafeEditMode();
+    const mode = document.getElementById('modal-project')?.dataset.mode || 'edit';
+    const bar = document.querySelector('[data-safe-edit-bar="project-modal"]');
+    if(mode === 'create'){
+      if(bar) bar.style.display = 'none';
+      setSafeEditLocked('project-modal', false);
+    }else{
+      if(bar) bar.style.display = '';
+      setSafeEditLocked('project-modal', true);
+    }
+  }, 0);
+};
+
+// 防止點到唯讀欄位時誤以為壞掉：提示要先按筆。
+document.addEventListener('pointerdown', function(e){
+  const el = e.target.closest('input, textarea, select, .profile-role-btn, .editor-btn');
+  if(!el) return;
+  const group = Object.values(safeEditGroups).find(g => {
+    const root = document.querySelector(g.root);
+    return root && root.contains(el) && g.locked;
+  });
+  if(group && !el.closest('.safe-edit-bar')){
+    toast('請先按 ✎ 編輯，儲存後會自動鎖回唯讀', '✎');
+  }
+}, true);
+
+// START 後再補一層初始化，確保動態資料載入後也會鎖住。
+setTimeout(initSafeEditMode, 0);
 
 // ══════════════════════════════════════════
 //  START
