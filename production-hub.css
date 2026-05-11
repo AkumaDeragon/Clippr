@@ -2771,3 +2771,69 @@ html, body { height: 100dvh; }
   max-width: 150px !important;
   min-height: 140px !important;
 }
+
+
+/* ── GLOBAL SAFE EDIT MODE / 防誤按編輯鎖 ── */
+.safe-edit-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 12px;
+  margin-bottom:12px;
+  border:1px solid rgba(201,168,76,.24);
+  border-radius:var(--radius-lg);
+  background:linear-gradient(135deg, rgba(201,168,76,.10), rgba(255,255,255,.025));
+}
+.safe-edit-bar.editing{
+  border-color:rgba(201,168,76,.52);
+  box-shadow:0 0 0 2px rgba(201,168,76,.08);
+}
+.safe-edit-title{
+  font-size:11px;
+  letter-spacing:1.7px;
+  text-transform:uppercase;
+  color:var(--gold-light);
+  font-family:var(--font-mono);
+}
+.safe-edit-status{
+  margin-top:2px;
+  font-size:11px;
+  color:var(--text-muted);
+}
+.safe-edit-actions{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.safe-edit-locked input.safe-readonly,
+.safe-edit-locked textarea.safe-readonly,
+.safe-edit-locked select.safe-readonly{
+  cursor:not-allowed;
+  opacity:.72;
+  border-color:rgba(255,255,255,.045)!important;
+  background:rgba(255,255,255,.025)!important;
+  color:var(--text-secondary)!important;
+}
+.safe-edit-locked textarea.safe-readonly::placeholder,
+.safe-edit-locked input.safe-readonly::placeholder{
+  color:rgba(255,255,255,.24);
+}
+.safe-tool-disabled{
+  pointer-events:none;
+  opacity:.35;
+  filter:grayscale(1);
+}
+.safe-edit-locked .script-textarea,
+.safe-edit-locked .compose-textarea,
+.safe-edit-locked .form-textarea{
+  user-select:text;
+}
+#modal-project .safe-edit-bar{
+  margin:0 18px 14px;
+}
+#page-script .safe-edit-bar{
+  grid-column:1 / -1;
+}
