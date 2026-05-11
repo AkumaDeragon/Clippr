@@ -1477,3 +1477,81 @@ html, body { height: 100dvh; }
   .mobile-tabbar { height: calc(64px + env(safe-area-inset-bottom, 0px)); }
   .toast-container { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
 }
+
+
+/* ══════════════════════════════════════════
+   PATCH — clearer home profile, mobile scroll, bigger scenes, safe edit mode
+   ══════════════════════════════════════════ */
+.home-profile-editor{
+  margin-top:12px; max-width:420px; padding:12px;
+  background:rgba(201,168,76,.07); border:1px solid var(--border-gold);
+  border-radius:var(--radius-lg);
+}
+.home-profile-editor label{
+  display:block; margin-bottom:6px; font-family:var(--font-mono); font-size:10px;
+  letter-spacing:1.5px; text-transform:uppercase; color:var(--gold-light);
+}
+.home-profile-editor-row{display:flex; gap:8px; align-items:center;}
+.home-profile-name-input{
+  flex:1; min-width:0; background:var(--bg-raised); border:1px solid var(--border);
+  border-radius:var(--radius); padding:8px 10px; color:var(--text-primary);
+  font-family:var(--font-body); outline:none;
+}
+.home-profile-name-input:focus{border-color:var(--gold); box-shadow:0 0 0 2px rgba(201,168,76,.14);}
+.home-profile-editor small{display:block; margin-top:6px; color:var(--text-muted); font-size:11px;}
+.home-sync-help{
+  margin-top:12px; max-width:680px; padding:10px 12px; border:1px solid rgba(52,152,219,.28);
+  background:rgba(52,152,219,.08); border-radius:var(--radius-lg);
+  color:var(--text-secondary); font-size:12px; line-height:1.7;
+}
+.home-sync-help strong{color:var(--blue-light); margin-right:4px;}
+
+/* 所有場景區塊更明顯 */
+#page-scenes .table-wrap{
+  border-color:var(--border-gold); box-shadow:0 0 0 1px rgba(201,168,76,.08), 0 18px 44px rgba(0,0,0,.28);
+}
+#page-scenes .table-header{padding:18px 20px; background:linear-gradient(90deg, rgba(201,168,76,.12), var(--bg-surface));}
+#page-scenes .table-title{font-size:16px; color:var(--gold-light); letter-spacing:2px;}
+#page-scenes .scene-filter-tab{font-size:13px; padding:7px 16px;}
+#page-scenes .scene-table th{font-size:11px; padding:13px 16px; color:var(--gold-light);}
+#page-scenes .scene-table td{font-size:14px; padding:14px 16px;}
+#page-scenes .scene-name-cell{font-size:15px;}
+.scene-stat-card{min-height:118px;}
+.scene-stat-num{font-size:34px;}
+
+/* 場景詳情安全編輯模式 */
+.sdp-edit-actions{display:flex; align-items:center; justify-content:flex-end; gap:6px; flex-wrap:wrap;}
+.sdp-edit-status{font-size:10px; color:var(--text-muted); font-family:var(--font-mono); margin-right:2px;}
+.sdp-edit-only{display:none;}
+.sdp-readonly{
+  cursor:default; color:var(--text-secondary) !important;
+  border-color:var(--border) !important; background:rgba(255,255,255,.025) !important;
+}
+.sdp-readonly:focus{box-shadow:none !important; border-color:var(--border) !important;}
+.sdp-safe-hint{margin-top:8px; color:var(--text-muted); font-size:11px; line-height:1.5;}
+.compact-head{gap:8px; flex-wrap:wrap;}
+
+@media (max-width:768px){
+  html, body{height:100dvh; min-height:100dvh; overflow:hidden;}
+  .app{height:100dvh; min-height:100dvh; overflow:hidden;}
+  .topbar{height:52px; padding:0 12px;}
+  .main-body{height:calc(100dvh - 52px); overflow:hidden; padding-bottom:0 !important;}
+  .content{
+    height:100%; overflow-y:auto !important; overflow-x:hidden;
+    -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain;
+    touch-action:pan-y; padding-bottom:calc(118px + env(safe-area-inset-bottom,0px)) !important;
+  }
+  .page{min-height:calc(100dvh - 52px); padding-bottom:calc(180px + env(safe-area-inset-bottom,0px)) !important;}
+  .scene-detail-page{padding-bottom:calc(200px + env(safe-area-inset-bottom,0px)) !important;}
+  .mobile-tabbar{height:calc(64px + env(safe-area-inset-bottom,0px));}
+  .home-profile-editor-row{flex-direction:column; align-items:stretch;}
+  .home-profile-editor{max-width:none; width:100%;}
+  .home-sync-help{max-width:none;}
+  #page-scenes .table-header{align-items:flex-start; gap:12px; flex-direction:column;}
+  #page-scenes .table-title{font-size:18px;}
+  #page-scenes .scene-filter-tab{font-size:13px; padding:8px 14px;}
+  #page-scenes .table-header > div{width:100%; overflow-x:auto; padding-bottom:4px;}
+  .sdp-section-head{align-items:flex-start; gap:8px; flex-direction:column;}
+  .sdp-edit-actions{justify-content:flex-start; width:100%;}
+  .sdp-edit-actions .btn{flex:1 1 auto; justify-content:center;}
+}

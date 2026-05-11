@@ -279,6 +279,17 @@
           <button class="home-profile-summary" id="home-profile-summary" onclick="openProfileEditor()" type="button">
             <span>目前身份</span><strong>尚未設定</strong><small>點擊修改個人檔案</small>
           </button>
+          <div class="home-profile-editor" aria-label="主頁個人名稱編輯">
+            <label for="home-profile-name-input">個人名稱</label>
+            <div class="home-profile-editor-row">
+              <input id="home-profile-name-input" class="home-profile-name-input" placeholder="輸入你的名字" maxlength="20" onkeydown="if(event.key==='Enter') saveHomeProfileName()">
+              <button class="btn btn-gold btn-sm" onclick="saveHomeProfileName()">儲存名稱</button>
+            </div>
+            <small>這個名稱會用在編輯紀錄、公告與同步標註。</small>
+          </div>
+          <div class="home-sync-help">
+            <strong>手機看不到電腦資料？</strong> 手機必須輸入同一個「專案同步碼」，而且正式同步要連上 Supabase Realtime；如果只用 Prototype / localStorage，資料只會存在目前裝置，手機不會自動看到電腦資料。
+          </div>
 
         </div>
         <div class="home-actions">
@@ -760,7 +771,12 @@
           <div class="sdp-section sdp-dialogue-section">
             <div class="sdp-section-head">
               <div class="sdp-section-title">🎭 台詞</div>
-              <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">主要 · 隨時可編輯</span>
+              <div class="sdp-edit-actions">
+                <span id="sdp-dialogue-status" class="sdp-edit-status">唯讀 · 按「編輯」才可修改</span>
+                <button class="btn btn-outline btn-sm" id="sdp-dialogue-edit-btn" onclick="enableSceneFieldEdit('dialogue')">✎ 編輯</button>
+                <button class="btn btn-outline btn-sm sdp-edit-only" id="sdp-dialogue-cancel-btn" onclick="cancelSceneFieldEdit('dialogue')">取消</button>
+                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-dialogue-save-btn" onclick="saveSceneDialogue()">💾 儲存</button>
+              </div>
             </div>
             <textarea class="sdp-dialogue-area" id="sdp-dialogue" placeholder="在這裡輸入台詞…
 
@@ -769,25 +785,26 @@
 
 [角色名]
 台詞內容…"></textarea>
-            <div style="display:flex;justify-content:flex-end;margin-top:8px">
-              <button class="btn btn-gold btn-sm" onclick="saveSceneDialogue()">💾 儲存台詞</button>
-            </div>
+            <div class="sdp-safe-hint">避免誤按：目前預設不可修改，按上方「編輯」後才會開放輸入。</div>
           </div>
 
           <!-- 場景指示/劇本 -->
           <div class="sdp-section sdp-script-section">
             <div class="sdp-section-head">
               <div class="sdp-section-title">📄 場景指示 / 劇本</div>
-              <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">動作 · 場面描述</span>
+              <div class="sdp-edit-actions">
+                <span id="sdp-script-status" class="sdp-edit-status">唯讀 · 按「編輯」才可修改</span>
+                <button class="btn btn-outline btn-sm" id="sdp-script-edit-btn" onclick="enableSceneFieldEdit('script')">✎ 編輯</button>
+                <button class="btn btn-outline btn-sm sdp-edit-only" id="sdp-script-cancel-btn" onclick="cancelSceneFieldEdit('script')">取消</button>
+                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-script-save-btn" onclick="saveSceneScript()">儲存</button>
+              </div>
             </div>
             <textarea class="sdp-script-area" id="sdp-script-text" placeholder="場景動作說明、場面描述…
 
 INT./EXT. 地點 — 日/夜
 
 動作描述與場景指示…"></textarea>
-            <div style="display:flex;justify-content:flex-end;margin-top:8px">
-              <button class="btn btn-outline btn-sm" onclick="saveSceneScript()">儲存劇本</button>
-            </div>
+            <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。</div>
           </div>
 
         </div>
@@ -821,9 +838,17 @@ INT./EXT. 地點 — 日/夜
           </div>
           <!-- 導演備注 -->
           <div class="sdp-section">
-            <div class="sdp-section-title">導演備注</div>
+            <div class="sdp-section-head compact-head">
+              <div class="sdp-section-title">導演備注</div>
+              <div class="sdp-edit-actions">
+                <span id="sdp-notes-status" class="sdp-edit-status">唯讀</span>
+                <button class="btn btn-outline btn-sm" id="sdp-notes-edit-btn" onclick="enableSceneFieldEdit('notes')">✎ 編輯</button>
+                <button class="btn btn-outline btn-sm sdp-edit-only" id="sdp-notes-cancel-btn" onclick="cancelSceneFieldEdit('notes')">取消</button>
+                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-notes-save-btn" onclick="saveSceneNotes()">儲存</button>
+              </div>
+            </div>
             <textarea class="notes-area" id="sdp-notes" placeholder="導演指示或備注…" style="min-height:100px;resize:vertical"></textarea>
-            <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px" onclick="saveSceneNotes()">儲存備注</button>
+            <div class="sdp-safe-hint">備注也必須先按「編輯」才可以輸入。</div>
           </div>
         </div>
 
@@ -1558,6 +1583,25 @@ function renderHomeProfileSummary(){
   const name = (currentUserProfile && currentUserProfile.name && currentUserProfile.name !== '匿名') ? currentUserProfile.name : '尚未設定';
   const role = (currentUserProfile && currentUserProfile.role) ? currentUserProfile.role : '點擊修改個人檔案';
   el.innerHTML = `<span>目前身份</span><strong>${name}</strong><small>${role}</small>`;
+  const homeName = document.getElementById('home-profile-name-input');
+  if(homeName && document.activeElement !== homeName) homeName.value = name === '尚未設定' ? '' : name;
+}
+
+function saveHomeProfileName(){
+  const input = document.getElementById('home-profile-name-input');
+  const name = (input?.value || '').trim();
+  if(!name){
+    input?.focus();
+    toast('請先輸入個人名稱', '👤');
+    return;
+  }
+  const profile = {
+    name,
+    role: (currentUserProfile && currentUserProfile.role) || '成員'
+  };
+  applyProfile(profile);
+  saveProfileToStorage(profile);
+  toast('個人名稱已更新', '👤');
 }
 
 function checkAndRestoreProfile() {
@@ -1671,11 +1715,8 @@ function openDetail(sid) {
 }
 
 function backFromSceneDetail() {
-  // Save notes
-  if (_currentSDP) {
-    const s = scenes.find(x => x.id === _currentSDP);
-    if (s) s.notes = document.getElementById('sdp-notes').value;
-  }
+  // 不自動儲存，避免誤按或誤改；只有按「儲存」才會寫入。
+  _sceneFieldEditing = { dialogue:false, script:false, notes:false };
   _currentSDP = null;
   // Go back to wherever we came from
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1701,6 +1742,7 @@ function saveSceneNotes() {
       persistSave();
       syncSceneToDB(s);
       broadcastChange('更新場景備注 ' + _currentSDP);
+      setSceneFieldReadOnly('notes', true);
       toast('備注已儲存', '💾');
     }
   }
@@ -2967,7 +3009,7 @@ function copyProjectCode(id){
 }
 
 async function joinSharedProject(){
-  const code = (prompt('請輸入電腦端的「專案同步碼 / 目前專案 ID」：\n（在電腦首頁專案卡片或設定頁可複製）') || '').trim();
+  const code = (prompt('請輸入電腦端同一個「專案同步碼 / 目前專案 ID」：\n\n注意：手機和電腦要看到同一份資料，必須使用同同步碼，而且正式同步需連上 Supabase Realtime。若只是 Prototype/localStorage，資料只存在單一裝置。') || '').trim();
   if(!code) return;
   saveCurrentProjectState();
   let p = projects.find(x=>x.id===code);
@@ -3112,6 +3154,7 @@ function saveSceneDialogue(){
     persistSave();
     syncSceneToDB(s);
     broadcastChange('更新台詞 ' + _currentSDP);
+    setSceneFieldReadOnly('dialogue', true);
     toast('台詞已儲存','🎭');
   }
 }
@@ -3124,6 +3167,7 @@ function saveSceneScript(){
     persistSave();
     syncSceneToDB(s);
     broadcastChange('更新場景指示 ' + _currentSDP);
+    setSceneFieldReadOnly('script', true);
     toast('劇本已儲存','📄');
   }
 }
@@ -3138,7 +3182,56 @@ openDetail = function(sid){
   const sEl = document.getElementById('sdp-script-text');
   if(dEl) dEl.value = s.dialogue || '';
   if(sEl) sEl.value = s.sceneScript || '';
+  setAllSceneFieldsReadOnly();
 };
+
+
+// ══════════════════════════════════════════
+//  SAFE SCENE EDIT MODE — 預設唯讀，避免誤改
+// ══════════════════════════════════════════
+let _sceneFieldEditing = { dialogue:false, script:false, notes:false };
+const _sceneFieldMap = {
+  dialogue: { el:'sdp-dialogue', status:'sdp-dialogue-status', edit:'sdp-dialogue-edit-btn', cancel:'sdp-dialogue-cancel-btn', save:'sdp-dialogue-save-btn' },
+  script: { el:'sdp-script-text', status:'sdp-script-status', edit:'sdp-script-edit-btn', cancel:'sdp-script-cancel-btn', save:'sdp-script-save-btn' },
+  notes: { el:'sdp-notes', status:'sdp-notes-status', edit:'sdp-notes-edit-btn', cancel:'sdp-notes-cancel-btn', save:'sdp-notes-save-btn' }
+};
+function setSceneFieldReadOnly(kind, readOnly=true){
+  const cfg = _sceneFieldMap[kind];
+  if(!cfg) return;
+  const el = document.getElementById(cfg.el);
+  const status = document.getElementById(cfg.status);
+  const editBtn = document.getElementById(cfg.edit);
+  const cancelBtn = document.getElementById(cfg.cancel);
+  const saveBtn = document.getElementById(cfg.save);
+  if(el){
+    el.readOnly = readOnly;
+    el.classList.toggle('sdp-readonly', readOnly);
+  }
+  if(status) status.textContent = readOnly ? (kind==='notes' ? '唯讀' : '唯讀 · 按「編輯」才可修改') : '編輯中 · 可修改';
+  if(editBtn) editBtn.style.display = readOnly ? '' : 'none';
+  if(cancelBtn) cancelBtn.style.display = readOnly ? 'none' : '';
+  if(saveBtn) saveBtn.style.display = readOnly ? 'none' : '';
+  _sceneFieldEditing[kind] = !readOnly;
+}
+function setAllSceneFieldsReadOnly(){
+  Object.keys(_sceneFieldMap).forEach(k=>setSceneFieldReadOnly(k, true));
+}
+function enableSceneFieldEdit(kind){
+  setSceneFieldReadOnly(kind, false);
+  const cfg = _sceneFieldMap[kind];
+  const el = cfg && document.getElementById(cfg.el);
+  el?.focus();
+}
+function cancelSceneFieldEdit(kind){
+  const s = scenes.find(x=>x.id===_currentSDP);
+  if(s){
+    if(kind==='dialogue') document.getElementById('sdp-dialogue').value = s.dialogue || '';
+    if(kind==='script') document.getElementById('sdp-script-text').value = s.sceneScript || '';
+    if(kind==='notes') document.getElementById('sdp-notes').value = s.notes || '';
+  }
+  setSceneFieldReadOnly(kind, true);
+  toast('已取消編輯，沒有儲存變更', '↩');
+}
 
 // ══════════════════════════════════════════
 //  PROFILE CREW PREVIEW
