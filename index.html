@@ -273,19 +273,31 @@
     <!-- ═══ HOME / PROJECT PICKER ═══ -->
     <section id="page-home" class="page home-page active">
       <div class="home-hero-panel">
-        <div>
+        <div class="home-hero-copy">
           <div class="home-kicker">Production Hub</div>
           <div class="home-title">選擇要進入的 <span>專案</span></div>
-          <div class="identity-name-row">
+        </div>
 
-          <button class="home-profile-summary" id="home-profile-summary" onclick="openProfileEditor()" type="button">
-            <span>目前身份</span><strong>尚未設定</strong><small>點擊修改個人檔案</small>
+        <div class="home-action-row">
+          <!-- 身份卡（整張可點） -->
+          <button class="home-hero-card identity-card" id="home-profile-summary" onclick="openProfileEditor()" type="button">
+            <div class="hhc-label">目前身份</div>
+            <div class="hhc-name" id="hhc-name-display">尚未設定</div>
+            <div class="hhc-sub" id="hhc-role-display">點擊設定個人檔案</div>
+            <div class="hhc-edit-hint">✎ 修改</div>
           </button>
-          </div>
-<div class="home-actions">
-          <button class="btn btn-outline" onclick="openProfileEditor()">👤 修改個人檔案</button>
-          <button class="btn btn-gold" onclick="openNewProjectModal()">＋ 新增專案</button>
-          <button class="btn btn-gold join-project-big" onclick="joinSharedProject()">＋ 加入專案（輸入專案碼）</button>
+          <!-- 新增專案 -->
+          <button class="home-hero-card new-proj-card" onclick="openNewProjectModal()" type="button">
+            <div class="hhc-icon">＋</div>
+            <div class="hhc-action-title">新增專案</div>
+            <div class="hhc-action-sub">建立全新工作區</div>
+          </button>
+          <!-- 加入專案 -->
+          <button class="home-hero-card join-proj-card" onclick="joinSharedProject()" type="button">
+            <div class="hhc-icon">⤵</div>
+            <div class="hhc-action-title">加入專案</div>
+            <div class="hhc-action-sub">輸入專案碼加入</div>
+          </button>
         </div>
       </div>
 
@@ -1544,6 +1556,9 @@ function resetProfileOverlayText(){
   if(sub) sub.textContent = '請先設定您的身份，團隊成員才知道誰在編輯';
   if(submit) submit.textContent = '進入系統 →';
   if(skip) skip.textContent = '先跳過（以匿名身份進入）';
+  // 還原劇組成員預覽
+  const crewPreview = document.getElementById('profile-crew-preview');
+  if(crewPreview) crewPreview.style.display = '';
 }
 
 function openProfileEditor(){
@@ -1564,6 +1579,9 @@ function openProfileEditor(){
   if(sub) sub.textContent = '更新姓名與職位，之後的編輯紀錄會顯示新的身份';
   if(submit) submit.textContent = '儲存個人檔案 ✓';
   if(skip) skip.textContent = '取消';
+  // 修改模式下隱藏劇組成員預覽
+  const crewPreview = document.getElementById('profile-crew-preview');
+  if(crewPreview) crewPreview.style.display = 'none';
   document.getElementById('profile-overlay')?.classList.remove('hidden');
 }
 
@@ -1572,7 +1590,7 @@ function renderHomeProfileSummary(){
   if(!el) return;
   const name = (currentUserProfile && currentUserProfile.name && currentUserProfile.name !== '匿名') ? currentUserProfile.name : '尚未設定';
   const role = (currentUserProfile && currentUserProfile.role) ? currentUserProfile.role : '點擊修改個人檔案';
-  el.innerHTML = `<span>目前身份</span><strong>${name}</strong><small>${role}</small>`;
+  el.innerHTML = `<div class="hhc-label">目前身份</div><div class="hhc-name">${name}</div><div class="hhc-sub">${role}</div><div class="hhc-edit-hint">✎ 修改</div>`;
   const homeName = document.getElementById('home-profile-name-input');
   if(homeName && document.activeElement !== homeName) homeName.value = name === '尚未設定' ? '' : name;
 }
@@ -2360,7 +2378,7 @@ function saveProject(){
     spec:document.getElementById('p-spec').value
   };
   if(mode==='create'){
-    const id='P' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    const id='proj-' + Math.random().toString(36).slice(2, 7).toUpperCase();
     projects.forEach(p=>p.active=false);
     projects.push({...data,id,active:true,scenes:[],shots:{},announcements:[],crew:[],equipment:clone(equipment),script:''});
     currentProjectId=id;
@@ -2948,7 +2966,15 @@ function projectSummary(p){
   const done=(p.scenes||[]).filter(s=>s.status==='done').length;
   const anns=(p.announcements||[]).length;
   const pct=total?Math.round(done/total*100):0;
-  return {total,done,anns,pct};
+  // Count shots across all scenes
+  let totalShots=0, doneShots=0;
+  (p.scenes||[]).forEach(s=>{
+    const sid=s.id;
+    const sArr=(p.shots&&p.shots[sid])||(shots&&shots[sid])||[];
+    totalShots+=sArr.length;
+    doneShots+=sArr.filter(sh=>sh.done).length;
+  });
+  return {total,done,anns,pct,totalShots,doneShots};
 }
 
 function renderHomeProjects(){
@@ -2956,16 +2982,21 @@ function renderHomeProjects(){
   if(!grid) return;
   grid.innerHTML=projects.map(p=>{
     const st=projectSummary(p);
+    // Shot progress display
+    const shotChip=st.totalShots>0?`<span class="shot-progress-chip">${st.doneShots}/${st.totalShots} 鏡頭</span>`:'';
     return `<div class="home-project-card" style="position:relative;text-align:left;display:flex;flex-direction:column;gap:6px;cursor:default">
-      <button onclick="deleteProject('${p.id}')" style="position:absolute;top:10px;right:10px;background:transparent;border:1px solid rgba(231,76,60,0.25);border-radius:5px;color:rgba(231,76,60,0.5);font-size:10px;padding:2px 7px;cursor:pointer;transition:all .2s;z-index:2" onmouseover="this.style.color='var(--red-light)';this.style.borderColor='rgba(231,76,60,0.7)'" onmouseout="this.style.color='rgba(231,76,60,0.5)';this.style.borderColor='rgba(231,76,60,0.25)'">🗑</button>
       <span class="home-project-type">${p.type||'FILM'}</span>
+      <button onclick="deleteProject('${p.id}')" title="退出專案" style="position:absolute;top:42px;right:14px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.35);border-radius:6px;color:rgba(231,76,60,0.7);font-size:12px;padding:3px 9px;cursor:pointer;transition:all .2s;z-index:2;line-height:1;font-family:inherit" onmouseover="this.style.color='#fff';this.style.background='rgba(231,76,60,0.85)';this.style.borderColor='rgba(231,76,60,0.9)'" onmouseout="this.style.color='rgba(231,76,60,0.7)';this.style.background='rgba(231,76,60,0.08)';this.style.borderColor='rgba(231,76,60,0.35)'">退出</button>
       <strong style="font-size:15px">《${p.name}》</strong>
       <small style="color:var(--text-muted)">${p.prod||'未填製作公司'} · 導演 ${p.dir||'—'}</small>
       <div class="home-project-meta">
-        <span>${st.total} 場景</span><span>${st.pct}% 完成</span><span>${st.anns} 公告</span>
+        <span>${st.done}/${st.total} 場景</span><span>${st.pct}% 完成</span>${shotChip}<span>${st.anns} 公告</span>
       </div>
-      <button class="home-sync-code" onclick="event.stopPropagation();copyProjectCode('${p.id}')">專案碼：${p.id}</button>
-      <div class="home-card-progress"><i style="width:${st.pct}%"></i></div>
+      <button class="home-sync-code" onclick="event.stopPropagation();copyProjectCode('${p.id}')" title="${p.id}">專案碼：${p.id}</button>
+      <div class="home-card-progress-wrap">
+        <div class="home-card-progress"><i style="width:${st.pct}%"></i></div>
+        <span class="home-card-progress-label">${st.done}/${st.total}</span>
+      </div>
       <button onclick="enterProject('${p.id}')" class="btn btn-gold btn-sm" style="margin-top:4px;width:100%">進入專案 →</button>
     </div>`;
   }).join('') + `<button class="home-project-card add" onclick="openNewProjectModal()"><b>＋</b><strong>新增專案</strong><small>建立一個乾淨的新專案工作區</small></button>`;
@@ -3325,11 +3356,13 @@ function updateMobileAnnBadge(){
 // ══════════════════════════════════════════
 //  CONFIRM DELETE SYSTEM
 // ══════════════════════════════════════════
-function confirmDelete(msg, onConfirm) {
+function confirmDelete(msg, onConfirm, opts={}) {
   document.getElementById('confirm-delete-msg').textContent = msg;
+  const subEl = document.querySelector('#modal-confirm-delete .modal-body > div:last-child');
+  if (subEl) subEl.textContent = opts.subtitle || '此操作無法復原，刪除後資料將永久消失。';
   const btn = document.getElementById('confirm-delete-btn');
-  // Clone button to clear old event listeners
   const newBtn = btn.cloneNode(true);
+  newBtn.textContent = opts.btnLabel || '確定刪除';
   btn.parentNode.replaceChild(newBtn, btn);
   newBtn.onclick = () => {
     closeModal('modal-confirm-delete');
@@ -3416,18 +3449,16 @@ function deleteShot(sid, index) {
   });
 }
 
-// ── Delete Project ───────────────────────
+// ── Leave Project ───────────────────────
 function deleteProject(id) {
   const p = projects.find(x => x.id === id);
   if (!p) return;
-  if (projects.length <= 1) { toast('至少保留一個專案', '⚠'); return; }
-  confirmDelete(`確定要刪除專案《${p.name}》？\n所有場景、公告、成員等資料都會消失。`, async () => {
-    if (supabase) {
-      await supabase.from('scenes').delete().eq('project_id', id);
-      await supabase.from('shots').delete().eq('project_id', id);
-      await supabase.from('announcements').delete().eq('project_id', id);
-      await supabase.from('crew').delete().eq('project_id', id);
-    }
+  // Customise modal wording for "leave" semantics
+  const subEl = document.querySelector('#modal-confirm-delete .modal-body > div:last-child');
+  if (subEl) subEl.textContent = '此操作只從本機移除，雲端資料不受影響，日後可再用專案碼重新加入。';
+  const confirmBtn = document.getElementById('confirm-delete-btn');
+  if (confirmBtn) confirmBtn.textContent = '確定退出';
+  confirmDelete(`確定要退出專案《${p.name}》？`, async () => {
     const idx = projects.findIndex(x => x.id === id);
     if (idx !== -1) projects.splice(idx, 1);
     if (currentProjectId === id) {
@@ -3435,7 +3466,7 @@ function deleteProject(id) {
     }
     persistSave();
     renderHomeProjects();
-    toast(`專案《${p.name}》已刪除`, '🗑');
+    toast(`已退出專案《${p.name}》`, '🚪');
   });
 }
 
