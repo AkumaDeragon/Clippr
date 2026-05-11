@@ -1420,3 +1420,7 @@ body.project-mode .main-body { display: flex; }
   background: var(--gold); color: var(--bg-base);
   border-color: var(--gold);
 }
+
+/* ── HOME / PROJECT MODE visibility ── */
+.home-mode .project-only { display: none !important; }
+.project-mode .home-only { display: none !important; }

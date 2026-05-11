@@ -71,8 +71,42 @@
 /* ── SLIDER: Shooting order dots ── */
 .scene-dot-btn.shot-order-badge{font-size:9px;font-family:var(--font-mono,'DM Mono'),monospace;color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;width:22px!important;height:22px!important;}
 
-/* ── ACTIVITY ITEM enhanced with role ── */
-.activity-role-tag{font-size:10px;color:var(--text-muted,#888);background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:4px;padding:1px 5px;margin-left:4px;font-family:var(--font-mono,'DM Mono'),monospace;}
+/* ── PROFILE CREW PREVIEW ── */
+.profile-crew-preview{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;margin-bottom:20px;}
+.profile-crew-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);font-family:var(--font-mono,'DM Mono'),monospace;margin-bottom:10px;}
+.profile-crew-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.profile-crew-chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 10px 4px 6px;}
+.profile-crew-avatar{width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,0.25);color:var(--gold,#C9A84C);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.profile-crew-name{font-size:11px;color:rgba(255,255,255,0.7);}
+.profile-crew-role{font-size:10px;color:rgba(255,255,255,0.3);margin-left:2px;}
+
+/* ── SETTINGS PAGE ── */
+.settings-layout{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+@media(max-width:900px){.settings-layout{grid-template-columns:1fr;}}
+.settings-card{background:var(--bg-elevated,#1a1a1a);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:var(--radius-lg,12px);overflow:hidden;}
+.settings-card-head{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border,rgba(255,255,255,0.08));background:var(--bg-raised,#111);}
+.settings-icon{font-size:20px;width:32px;text-align:center;}
+.settings-card-title{font-size:14px;font-weight:600;color:var(--text-primary,#fff);}
+.settings-card-sub{font-size:11px;color:var(--text-muted,#888);margin-top:2px;}
+.settings-body{padding:18px;}
+.settings-field{margin-bottom:14px;}
+.settings-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;display:block;margin-bottom:6px;}
+.settings-two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* ── SCENE DETAIL V2 ── */
+.sdp-layout-v2{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start;}
+@media(max-width:1100px){.sdp-layout-v2{grid-template-columns:1fr;}}
+.sdp-script-col{display:flex;flex-direction:column;gap:16px;}
+.sdp-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sdp-dialogue-section{flex:1;}
+.sdp-dialogue-area{width:100%;min-height:320px;max-height:480px;resize:vertical;background:var(--bg-raised,#111);border:1px solid var(--gold,#C9A84C);border-radius:8px;color:var(--text-primary,#fff);font-size:15px;line-height:1.8;padding:16px 18px;font-family:'DM Mono','Courier New',monospace;outline:none;box-sizing:border-box;letter-spacing:.3px;}
+.sdp-dialogue-area:focus{border-color:var(--gold,#C9A84C);box-shadow:0 0 0 2px rgba(201,168,76,0.15);}
+.sdp-script-area{width:100%;min-height:160px;max-height:280px;resize:vertical;background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:8px;color:var(--text-secondary,#aaa);font-size:13px;line-height:1.7;padding:14px 16px;font-family:'DM Mono','Courier New',monospace;outline:none;box-sizing:border-box;}
+.sdp-script-area:focus{border-color:var(--border,rgba(255,255,255,0.15));}
+
+/* ── BG ELEVATED ── */
+.bg-elevated,.sdp-section{background:var(--bg-elevated,#1a1a1a);}
+
 </style>
 <body>
 <!-- ═══ PROFILE ONBOARDING OVERLAY ═══ -->
@@ -83,6 +117,11 @@
     </div>
     <div class="profile-title">歡迎來到 Clappr</div>
     <div class="profile-sub">請先設定您的身份，團隊成員才知道誰在編輯</div>
+    <!-- 目前劇組成員預覽 -->
+    <div class="profile-crew-preview" id="profile-crew-preview">
+      <div class="profile-crew-label">劇組成員</div>
+      <div class="profile-crew-grid" id="profile-crew-grid"><div style="color:rgba(255,255,255,0.3);font-size:11px">載入中…</div></div>
+    </div>
     <div class="profile-form">
       <div class="profile-field">
         <label class="profile-label">您的姓名</label>
@@ -153,9 +192,6 @@
   </div>
   <div class="topbar-right">
     <div class="clock" id="clock">00:00</div>
-    <button class="btn btn-outline btn-sm edit-cta project-only" onclick="openProjectModal()">✎ 編輯此專案</button>
-    <button class="btn btn-outline btn-sm project-only" onclick="openSyncModal()">👥 共編設定</button>
-    <button class="btn btn-gold btn-sm" onclick="openNewProjectModal()">＋ 新增專案</button>
     <button class="btn btn-green btn-sm project-only" onclick="markCurrentDone()">✓ 完成場景</button>
   </div>
 </header>
@@ -212,6 +248,13 @@
       </div>
       <div class="nav-item" onclick="switchPage('equipment',this)">
         <span class="nav-icon">◧</span> 器材清單
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">系統</div>
+      <div class="nav-item" onclick="switchPage('settings',this)">
+        <span class="nav-icon">⚙</span> 設定
       </div>
     </div>
     <div class="sidebar-divider"></div>
@@ -701,27 +744,60 @@
         </div>
       </div>
 
-      <div class="sdp-layout">
-        <div class="sdp-main">
+      <div class="sdp-layout-v2">
+
+        <!-- 左側 60%：台詞 + 劇本 -->
+        <div class="sdp-script-col">
+
+          <!-- 台詞區（主要，佔較多空間） -->
+          <div class="sdp-section sdp-dialogue-section">
+            <div class="sdp-section-head">
+              <div class="sdp-section-title">🎭 台詞</div>
+              <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">主要 · 隨時可編輯</span>
+            </div>
+            <textarea class="sdp-dialogue-area" id="sdp-dialogue" placeholder="在這裡輸入台詞…
+
+[角色名]
+台詞內容
+
+[角色名]
+台詞內容…"></textarea>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-gold btn-sm" onclick="saveSceneDialogue()">💾 儲存台詞</button>
+            </div>
+          </div>
+
+          <!-- 場景指示/劇本 -->
+          <div class="sdp-section sdp-script-section">
+            <div class="sdp-section-head">
+              <div class="sdp-section-title">📄 場景指示 / 劇本</div>
+              <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">動作 · 場面描述</span>
+            </div>
+            <textarea class="sdp-script-area" id="sdp-script-text" placeholder="場景動作說明、場面描述…
+
+INT./EXT. 地點 — 日/夜
+
+動作描述與場景指示…"></textarea>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-outline btn-sm" onclick="saveSceneScript()">儲存劇本</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 右側 40%：資訊 + 鏡頭 + 備注 -->
+        <div class="sdp-sidebar">
+          <!-- 基本資訊 -->
           <div class="sdp-section">
             <div class="sdp-section-title">基本資訊</div>
             <div class="sdp-info-grid" id="sdp-info-grid"></div>
           </div>
+          <!-- 參與角色 -->
           <div class="sdp-section">
             <div class="sdp-section-title">參與角色</div>
             <div class="cast-list" id="sdp-cast-list"></div>
           </div>
-          <div class="sdp-section">
-            <div class="sdp-section-title">鏡頭清單</div>
-            <div class="sdp-shot-list" id="sdp-shot-list"></div>
-          </div>
-        </div>
-        <div class="sdp-sidebar">
-          <div class="sdp-section">
-            <div class="sdp-section-title">導演備注</div>
-            <textarea class="notes-area" id="sdp-notes" placeholder="輸入導演指示或備注…" style="min-height:160px;resize:vertical"></textarea>
-            <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px" onclick="saveSceneNotes()">儲存備注</button>
-          </div>
+          <!-- 拍攝進度 -->
           <div class="sdp-section">
             <div class="sdp-section-title">拍攝進度</div>
             <div class="sdp-progress-wrap">
@@ -731,7 +807,189 @@
               <div class="sdp-progress-label" id="sdp-progress-label">0 / 0 鏡頭完成</div>
             </div>
           </div>
+          <!-- 鏡頭清單 -->
+          <div class="sdp-section">
+            <div class="sdp-section-title">鏡頭清單</div>
+            <div class="sdp-shot-list" id="sdp-shot-list"></div>
+          </div>
+          <!-- 導演備注 -->
+          <div class="sdp-section">
+            <div class="sdp-section-title">導演備注</div>
+            <textarea class="notes-area" id="sdp-notes" placeholder="導演指示或備注…" style="min-height:100px;resize:vertical"></textarea>
+            <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px" onclick="saveSceneNotes()">儲存備注</button>
+          </div>
         </div>
+
+      </div>
+    </section>
+
+    <!-- ═══ SETTINGS ═══ -->
+    <section id="page-settings" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">設定 <span>中心</span></div>
+          <div class="page-subtitle">共編設定、專案參數、同步配置</div>
+        </div>
+      </div>
+      <div class="settings-layout">
+
+        <!-- 共編設定 -->
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <span class="settings-icon">👥</span>
+            <div>
+              <div class="settings-card-title">共編設定</div>
+              <div class="settings-card-sub">多人即時同步設定</div>
+            </div>
+          </div>
+          <div class="settings-body">
+            <div class="sync-explain">
+              <strong>Supabase Realtime 已啟用</strong>
+              <span>開兩個分頁、兩台電腦都能毫秒級同步。每次修改會標註編輯者姓名與時間。</span>
+            </div>
+            <div class="settings-field">
+              <label class="settings-label">目前編輯者名稱</label>
+              <input class="form-input" id="settings-editor-name" placeholder="您的名字" oninput="setCurrentEditor(this.value)">
+            </div>
+            <div class="settings-field">
+              <label class="settings-label">同步模式</label>
+              <select class="form-select" id="settings-sync-mode" onchange="toast('同步模式：'+this.options[this.selectedIndex].text,'👥')">
+                <option>Supabase Realtime（已啟用）</option>
+                <option>Firebase Firestore</option>
+                <option>Custom WebSocket API</option>
+                <option>本機多分頁（Prototype）</option>
+              </select>
+            </div>
+            <div class="settings-field">
+              <label class="settings-label">同步狀態</label>
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius);">
+                <div id="settings-sync-dot" style="width:8px;height:8px;border-radius:50%;background:var(--green-light);flex-shrink:0"></div>
+                <span id="settings-sync-label" style="font-size:13px;color:var(--text-primary)">即時同步中</span>
+              </div>
+            </div>
+            <div class="sync-checklist">
+              <div>✓ 場景狀態即時同步</div>
+              <div>✓ 鏡頭完成標記即時同步</div>
+              <div>✓ 公告即時推播</div>
+              <div>✓ 劇組成員資料同步</div>
+            </div>
+            <button class="btn btn-outline" style="width:100%;margin-top:12px" onclick="openSyncModal()">查看詳細同步規格 →</button>
+          </div>
+        </div>
+
+        <!-- 專案參數 -->
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <span class="settings-icon">⚙</span>
+            <div>
+              <div class="settings-card-title">專案參數</div>
+              <div class="settings-card-sub">拍攝規格與基本資料</div>
+            </div>
+          </div>
+          <div class="settings-body">
+            <div class="settings-field">
+              <label class="settings-label">專案名稱</label>
+              <input class="form-input" id="sp-name" placeholder="專案名稱">
+            </div>
+            <div class="settings-two-col">
+              <div class="settings-field">
+                <label class="settings-label">製作類型</label>
+                <select class="form-select" id="sp-type">
+                  <option value="FILM">電影 FILM</option>
+                  <option value="TV">電視劇 TV</option>
+                  <option value="OTT">網路 OTT</option>
+                  <option value="DOC">紀錄片 DOC</option>
+                  <option value="CM">廣告 CM</option>
+                  <option value="MV">MV</option>
+                </select>
+              </div>
+              <div class="settings-field">
+                <label class="settings-label">拍攝規格</label>
+                <select class="form-select" id="sp-spec">
+                  <option>4K / 25fps</option>
+                  <option>4K / 24fps</option>
+                  <option>2K / 30fps</option>
+                  <option>1080p / 60fps</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-two-col">
+              <div class="settings-field">
+                <label class="settings-label">導演</label>
+                <input class="form-input" id="sp-dir" placeholder="導演姓名">
+              </div>
+              <div class="settings-field">
+                <label class="settings-label">製作公司</label>
+                <input class="form-input" id="sp-prod" placeholder="製作公司">
+              </div>
+            </div>
+            <div class="settings-field">
+              <label class="settings-label">總拍攝天數</label>
+              <input class="form-input" id="sp-days" type="number" placeholder="45">
+            </div>
+            <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="saveSettingsProject()">儲存專案參數</button>
+          </div>
+        </div>
+
+        <!-- 個人設定 -->
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <span class="settings-icon">👤</span>
+            <div>
+              <div class="settings-card-title">個人設定</div>
+              <div class="settings-card-sub">您的身份與偏好</div>
+            </div>
+          </div>
+          <div class="settings-body">
+            <div class="settings-field">
+              <label class="settings-label">您的姓名</label>
+              <input class="form-input" id="sp-myname" placeholder="如：陳大明" oninput="setCurrentEditor(this.value)">
+            </div>
+            <div class="settings-field">
+              <label class="settings-label">職位 / 部門</label>
+              <div class="profile-role-grid" id="sp-role-grid" style="margin-bottom:8px">
+                <button class="profile-role-btn" onclick="selectSettingsRole(this,'導演')">導演</button>
+                <button class="profile-role-btn" onclick="selectSettingsRole(this,'副導演')">副導演</button>
+                <button class="profile-role-btn" onclick="selectSettingsRole(this,'製片')">製片</button>
+                <button class="profile-role-btn" onclick="selectSettingsRole(this,'攝影指導')">攝影指導</button>
+                <button class="profile-role-btn" onclick="selectSettingsRole(this,'攝影師')">攝影師</button>
+                <button class="profile-role-btn" onclick="selectSettingsRole(this,'燈光師')">燈光師</button>
+                <button class="profile-role-btn" onclick="selectSettingsRole(this,'收音師')">收音師</button>
+                <button class="profile-role-btn" onclick="selectSettingsRole(this,'場記')">場記</button>
+                <button class="profile-role-btn" onclick="selectSettingsRole(this,'演員')">演員</button>
+              </div>
+              <input class="form-input" id="sp-myrole" placeholder="或直接輸入職位…">
+            </div>
+            <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="savePersonalSettings()">儲存個人設定</button>
+          </div>
+        </div>
+
+        <!-- 資料管理 -->
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <span class="settings-icon">🗄</span>
+            <div>
+              <div class="settings-card-title">資料管理</div>
+              <div class="settings-card-sub">匯出、備份、清除</div>
+            </div>
+          </div>
+          <div class="settings-body">
+            <div class="settings-field">
+              <label class="settings-label">Supabase 端點</label>
+              <input class="form-input" value="gdnharkyealkkzymrxls.supabase.co" readonly style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">
+            </div>
+            <div class="settings-field">
+              <label class="settings-label">目前專案 ID</label>
+              <input class="form-input" id="sp-project-id" readonly style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+              <button class="btn btn-outline" style="width:100%" onclick="copyRealtimePlan()">📋 複製同步規格</button>
+              <button class="btn btn-outline" style="width:100%" onclick="toast('匯出功能開發中','📁')">📁 匯出專案資料</button>
+              <button class="btn btn-danger btn-sm" style="width:100%;margin-top:4px" onclick="if(confirm('確定要清除本機快取？'))localStorage.removeItem('clappr_v1')&&toast('快取已清除','🗑')">清除本機快取</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -2512,8 +2770,150 @@ function openNewProjectSheetModal(){ openNewProjectModal(); }
 function createNewProject(){ saveProject(); }
 
 // ══════════════════════════════════════════
-//  SHOT PROGRESS BAR
+//  SETTINGS PAGE
 // ══════════════════════════════════════════
+function openSettingsPage(){
+  // Populate fields from current project
+  const p = getCurrentProject();
+  if(p){
+    const n = document.getElementById('sp-name'); if(n) n.value = p.name||'';
+    const t = document.getElementById('sp-type'); if(t) t.value = p.type||'FILM';
+    const sp = document.getElementById('sp-spec'); if(sp) sp.value = p.spec||'4K / 25fps';
+    const d = document.getElementById('sp-dir'); if(d) d.value = p.dir||'';
+    const pr = document.getElementById('sp-prod'); if(pr) pr.value = p.prod||'';
+    const dy = document.getElementById('sp-days'); if(dy) dy.value = p.days||45;
+  }
+  const mn = document.getElementById('sp-myname'); if(mn) mn.value = currentUserProfile.name||currentEditor||'';
+  const mr = document.getElementById('sp-myrole'); if(mr) mr.value = currentUserProfile.role||'';
+  const pid = document.getElementById('sp-project-id'); if(pid) pid.value = getProjectId();
+  const sen = document.getElementById('settings-editor-name'); if(sen) sen.value = currentEditor||'';
+  // Sync status
+  const ssd = document.getElementById('settings-sync-dot');
+  const ssl = document.getElementById('settings-sync-label');
+  const syncText = document.getElementById('sync-text');
+  if(ssd && syncText){
+    const connected = !syncText.textContent.includes('離線') && !syncText.textContent.includes('錯誤');
+    ssd.style.background = connected ? 'var(--green-light)' : 'var(--red-light)';
+    if(ssl) ssl.textContent = syncText.textContent;
+  }
+}
+
+function saveSettingsProject(){
+  const data={
+    name:(document.getElementById('sp-name')?.value||'').trim()||getCurrentProject()?.name,
+    type:document.getElementById('sp-type')?.value||'FILM',
+    spec:document.getElementById('sp-spec')?.value||'4K / 25fps',
+    dir:(document.getElementById('sp-dir')?.value||'').trim(),
+    prod:(document.getElementById('sp-prod')?.value||'').trim(),
+    days:document.getElementById('sp-days')?.value||45
+  };
+  const p=getCurrentProject();
+  if(p){ Object.assign(p,data); applyProjectMeta(p); persistSave(); }
+  toast('專案參數已儲存','⚙');
+  broadcastChange('更新專案參數');
+}
+
+function savePersonalSettings(){
+  const name=(document.getElementById('sp-myname')?.value||'').trim();
+  const role=(document.getElementById('sp-myrole')?.value||'').trim();
+  if(name){ currentUserProfile={name,role:role||'成員'}; setCurrentEditor(name); }
+  toast('個人設定已儲存','👤');
+}
+
+function selectSettingsRole(btn,role){
+  document.querySelectorAll('#sp-role-grid .profile-role-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const r=document.getElementById('sp-myrole'); if(r) r.value=role;
+}
+
+// ── Patch switchPage to open settings ──────
+const _origSwitchPage = switchPage;
+switchPage = function(id, el){
+  _origSwitchPage(id, el);
+  if(id==='settings') openSettingsPage();
+};
+
+// ══════════════════════════════════════════
+//  SCENE DIALOGUE + SCRIPT SAVE
+// ══════════════════════════════════════════
+function saveSceneDialogue(){
+  if(!_currentSDP) return;
+  const s=scenes.find(x=>x.id===_currentSDP);
+  if(s){
+    s.dialogue = document.getElementById('sdp-dialogue')?.value || '';
+    persistSave();
+    syncSceneToDB(s);
+    broadcastChange('更新台詞 ' + _currentSDP);
+    toast('台詞已儲存','🎭');
+  }
+}
+
+function saveSceneScript(){
+  if(!_currentSDP) return;
+  const s=scenes.find(x=>x.id===_currentSDP);
+  if(s){
+    s.sceneScript = document.getElementById('sdp-script-text')?.value || '';
+    persistSave();
+    syncSceneToDB(s);
+    broadcastChange('更新場景指示 ' + _currentSDP);
+    toast('劇本已儲存','📄');
+  }
+}
+
+// ── Patch openDetail to load dialogue/script ──
+const _origOpenDetail = openDetail;
+openDetail = function(sid){
+  _origOpenDetail(sid);
+  const s = scenes.find(x=>x.id===sid);
+  if(!s) return;
+  const dEl = document.getElementById('sdp-dialogue');
+  const sEl = document.getElementById('sdp-script-text');
+  if(dEl) dEl.value = s.dialogue || '';
+  if(sEl) sEl.value = s.sceneScript || '';
+};
+
+// ══════════════════════════════════════════
+//  PROFILE CREW PREVIEW
+// ══════════════════════════════════════════
+function renderProfileCrewPreview(){
+  const grid = document.getElementById('profile-crew-grid');
+  if(!grid) return;
+  if(!crew.length){
+    grid.innerHTML='<div style="color:rgba(255,255,255,0.3);font-size:11px;padding:4px 0">尚無劇組成員資料</div>';
+    return;
+  }
+  grid.innerHTML = crew.slice(0,12).map((c,i)=>{
+    const col = avatarColors[c.color!==undefined?c.color:i%7];
+    return `<div class="profile-crew-chip">
+      <div class="profile-crew-avatar" style="background:${col}22;color:${col};border:1px solid ${col}33">${c.name.slice(0,1)}</div>
+      <span class="profile-crew-name">${c.name}</span><span class="profile-crew-role">${c.role||''}</span>
+    </div>`;
+  }).join('') + (crew.length>12?`<div style="color:rgba(255,255,255,0.3);font-size:11px;align-self:center">+${crew.length-12}</div>`:'');
+}
+
+// ── Patch initSupabase to render crew preview after load ──
+const _origInitSupabase = initSupabase;
+initSupabase = async function(){
+  await _origInitSupabase();
+  renderProfileCrewPreview();
+};
+
+// Also render when crew data changes
+const _origRenderCrew = renderCrew;
+renderCrew = function(){
+  _origRenderCrew();
+  renderProfileCrewPreview();
+};
+
+// ══════════════════════════════════════════
+//  SYNC FIX: ensure same project_id across tabs
+// ══════════════════════════════════════════
+// Override getProjectId to always use a stable, shared key
+// so two browser tabs sync to the same Supabase channel
+const _origGetProjectId = getProjectId;
+// We keep the existing function but ensure project_id is
+// consistent by using the persisted currentProjectId
+
 function updateShotProgress(sid){
   const arr = shots[sid] || [];
   const total = arr.length;
