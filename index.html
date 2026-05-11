@@ -110,14 +110,203 @@
 </style>
 <body>
 <!-- ═══ PROFILE ONBOARDING OVERLAY ═══ -->
-
+<div class="profile-overlay" id="profile-overlay">
+  <div class="profile-card">
+    <div class="profile-logo">
+      <div class="brand-icon" style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--gold),#a07020);display:flex;align-items:center;justify-content:center;font-size:22px;color:#000;font-weight:700;font-family:var(--font-serif);flex-shrink:0">C</div>
+    </div>
+    <div class="profile-title">歡迎來到 Clappr</div>
+    <div class="profile-sub">請先設定您的身份，團隊成員才知道誰在編輯</div>
+    <!-- 目前劇組成員預覽 -->
+    <div class="profile-crew-preview" id="profile-crew-preview">
+      <div class="profile-crew-label">劇組成員</div>
+      <div class="profile-crew-grid" id="profile-crew-grid"><div style="color:rgba(255,255,255,0.3);font-size:11px">載入中…</div></div>
+    </div>
+    <div class="profile-form">
+      <div class="profile-field">
+        <label class="profile-label">您的姓名</label>
+        <input class="profile-input" id="profile-name-input" placeholder="如：陳大明" maxlength="20">
+      </div>
+      <div class="profile-field">
+        <label class="profile-label">職位 / 部門</label>
+        <div class="profile-role-grid" id="profile-role-grid">
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'導演')">導演</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'副導演')">副導演</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'製片')">製片</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'攝影指導')">攝影指導</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'攝影師')">攝影師</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'燈光師')">燈光師</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'收音師')">收音師</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'美術指導')">美術指導</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'場記')">場記</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'演員')">演員</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'助理導演')">助理導演</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'其他')">其他</button>
         </div>
-<div class="home-actions">
-  <button class="btn btn-outline" onclick="openProfileEditor()">👤 修改個人檔案</button>
-  <button class="btn btn-gold" onclick="openNewProjectModal()">＋ 新增專案</button>
-  <button class="btn btn-gold join-project-big" onclick="joinSharedProject()">＋ 加入專案（輸入專案碼）</button>
+        <input class="profile-input" id="profile-role-input" placeholder="或直接輸入職位…" maxlength="20" style="margin-top:8px">
+      </div>
+    </div>
+    <button class="btn btn-gold" id="profile-submit-btn" style="width:100%;margin-top:4px;padding:12px" onclick="submitProfile()">進入系統 →</button>
+    <div class="profile-skip" id="profile-skip-btn" onclick="skipProfile()">先跳過（以匿名身份進入）</div>
+  </div>
 </div>
 
+<!-- ═══ LIVE BROADCAST POPUP ═══ -->
+<div class="broadcast-overlay" id="broadcast-overlay">
+  <div class="broadcast-card" id="broadcast-card">
+    <div class="broadcast-type-tag" id="broadcast-type-tag">📢 即時通告</div>
+    <div class="broadcast-from-row">
+      <div class="broadcast-avatar" id="broadcast-avatar">導</div>
+      <div>
+        <div class="broadcast-from" id="broadcast-from">導演</div>
+        <div class="broadcast-role" id="broadcast-role">剛剛</div>
+      </div>
+    </div>
+    <div class="broadcast-msg" id="broadcast-msg">公告內容</div>
+    <button class="broadcast-dismiss" onclick="dismissBroadcast()">知道了，繼續工作 ✓</button>
+    <div class="broadcast-hint">點按上方按鈕關閉通告</div>
+  </div>
+</div>
+
+<div class="app">
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-icon"></div>
+    <div>
+      <div class="brand-name">Clappr</div>
+      <div class="brand-sub">Production Management</div>
+    </div>
+  </div>
+  <div class="topbar-center">
+    <div class="project-badge">
+      <span class="Ptype" id="Ptype-badge">FILM</span>
+      <span class="Pname" id="Pname-badge">《彼岸之城》</span>
+    </div>
+    <div class="sync-pill" id="sync-pill" title="多人同步狀態">
+      <span class="sync-dot"></span>
+      <span id="sync-text">即時同步中</span>
+    </div>
+    <div class="rec-dot" title="拍攝進行中"></div>
+  </div>
+  <div class="topbar-right">
+    <div class="clock" id="clock">00:00</div>
+    <button class="btn btn-green btn-sm project-only" onclick="markCurrentDone()">✓ 完成場景</button>
+  </div>
+</header>
+
+<!-- MAIN BODY -->
+<div class="main-body">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section workspace-panel">
+      <button class="workspace-back" onclick="showHome()">← 回主頁</button>
+      <div class="sidebar-label">目前專案</div>
+      <button class="workspace-btn" onclick="openProjectModal()">
+        <span>
+          <strong id="workspace-project-name">彼岸之城</strong>
+          <small>專案內編輯區 · 點擊編輯</small>
+        </span>
+        <b>✎</b>
+      </button>
+
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">主控台</div>
+      <div class="nav-item active" onclick="switchPage('dashboard',this)">
+        <span class="nav-icon">◈</span> 拍攝總覽
+      </div>
+      <div class="nav-item" onclick="switchPage('scenes',this)">
+        <span class="nav-icon">☰</span> 場景進度
+      </div>
+      <div class="nav-item" onclick="switchPage('shots',this)">
+        <span class="nav-icon">⊡</span> 鏡頭腳位
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">協作</div>
+      <div class="nav-item" onclick="switchPage('script',this)">
+        <span class="nav-icon">✎</span> 劇本共編
+      </div>
+      <div class="nav-item" onclick="switchPage('announce',this)">
+        <span class="nav-icon">◎</span> 公告欄
+        <span class="nav-badge live" id="ann-count-badge">2</span>
+      </div>
+      <div class="nav-item" onclick="switchPage('crew',this)">
+        <span class="nav-icon">◉</span> 劇組成員
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">排程</div>
+      <div class="nav-item" onclick="switchPage('callsheet',this)">
+        <span class="nav-icon">▦</span> 通告單
+      </div>
+      <div class="nav-item" onclick="switchPage('equipment',this)">
+        <span class="nav-icon">◧</span> 器材清單
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">系統</div>
+      <div class="nav-item" onclick="switchPage('settings',this)">
+        <span class="nav-icon">⚙</span> 設定
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-project-info">
+      <div class="Pinfo-row"><span class="Pinfo-key">製作</span><span class="Pinfo-val" id="info-prod">星影製作</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">導演</span><span class="Pinfo-val" id="info-dir">陳大明</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">天數</span><span class="Pinfo-val" id="info-day">D-08/45</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">規格</span><span class="Pinfo-val" id="info-spec">4K / 25fps</span></div>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+
+    <!-- ═══ HOME / PROJECT PICKER ═══ -->
+    <section id="page-home" class="page home-page active">
+      <div class="home-hero-panel">
+        <div>
+          <div class="home-kicker">Production Hub</div>
+          <div class="home-title">選擇要進入的 <span>專案</span></div>
+          <div class="identity-name-row">
+
+          <button class="home-profile-summary" id="home-profile-summary" onclick="openProfileEditor()" type="button">
+            <span>目前身份</span><strong>尚未設定</strong><small>點擊修改個人檔案</small>
+          </button>
+
+          <div class="profile-name-compact">
+            <label>個人名稱</label>
+            <div class="profile-name-controls">
+              <input type="text" id="quick-profile-name" placeholder="輸入個人名稱">
+              <button class="btn btn-gold btn-sm" onclick="saveQuickProfileName()">儲存</button>
+            </div>
+          </div>
+          </div>
+          <div class="home-profile-editor" aria-label="主頁個人名稱編輯">
+            <label for="home-profile-name-input">個人名稱</label>
+            <div class="home-profile-editor-row">
+              <input id="home-profile-name-input" class="home-profile-name-input" placeholder="輸入你的名字" maxlength="20" onkeydown="if(event.key==='Enter') saveHomeProfileName()">
+              <button class="btn btn-gold btn-sm" onclick="saveHomeProfileName()">儲存名稱</button>
+            </div>
+            <small>這個名稱會用在編輯紀錄、公告與同步標註。</small>
+          </div>
+          <div class="home-sync-help">
+            <strong>手機看不到電腦資料？</strong> 手機必須輸入同一個「專案專案碼」，而且正式同步要連上 Supabase Realtime；如果只用 Prototype / localStorage，資料只會存在目前裝置，手機不會自動看到電腦資料。
+          </div>
+
+        </div><div class="home-actions">
+          <button class="btn btn-outline" onclick="openProfileEditor()">👤 修改個人檔案</button>
+          <button class="btn btn-gold join-project-big" onclick="joinSharedProject()">＋ 加入專案（輸入專案碼）</button>
+          <button class="btn btn-gold" onclick="openNewProjectModal()">＋ 新增專案</button>
+        </div>
       </div>
 
       <div class="home-layout">
