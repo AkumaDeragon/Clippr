@@ -1332,6 +1332,25 @@ INT./EXT. 地點 — 日/夜
 
 <div class="toast-container" id="toast-container"></div>
 
+<!-- ══ DELETE CONFIRMATION MODAL ══ -->
+<div class="modal-overlay" id="modal-confirm-delete" style="z-index:99999">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head" style="background:rgba(231,76,60,0.08);border-bottom:1px solid rgba(231,76,60,0.2)">
+      <span class="modal-title" style="color:var(--red-light)">🗑 確認刪除</span>
+      <button class="modal-close" onclick="closeModal('modal-confirm-delete')">×</button>
+    </div>
+    <div class="modal-body" style="text-align:center;padding:28px 24px">
+      <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+      <div id="confirm-delete-msg" style="font-size:15px;color:var(--text-primary);margin-bottom:8px;line-height:1.5">確定要刪除嗎？</div>
+      <div style="font-size:12px;color:var(--text-muted)">此操作無法復原，刪除後資料將永久消失。</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-confirm-delete')">取消</button>
+      <button class="btn btn-danger" id="confirm-delete-btn" onclick="">確定刪除</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MOBILE TAB BAR ══ -->
 <nav class="mobile-tabbar" id="mobile-tabbar">
   <div class="tab-item active" id="tab-dashboard" onclick="mobileTab('dashboard',this)">
@@ -1423,9 +1442,38 @@ let selectedAnnType = 'general';
 const activityLog = [];
 
 // ══════════════════════════════════════════
-//  PROFILE SYSTEM
+//  PROFILE SYSTEM (with localStorage persistence)
 // ══════════════════════════════════════════
 let currentUserProfile = { name: '', role: '' };
+const PROFILE_KEY = 'clappr_profile_v1';
+
+function saveProfileToStorage(profile) {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch(e) {}
+}
+
+function loadProfileFromStorage() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+function applyProfile(profile) {
+  currentUserProfile = profile;
+  currentEditor = profile.name;
+  const globalName = document.getElementById('global-editor-name');
+  if (globalName) globalName.value = profile.name;
+  const scriptName = document.getElementById('editor-name');
+  if (scriptName) scriptName.value = profile.name;
+  const annFrom = document.getElementById('ann-from');
+  if (annFrom) annFrom.value = profile.name;
+  // Pre-fill settings page
+  const spName = document.getElementById('sp-myname');
+  if (spName) spName.value = profile.name;
+  const spRole = document.getElementById('sp-myrole');
+  if (spRole) spRole.value = profile.role;
+}
 
 function selectProfileRole(btn, role) {
   document.querySelectorAll('.profile-role-btn').forEach(b => b.classList.remove('selected'));
@@ -1436,22 +1484,34 @@ function selectProfileRole(btn, role) {
 function submitProfile() {
   const name = document.getElementById('profile-name-input').value.trim();
   const role = document.getElementById('profile-role-input').value.trim();
-  if (!name) { document.getElementById('profile-name-input').focus(); document.getElementById('profile-name-input').style.borderColor='var(--red-light,#e74c3c)'; return; }
-  currentUserProfile = { name, role: role || '成員' };
-  currentEditor = name;
-  const globalName = document.getElementById('global-editor-name');
-  if (globalName) globalName.value = name;
-  const scriptName = document.getElementById('editor-name');
-  if (scriptName) scriptName.value = name;
-  const annFrom = document.getElementById('ann-from');
-  if (annFrom) annFrom.value = name;
+  if (!name) {
+    document.getElementById('profile-name-input').focus();
+    document.getElementById('profile-name-input').style.borderColor='var(--red-light,#e74c3c)';
+    return;
+  }
+  const profile = { name, role: role || '成員' };
+  applyProfile(profile);
+  saveProfileToStorage(profile);
   document.getElementById('profile-overlay').classList.add('hidden');
   toast(`歡迎，${role ? role + ' ' : ''}${name} ✦`, '👤');
 }
 
 function skipProfile() {
-  currentUserProfile = { name: '匿名', role: '' };
+  const profile = { name: '匿名', role: '' };
+  applyProfile(profile);
+  // Don't save anonymous to storage so they see login next time
   document.getElementById('profile-overlay').classList.add('hidden');
+}
+
+function checkAndRestoreProfile() {
+  const saved = loadProfileFromStorage();
+  if (saved && saved.name && saved.name !== '匿名') {
+    applyProfile(saved);
+    document.getElementById('profile-overlay').classList.add('hidden');
+    toast(`歡迎回來，${saved.role ? saved.role + ' ' : ''}${saved.name} ✦`, '👤');
+    return true;
+  }
+  return false;
 }
 
 // ══════════════════════════════════════════
@@ -1667,6 +1727,8 @@ function init(){
   renderHomeProjects();
   renderHomeAnnouncements();
   showHome(false);
+  // 嘗試從 localStorage 恢復登入狀態（避免刷新後重新登入）
+  checkAndRestoreProfile();
 }
 
 // ══════════════════════════════════════════
@@ -1730,20 +1792,21 @@ function sceneRow(s, showDetail=false){
   const dnTag=s.daynight==='DAY'?'<span class="inline-tag tag-day">日</span>':s.daynight==='NIGHT'?'<span class="inline-tag tag-night" style="font-size:10px;padding:1px 7px;background:rgba(92,59,148,.15);color:#a78bfa">夜</span>':s.daynight==='DUSK'?'<span class="inline-tag tag-day" style="background:rgba(211,84,0,.1);color:var(--amber-light)">黃昏</span>':'<span class="inline-tag tag-day" style="background:rgba(41,128,185,.1);color:var(--blue-light)">黎明</span>';
   const doneShots=(shots[s.id]||[]).filter(sh=>sh.done).length;
   const totalShots=(shots[s.id]||[]).length;
-  return `<tr class="${s.status==='current'?'current-row':''}" onclick="openDetail('${s.id}')">
-    <td class="scene-num">${s.id}</td>
-    <td class="scene-name-cell">${s.name}</td>
-    <td>${inTag} ${dnTag}</td>
-    <td style="font-size:12px;color:var(--text-muted)">${s.loc}</td>
-    <td style="font-size:12px;color:var(--text-muted)">${s.cast.slice(0,2).join('、')+(s.cast.length>2?'…':'')}</td>
-    <td><span style="font-family:var(--font-mono);font-size:11px;color:${doneShots===totalShots&&totalShots>0?'var(--green-light)':'var(--text-muted)'}">${doneShots}/${totalShots}</span></td>
-    <td>${statusMap[s.status]||statusMap.pending}</td>
+  return `<tr class="${s.status==='current'?'current-row':''}">
+    <td class="scene-num" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.id}</td>
+    <td class="scene-name-cell" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.name}</td>
+    <td onclick="openDetail('${s.id}')" style="cursor:pointer">${inTag} ${dnTag}</td>
+    <td style="font-size:12px;color:var(--text-muted)" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.loc}</td>
+    <td style="font-size:12px;color:var(--text-muted)" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.cast.slice(0,2).join('、')+(s.cast.length>2?'…':'')}</td>
+    <td onclick="openDetail('${s.id}')" style="cursor:pointer"><span style="font-family:var(--font-mono);font-size:11px;color:${doneShots===totalShots&&totalShots>0?'var(--green-light)':'var(--text-muted)'}">${doneShots}/${totalShots}</span></td>
+    <td onclick="openDetail('${s.id}')" style="cursor:pointer">${statusMap[s.status]||statusMap.pending}</td>
+    <td><button onclick="event.stopPropagation();deleteScene('${s.id}')" style="background:transparent;border:1px solid rgba(231,76,60,0.3);border-radius:5px;color:rgba(231,76,60,0.6);font-size:11px;padding:3px 8px;cursor:pointer;transition:all .2s;white-space:nowrap" onmouseover="this.style.borderColor='rgba(231,76,60,0.8)';this.style.color='var(--red-light)'" onmouseout="this.style.borderColor='rgba(231,76,60,0.3)';this.style.color='rgba(231,76,60,0.6)'">🗑 刪除</button></td>
   </tr>`;
 }
 
 function renderDashScenes(){
   const t=document.getElementById('dash-scene-table');
-  t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th></tr></thead><tbody>${scenes.slice(0,6).map(s=>sceneRow(s)).join('')}</tbody>`;
+  t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th><th></th></tr></thead><tbody>${scenes.slice(0,6).map(s=>sceneRow(s)).join('')}</tbody>`;
 }
 
 let _sceneFilter = 'all';
@@ -1769,7 +1832,7 @@ function renderScenes(){
     t.innerHTML=`<tbody><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);font-size:13px">此分類目前沒有場景</td></tr></tbody>`;
     return;
   }
-  t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th></tr></thead><tbody>${filtered.map(s=>sceneRow(s)).join('')}</tbody>`;
+  t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th><th></th></tr></thead><tbody>${filtered.map(s=>sceneRow(s)).join('')}</tbody>`;
 }
 
 function renderFullScenes(){renderScenes();}
@@ -1847,6 +1910,7 @@ function renderShots(){
       <div class="shot-header">
         <span class="shot-num">${sh.id}</span>
         ${sh.done?'<span style="color:var(--green-light);font-size:12px">✓</span>':''}
+        <button onclick="deleteShot('${sid}',${i})" style="margin-left:auto;background:transparent;border:1px solid rgba(231,76,60,0.25);border-radius:5px;color:rgba(231,76,60,0.5);font-size:10px;padding:2px 6px;cursor:pointer;transition:all .2s" onmouseover="this.style.color='var(--red-light)';this.style.borderColor='rgba(231,76,60,0.7)'" onmouseout="this.style.color='rgba(231,76,60,0.5)';this.style.borderColor='rgba(231,76,60,0.25)'">🗑</button>
       </div>
       <div class="shot-type-label">${sh.type}</div>
       <div class="shot-angle">${sh.angle}</div>
@@ -1940,7 +2004,7 @@ const typeLabels={general:'一般',director:'導演指示',notice:'注意事項'
 function renderAnnouncements(){
   const board=document.getElementById('ann-board');
   if(!announcements.length){board.innerHTML='<div class="empty-state"><div class="empty-icon">◎</div>尚無公告</div>';return;}
-  board.innerHTML=announcements.map(a=>`
+  board.innerHTML=announcements.map((a,i)=>`
     <div class="ann-card">
       <div class="ann-card-accent" style="background:${typeColors[a.type]}"></div>
       <div class="ann-card-body">
@@ -1948,6 +2012,7 @@ function renderAnnouncements(){
           <span class="ann-from">${a.from}</span>
           <span class="ann-tag" style="background:${typeColors[a.type]}22;color:${typeColors[a.type]};border:1px solid ${typeColors[a.type]}44">${typeLabels[a.type]}</span>
           <span class="ann-time">${a.date} ${a.time}</span>
+          <button onclick="deleteAnnouncement(${i})" style="margin-left:auto;background:transparent;border:1px solid rgba(231,76,60,0.3);border-radius:5px;color:var(--red-light);font-size:11px;padding:2px 8px;cursor:pointer;opacity:0.7;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">🗑 刪除</button>
         </div>
         <div class="ann-msg">${a.msg}</div>
       </div>
@@ -1971,7 +2036,8 @@ const statusColor={onset:'var(--green-light)',makeup:'var(--gold)',onway:'var(--
 function renderCrew(){
   const grid=document.getElementById('crew-grid');
   grid.innerHTML=crew.map((c,i)=>`
-    <div class="crew-card">
+    <div class="crew-card" style="position:relative">
+      <button onclick="deleteCrewMember(${i})" style="position:absolute;top:8px;right:8px;background:transparent;border:1px solid rgba(231,76,60,0.25);border-radius:5px;color:rgba(231,76,60,0.5);font-size:10px;padding:2px 6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='rgba(231,76,60,0.7)';this.style.color='var(--red-light)'" onmouseout="this.style.borderColor='rgba(231,76,60,0.25)';this.style.color='rgba(231,76,60,0.5)'">🗑</button>
       <div class="crew-avatar" style="background:${avatarColors[c.color]}22;border-color:${avatarColors[c.color]}44;color:${avatarColors[c.color]}">${c.name.slice(0,1)}</div>
       <div class="crew-name">${c.name}</div>
       <div class="crew-role">${c.role}</div>
@@ -2429,10 +2495,9 @@ function subscribeRealtime(){
 
 // ── 遠端變更處理 ─────────────────────────
 async function handleRemoteChange(payload){
-  // Supabase realtime payload: { schema, table, commit_timestamp, eventType, new, old, errors }
-  const tbl = payload && (payload.table || '');
-  const evt = payload && (payload.eventType || payload.type || '');
-  const isNewAnn = tbl === 'announcements' && (evt === 'INSERT' || evt === '*');
+  const tbl = payload && (payload.table || (payload.data && payload.data.table) || '');
+  const evt = '';
+  const isNewAnn = tbl === 'announcements';
   const prevAnnCount = announcements.length;
   const myName = (currentUserProfile && currentUserProfile.name) || currentEditor || '匿名';
 
@@ -2442,15 +2507,8 @@ async function handleRemoteChange(payload){
   // 如果遠端有新公告，對所有人顯示 broadcast 彈窗
   if (isNewAnn && announcements.length > prevAnnCount) {
     const newest = announcements[0];
-    // 只跳給「不是自己發的那個人」(發送者本機已顯示過)
     if (newest && newest.from !== myName) {
       showBroadcast(newest);
-    }
-  } else if (tbl === 'announcements' && !isNewAnn) {
-    // fallback: 如果 eventType 不明確，比對最新公告的發送者
-    if (announcements.length > prevAnnCount) {
-      const newest = announcements[0];
-      if (newest && newest.from !== myName) showBroadcast(newest);
     }
   }
 }
@@ -2666,15 +2724,19 @@ function copyRealtimePlan(){
 function mobileTab(pageId, el){
   // 切換頁面
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + pageId).classList.add('active');
+  const targetPage = document.getElementById('page-' + pageId);
+  if (targetPage) targetPage.classList.add('active');
   // 切換 Tab 狀態
   document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   // 同步桌面版 sidebar
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  if(pageId === 'scenes') renderScenes();
-  if(pageId === 'shots'){ buildShotSelect(); }
+  // 確保資料都有 render
+  if(pageId === 'dashboard'){ renderStats(); renderDashScenes(); renderActivity(); }
+  if(pageId === 'scenes'){ renderScenes(); renderScenesStatCards(); renderSceneDots(); }
+  if(pageId === 'shots'){ buildShotSelect(); renderShots(); }
   if(pageId === 'announce'){ renderAnnouncements(); renderAnnStats(); }
+  if(pageId === 'crew'){ renderCrew(); }
 }
 
 // ══════════════════════════════════════════
@@ -2771,16 +2833,17 @@ function renderHomeProjects(){
   if(!grid) return;
   grid.innerHTML=projects.map(p=>{
     const st=projectSummary(p);
-    return `<button class="home-project-card" onclick="enterProject('${p.id}')">
+    return `<div class="home-project-card" style="position:relative;text-align:left;display:flex;flex-direction:column;gap:6px;cursor:default">
+      <button onclick="deleteProject('${p.id}')" style="position:absolute;top:10px;right:10px;background:transparent;border:1px solid rgba(231,76,60,0.25);border-radius:5px;color:rgba(231,76,60,0.5);font-size:10px;padding:2px 7px;cursor:pointer;transition:all .2s;z-index:2" onmouseover="this.style.color='var(--red-light)';this.style.borderColor='rgba(231,76,60,0.7)'" onmouseout="this.style.color='rgba(231,76,60,0.5)';this.style.borderColor='rgba(231,76,60,0.25)'">🗑</button>
       <span class="home-project-type">${p.type||'FILM'}</span>
-      <strong>《${p.name}》</strong>
-      <small>${p.prod||'未填製作公司'} · 導演 ${p.dir||'—'}</small>
+      <strong style="font-size:15px">《${p.name}》</strong>
+      <small style="color:var(--text-muted)">${p.prod||'未填製作公司'} · 導演 ${p.dir||'—'}</small>
       <div class="home-project-meta">
         <span>${st.total} 場景</span><span>${st.pct}% 完成</span><span>${st.anns} 公告</span>
       </div>
       <div class="home-card-progress"><i style="width:${st.pct}%"></i></div>
-      <em>進入專案 →</em>
-    </button>`;
+      <button onclick="enterProject('${p.id}')" class="btn btn-gold btn-sm" style="margin-top:4px;width:100%">進入專案 →</button>
+    </div>`;
   }).join('') + `<button class="home-project-card add" onclick="openNewProjectModal()"><b>＋</b><strong>新增專案</strong><small>建立一個乾淨的新專案工作區</small></button>`;
 }
 
@@ -3037,6 +3100,123 @@ renderShots = function(){
 function updateMobileAnnBadge(){
   const b = document.getElementById('tab-ann-badge');
   if(b) b.textContent = announcements.length;
+}
+
+// ══════════════════════════════════════════
+//  CONFIRM DELETE SYSTEM
+// ══════════════════════════════════════════
+function confirmDelete(msg, onConfirm) {
+  document.getElementById('confirm-delete-msg').textContent = msg;
+  const btn = document.getElementById('confirm-delete-btn');
+  // Clone button to clear old event listeners
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+  newBtn.onclick = () => {
+    closeModal('modal-confirm-delete');
+    onConfirm();
+  };
+  openModal('modal-confirm-delete');
+}
+
+// ── Delete Announcement ──────────────────
+function deleteAnnouncement(index) {
+  const a = announcements[index];
+  if (!a) return;
+  confirmDelete(`確定要刪除「${a.from}」的公告？\n「${a.msg.slice(0,30)}…」`, async () => {
+    // Remove from DB if supabase connected
+    if (supabase) {
+      await supabase.from('announcements')
+        .delete()
+        .eq('project_id', getProjectId())
+        .eq('from_name', a.from)
+        .eq('msg', a.msg)
+        .eq('time_str', a.time);
+    }
+    announcements.splice(index, 1);
+    renderAnnouncements();
+    renderAnnStats();
+    renderTicker();
+    persistSave();
+    const badge = document.getElementById('ann-count-badge');
+    if (badge) badge.textContent = announcements.length;
+    const tabBadge = document.getElementById('tab-ann-badge');
+    if (tabBadge) tabBadge.textContent = announcements.length;
+    toast('公告已刪除', '🗑');
+    broadcastChange('刪除公告');
+  });
+}
+
+// ── Delete Scene ─────────────────────────
+function deleteScene(sid) {
+  const s = scenes.find(x => x.id === sid);
+  if (!s) return;
+  confirmDelete(`確定要刪除場景「${s.id} — ${s.name}」？\n此場景的所有鏡頭也會一起刪除。`, async () => {
+    if (supabase) {
+      await supabase.from('scenes').delete().eq('project_id', getProjectId()).eq('scene_id', sid);
+      await supabase.from('shots').delete().eq('project_id', getProjectId()).eq('scene_id', sid);
+    }
+    const idx = scenes.findIndex(x => x.id === sid);
+    if (idx !== -1) scenes.splice(idx, 1);
+    delete shots[sid];
+    renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots();
+    buildShotSelect(); renderTicker();
+    persistSave();
+    toast(`場景 ${sid} 已刪除`, '🗑');
+    broadcastChange('刪除場景 ' + sid);
+  });
+}
+
+// ── Delete Crew Member ───────────────────
+function deleteCrewMember(index) {
+  const c = crew[index];
+  if (!c) return;
+  confirmDelete(`確定要從劇組移除「${c.name}（${c.role}）」？`, async () => {
+    crew.splice(index, 1);
+    await syncAllCrewToDB();
+    renderCrew();
+    persistSave();
+    toast(`${c.name} 已移除`, '🗑');
+    broadcastChange('移除成員 ' + c.name);
+  });
+}
+
+// ── Delete Shot ──────────────────────────
+function deleteShot(sid, index) {
+  const sh = (shots[sid] || [])[index];
+  if (!sh) return;
+  confirmDelete(`確定要刪除鏡頭「${sh.id} — ${sh.type}」？`, async () => {
+    if (supabase) {
+      await supabase.from('shots').delete().eq('project_id', getProjectId()).eq('shot_id', sh.id);
+    }
+    shots[sid].splice(index, 1);
+    renderShots();
+    persistSave();
+    toast(`鏡頭 ${sh.id} 已刪除`, '🗑');
+    broadcastChange('刪除鏡頭 ' + sh.id);
+  });
+}
+
+// ── Delete Project ───────────────────────
+function deleteProject(id) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  if (projects.length <= 1) { toast('至少保留一個專案', '⚠'); return; }
+  confirmDelete(`確定要刪除專案《${p.name}》？\n所有場景、公告、成員等資料都會消失。`, async () => {
+    if (supabase) {
+      await supabase.from('scenes').delete().eq('project_id', id);
+      await supabase.from('shots').delete().eq('project_id', id);
+      await supabase.from('announcements').delete().eq('project_id', id);
+      await supabase.from('crew').delete().eq('project_id', id);
+    }
+    const idx = projects.findIndex(x => x.id === id);
+    if (idx !== -1) projects.splice(idx, 1);
+    if (currentProjectId === id) {
+      currentProjectId = projects[0]?.id || null;
+    }
+    persistSave();
+    renderHomeProjects();
+    toast(`專案《${p.name}》已刪除`, '🗑');
+  });
 }
 
 // ══════════════════════════════════════════
