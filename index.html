@@ -312,6 +312,10 @@
           <div class="page-subtitle">第 8 拍攝日 ／ 2025年3月15日 星期六</div>
         </div>
         <div class="page-actions">
+          <button class="btn btn-outline" onclick="openProfileEditModal()" style="display:flex;align-items:center;gap:6px">
+            <span id="dash-profile-avatar" style="width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,0.2);color:var(--gold);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1px solid rgba(201,168,76,0.4);flex-shrink:0">?</span>
+            <span id="dash-profile-name">設定個人檔案</span>
+          </button>
           <button class="btn btn-outline" onclick="openProjectModal()">✎ 編輯總覽</button>
           <button class="btn btn-outline" onclick="openImportModal()">📄 匯入檔案排程</button>
           <button class="btn btn-outline" onclick="openSceneModal()">＋ 新增場景</button>
@@ -738,9 +742,11 @@
           <div class="page-title" id="sdp-title">場景 <span>詳情</span></div>
           <div class="page-subtitle" id="sdp-subtitle">—</div>
         </div>
-        <div class="page-actions">
+        <div class="page-actions" id="sdp-page-actions">
           <button class="btn btn-green" onclick="markSceneDoneFromPage()">✓ 完成此場景</button>
-          <button class="btn btn-danger btn-sm" onclick="skipSceneFromPage()">暫緩</button>
+          <button class="btn btn-danger btn-sm" id="sdp-skip-btn" onclick="skipSceneFromPage()">暫緩</button>
+          <button class="btn btn-outline btn-sm" id="sdp-unskip-btn" onclick="unskipSceneFromPage()" style="display:none">↩ 取消暫緩</button>
+          <button class="btn btn-outline btn-sm" id="sdp-delete-btn" onclick="deleteSceneFromPage()" style="color:var(--red-light);border-color:rgba(231,76,60,0.3)">🗑 刪除場景</button>
         </div>
       </div>
 
@@ -1332,6 +1338,47 @@ INT./EXT. 地點 — 日/夜
 
 <div class="toast-container" id="toast-container"></div>
 
+<!-- ══ PROFILE EDIT MODAL ══ -->
+<div class="modal-overlay" id="modal-profile-edit">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head">
+      <span class="modal-title">👤 修改個人檔案</span>
+      <button class="modal-close" onclick="closeModal('modal-profile-edit')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">您的姓名</label>
+        <input class="form-input" id="pe-name" placeholder="如：陳大明" maxlength="20">
+      </div>
+      <div class="form-field">
+        <label class="form-label">職位 / 部門</label>
+        <div class="profile-role-grid" id="pe-role-grid" style="margin-bottom:8px">
+          <button class="profile-role-btn" onclick="selectPERole(this,'導演')">導演</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'副導演')">副導演</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'製片')">製片</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'攝影指導')">攝影指導</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'攝影師')">攝影師</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'燈光師')">燈光師</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'收音師')">收音師</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'美術指導')">美術指導</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'場記')">場記</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'演員')">演員</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'助理導演')">助理導演</button>
+          <button class="profile-role-btn" onclick="selectPERole(this,'其他')">其他</button>
+        </div>
+        <input class="form-input" id="pe-role" placeholder="或直接輸入職位…" maxlength="20">
+      </div>
+      <div style="margin-top:8px;padding:10px 12px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:8px;font-size:12px;color:var(--text-muted)">
+        ✦ 修改後會同步更新您在公告欄與編輯紀錄中的顯示名稱，並儲存至本機。
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-profile-edit')">取消</button>
+      <button class="btn btn-gold" onclick="saveProfileEdit()">儲存個人檔案</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ DELETE CONFIRMATION MODAL ══ -->
 <div class="modal-overlay" id="modal-confirm-delete" style="z-index:99999">
   <div class="modal" style="max-width:380px">
@@ -1473,6 +1520,42 @@ function applyProfile(profile) {
   if (spName) spName.value = profile.name;
   const spRole = document.getElementById('sp-myrole');
   if (spRole) spRole.value = profile.role;
+  // Update dashboard profile button
+  updateDashProfileBtn(profile);
+}
+
+function updateDashProfileBtn(profile) {
+  const avatar = document.getElementById('dash-profile-avatar');
+  const nameEl = document.getElementById('dash-profile-name');
+  if (avatar && profile.name) avatar.textContent = profile.name.slice(0,1);
+  if (nameEl) nameEl.textContent = profile.name ? `${profile.role ? profile.role + ' · ' : ''}${profile.name}` : '設定個人檔案';
+}
+
+function openProfileEditModal() {
+  document.getElementById('pe-name').value = currentUserProfile.name || '';
+  document.getElementById('pe-role').value = currentUserProfile.role || '';
+  // Pre-select matching role button
+  document.querySelectorAll('#pe-role-grid .profile-role-btn').forEach(b => {
+    b.classList.toggle('selected', b.textContent === currentUserProfile.role);
+  });
+  openModal('modal-profile-edit');
+}
+
+function selectPERole(btn, role) {
+  document.querySelectorAll('#pe-role-grid .profile-role-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('pe-role').value = role;
+}
+
+function saveProfileEdit() {
+  const name = document.getElementById('pe-name').value.trim();
+  const role = document.getElementById('pe-role').value.trim();
+  if (!name) { document.getElementById('pe-name').focus(); return; }
+  const profile = { name, role: role || '成員' };
+  applyProfile(profile);
+  saveProfileToStorage(profile);
+  closeModal('modal-profile-edit');
+  toast(`個人檔案已更新：${role ? role + ' ' : ''}${name}`, '👤');
 }
 
 function selectProfileRole(btn, role) {
@@ -1506,7 +1589,7 @@ function skipProfile() {
 function checkAndRestoreProfile() {
   const saved = loadProfileFromStorage();
   if (saved && saved.name && saved.name !== '匿名') {
-    applyProfile(saved);
+    applyProfile(saved); // applyProfile now also calls updateDashProfileBtn
     document.getElementById('profile-overlay').classList.add('hidden');
     toast(`歡迎回來，${saved.role ? saved.role + ' ' : ''}${saved.name} ✦`, '👤');
     return true;
@@ -1602,6 +1685,19 @@ function openDetail(sid) {
   // Notes
   document.getElementById('sdp-notes').value = s.notes || '';
 
+  // Update action buttons based on scene status
+  const skipBtn = document.getElementById('sdp-skip-btn');
+  const unskipBtn = document.getElementById('sdp-unskip-btn');
+  if (skipBtn && unskipBtn) {
+    if (s.status === 'skip') {
+      skipBtn.style.display = 'none';
+      unskipBtn.style.display = '';
+    } else {
+      skipBtn.style.display = '';
+      unskipBtn.style.display = 'none';
+    }
+  }
+
   // Switch to detail page
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-scene-detail').classList.add('active');
@@ -1653,7 +1749,24 @@ function markSceneDoneFromPage() {
 function skipSceneFromPage() {
   if (_currentSDP) {
     skipScene(_currentSDP);
-    backFromSceneDetail();
+    // Update button state in-place
+    document.getElementById('sdp-skip-btn').style.display = 'none';
+    document.getElementById('sdp-unskip-btn').style.display = '';
+  }
+}
+
+function unskipSceneFromPage() {
+  if (_currentSDP) {
+    unskipScene(_currentSDP);
+    document.getElementById('sdp-skip-btn').style.display = '';
+    document.getElementById('sdp-unskip-btn').style.display = 'none';
+  }
+}
+
+function deleteSceneFromPage() {
+  if (_currentSDP) {
+    const sid = _currentSDP;
+    deleteScene(sid); // uses confirmDelete, will go back after
   }
 }
 
@@ -1682,6 +1795,18 @@ function skipScene(sid){
     persistSave();
     syncSceneToDB(s);
     broadcastChange('暫緩場景 ' + sid);
+  }
+}
+
+function unskipScene(sid){
+  const s=scenes.find(x=>x.id===sid);
+  if(s){
+    s.status='pending';
+    renderStats();renderDashScenes();renderFullScenes();renderScenesStatCards();renderSceneDots();
+    toast(`場景 ${sid} 已恢復待拍`,'↩');
+    persistSave();
+    syncSceneToDB(s);
+    broadcastChange('取消暫緩場景 ' + sid);
   }
 }
 
@@ -1792,6 +1917,9 @@ function sceneRow(s, showDetail=false){
   const dnTag=s.daynight==='DAY'?'<span class="inline-tag tag-day">日</span>':s.daynight==='NIGHT'?'<span class="inline-tag tag-night" style="font-size:10px;padding:1px 7px;background:rgba(92,59,148,.15);color:#a78bfa">夜</span>':s.daynight==='DUSK'?'<span class="inline-tag tag-day" style="background:rgba(211,84,0,.1);color:var(--amber-light)">黃昏</span>':'<span class="inline-tag tag-day" style="background:rgba(41,128,185,.1);color:var(--blue-light)">黎明</span>';
   const doneShots=(shots[s.id]||[]).filter(sh=>sh.done).length;
   const totalShots=(shots[s.id]||[]).length;
+  const actionBtns = s.status === 'skip'
+    ? `<button onclick="event.stopPropagation();unskipScene('${s.id}')" style="background:transparent;border:1px solid rgba(201,168,76,0.4);border-radius:5px;color:var(--gold);font-size:11px;padding:3px 8px;cursor:pointer;white-space:nowrap;margin-right:4px">↩ 取消暫緩</button>`
+    : '';
   return `<tr class="${s.status==='current'?'current-row':''}">
     <td class="scene-num" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.id}</td>
     <td class="scene-name-cell" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.name}</td>
@@ -1800,7 +1928,7 @@ function sceneRow(s, showDetail=false){
     <td style="font-size:12px;color:var(--text-muted)" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.cast.slice(0,2).join('、')+(s.cast.length>2?'…':'')}</td>
     <td onclick="openDetail('${s.id}')" style="cursor:pointer"><span style="font-family:var(--font-mono);font-size:11px;color:${doneShots===totalShots&&totalShots>0?'var(--green-light)':'var(--text-muted)'}">${doneShots}/${totalShots}</span></td>
     <td onclick="openDetail('${s.id}')" style="cursor:pointer">${statusMap[s.status]||statusMap.pending}</td>
-    <td><button onclick="event.stopPropagation();deleteScene('${s.id}')" style="background:transparent;border:1px solid rgba(231,76,60,0.3);border-radius:5px;color:rgba(231,76,60,0.6);font-size:11px;padding:3px 8px;cursor:pointer;transition:all .2s;white-space:nowrap" onmouseover="this.style.borderColor='rgba(231,76,60,0.8)';this.style.color='var(--red-light)'" onmouseout="this.style.borderColor='rgba(231,76,60,0.3)';this.style.color='rgba(231,76,60,0.6)'">🗑 刪除</button></td>
+    <td style="white-space:nowrap">${actionBtns}<button onclick="event.stopPropagation();deleteScene('${s.id}')" style="background:transparent;border:1px solid rgba(231,76,60,0.3);border-radius:5px;color:rgba(231,76,60,0.6);font-size:11px;padding:3px 8px;cursor:pointer;transition:all .2s;white-space:nowrap" onmouseover="this.style.borderColor='rgba(231,76,60,0.8)';this.style.color='var(--red-light)'" onmouseout="this.style.borderColor='rgba(231,76,60,0.3)';this.style.color='rgba(231,76,60,0.6)'">🗑 刪除</button></td>
   </tr>`;
 }
 
@@ -2891,6 +3019,11 @@ function enterProject(id){
   if(firstNav) firstNav.classList.add('active');
   persistSave();
   toast(`進入《${p.name}》`, '◈');
+  // Re-subscribe realtime with correct project_id and reload fresh data from DB
+  if (supabase) {
+    subscribeRealtime();
+    loadAllFromDB().catch(e => console.warn('loadAllFromDB error', e));
+  }
 }
 
 function renderProjectSheet(){ renderHomeProjects(); }
@@ -3158,6 +3291,12 @@ function deleteScene(sid) {
     const idx = scenes.findIndex(x => x.id === sid);
     if (idx !== -1) scenes.splice(idx, 1);
     delete shots[sid];
+    // If we're currently viewing this scene's detail, go back first
+    if (_currentSDP === sid) {
+      _currentSDP = null;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-scenes')?.classList.add('active');
+    }
     renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots();
     buildShotSelect(); renderTicker();
     persistSave();
