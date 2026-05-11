@@ -281,31 +281,11 @@
           <button class="home-profile-summary" id="home-profile-summary" onclick="openProfileEditor()" type="button">
             <span>目前身份</span><strong>尚未設定</strong><small>點擊修改個人檔案</small>
           </button>
-
-          <div class="profile-name-compact">
-            <label>個人名稱</label>
-            <div class="profile-name-controls">
-              <input type="text" id="quick-profile-name" placeholder="輸入個人名稱">
-              <button class="btn btn-gold btn-sm" onclick="saveQuickProfileName()">儲存</button>
-            </div>
           </div>
-          </div>
-          <div class="home-profile-editor" aria-label="主頁個人名稱編輯">
-            <label for="home-profile-name-input">個人名稱</label>
-            <div class="home-profile-editor-row">
-              <input id="home-profile-name-input" class="home-profile-name-input" placeholder="輸入你的名字" maxlength="20" onkeydown="if(event.key==='Enter') saveHomeProfileName()">
-              <button class="btn btn-gold btn-sm" onclick="saveHomeProfileName()">儲存名稱</button>
-            </div>
-            <small>這個名稱會用在編輯紀錄、公告與同步標註。</small>
-          </div>
-          <div class="home-sync-help">
-            <strong>手機看不到電腦資料？</strong> 手機必須輸入同一個「專案專案碼」，而且正式同步要連上 Supabase Realtime；如果只用 Prototype / localStorage，資料只會存在目前裝置，手機不會自動看到電腦資料。
-          </div>
-
-        </div><div class="home-actions">
+<div class="home-actions">
           <button class="btn btn-outline" onclick="openProfileEditor()">👤 修改個人檔案</button>
-          <button class="btn btn-gold join-project-big" onclick="joinSharedProject()">＋ 加入專案（輸入專案碼）</button>
           <button class="btn btn-gold" onclick="openNewProjectModal()">＋ 新增專案</button>
+          <button class="btn btn-gold join-project-big" onclick="joinSharedProject()">＋ 加入專案（輸入專案碼）</button>
         </div>
       </div>
 
