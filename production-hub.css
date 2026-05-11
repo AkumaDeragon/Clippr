@@ -813,7 +813,7 @@ body { font-size: 13px; }
   .main-body {
     flex: 1;
     overflow: hidden;
-    min-height: 0;
+    padding-bottom: 64px; /* tab bar 高度 */
   }
 
   /* ── Content 全寬 ── */
@@ -821,13 +821,11 @@ body { font-size: 13px; }
     width: 100%;
     height: 100%;
     overflow-y: auto;
-    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 80px; /* tab bar + extra breathing room */
   }
 
   /* ── Page padding ── */
-  .page { padding: 16px 14px 32px; }
+  .page { padding: 16px 14px 24px; }
 
   /* ── Page header ── */
   .page-header {
@@ -1426,3 +1424,56 @@ body.project-mode .main-body { display: flex; }
 /* ── HOME / PROJECT MODE visibility ── */
 .home-mode .project-only { display: none !important; }
 .project-mode .home-only { display: none !important; }
+
+
+/* ══════════════════════════════════════════
+   PATCH 2026-05 — mobile scroll/profile/sync/actions
+   ══════════════════════════════════════════ */
+html, body { height: 100dvh; }
+.app { height: 100dvh; min-height: 100dvh; }
+.content {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.page { padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scene-actions-cell { display:flex; gap:6px; align-items:center; flex-wrap:wrap; min-width:150px; }
+.home-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+.home-profile-summary {
+  margin-top: 14px; padding: 10px 12px; min-width: 220px;
+  display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  background: rgba(255,255,255,.04); color: var(--text-secondary);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: var(--font-body); cursor: pointer; transition: all .15s;
+}
+.home-profile-summary:hover { border-color: var(--border-gold); background: var(--gold-faint); }
+.home-profile-summary span { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--text-muted); }
+.home-profile-summary strong { color: var(--text-primary); font-size: 14px; }
+.home-profile-summary small { color: var(--text-muted); font-size: 11px; }
+.home-sync-code {
+  width: 100%; text-align: left; margin-top: 8px; padding: 6px 8px;
+  border: 1px dashed var(--border-gold); border-radius: var(--radius);
+  background: rgba(201,168,76,.06); color: var(--gold-light);
+  font-family: var(--font-mono); font-size: 10px; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.home-sync-code:hover { background: rgba(201,168,76,.12); }
+
+@media (max-width: 768px) {
+  html, body { height: 100dvh; min-height: 100dvh; overflow: hidden; }
+  .app { height: 100dvh; min-height: 100dvh; }
+  .main-body { height: calc(100dvh - 52px); padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+  .content { height: 100%; overflow-y: auto; padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }
+  .page { padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px)); }
+  .scene-detail-page { padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px)); }
+  .table-wrap { max-width: 100%; overflow-x: auto; }
+  .scene-table { min-width: 760px; }
+  .scene-actions-cell { min-width: 190px; }
+  .home-actions { width: 100%; justify-content: flex-start; }
+  .home-actions .btn { flex: 1 1 145px; justify-content: center; }
+  .home-profile-summary { width: 100%; }
+  .profile-card { max-height: calc(100dvh - 28px); overflow-y: auto; }
+  .mobile-tabbar { height: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  .toast-container { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
+}
