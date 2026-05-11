@@ -1555,3 +1555,88 @@ html, body { height: 100dvh; }
   .sdp-edit-actions{justify-content:flex-start; width:100%;}
   .sdp-edit-actions .btn{flex:1 1 auto; justify-content:center;}
 }
+
+
+/* ── V5 HOME FIX: identity + name side-by-side, shorter hero, vertical project list, clear project-code join ── */
+.home-hero-panel{
+  padding:24px 28px!important;
+  min-height:auto!important;
+}
+.identity-name-row{
+  display:flex;
+  align-items:stretch;
+  gap:12px;
+  margin-top:12px;
+  max-width:620px;
+}
+.identity-name-row .home-profile-summary{
+  margin:0!important;
+  width:210px!important;
+  min-width:210px!important;
+  padding:12px 14px!important;
+  min-height:76px!important;
+}
+.profile-name-compact{
+  flex:1;
+  min-width:280px;
+  border:1px solid rgba(201,168,76,.28);
+  background:rgba(201,168,76,.07);
+  border-radius:10px;
+  padding:10px 12px;
+}
+.profile-name-compact label{
+  display:block;
+  font-size:10px;
+  letter-spacing:1.5px;
+  color:var(--gold);
+  font-family:var(--font-mono);
+  margin-bottom:7px;
+}
+.profile-name-controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.profile-name-controls input{
+  flex:1;
+  height:34px;
+  background:var(--bg-raised);
+  border:1px solid var(--border);
+  color:var(--text-primary);
+  border-radius:7px;
+  padding:0 10px;
+  outline:none;
+}
+.profile-name-controls input:focus{border-color:var(--gold);}
+.join-project-big{
+  font-size:13px!important;
+  padding:10px 18px!important;
+  border-radius:9px!important;
+  box-shadow:0 8px 24px rgba(201,168,76,.18);
+}
+.home-layout{
+  grid-template-columns:minmax(0,1fr) 360px!important;
+  align-items:start;
+}
+.home-project-grid.home-project-list{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:12px!important;
+}
+.home-project-grid.home-project-list .project-card,
+.home-project-grid.home-project-list .home-project-card{
+  width:100%!important;
+  min-height:unset!important;
+}
+.home-project-grid.home-project-list .new-project-card,
+.home-project-grid.home-project-list .project-add-card{
+  min-height:118px!important;
+}
+@media(max-width:900px){
+  .identity-name-row{flex-direction:column;max-width:100%;}
+  .identity-name-row .home-profile-summary{width:100%!important;min-width:0!important;}
+  .profile-name-compact{min-width:0;}
+  .home-actions{align-items:stretch!important;}
+  .join-project-big{width:100%;justify-content:center;}
+  .home-layout{grid-template-columns:1fr!important;}
+}

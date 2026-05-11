@@ -181,8 +181,8 @@
   </div>
   <div class="topbar-center">
     <div class="project-badge">
-      <span class="proj-type" id="proj-type-badge">FILM</span>
-      <span class="proj-name" id="proj-name-badge">《彼岸之城》</span>
+      <span class="Ptype" id="Ptype-badge">FILM</span>
+      <span class="Pname" id="Pname-badge">《彼岸之城》</span>
     </div>
     <div class="sync-pill" id="sync-pill" title="多人同步狀態">
       <span class="sync-dot"></span>
@@ -259,10 +259,10 @@
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-project-info">
-      <div class="proj-info-row"><span class="proj-info-key">製作</span><span class="proj-info-val" id="info-prod">星影製作</span></div>
-      <div class="proj-info-row"><span class="proj-info-key">導演</span><span class="proj-info-val" id="info-dir">陳大明</span></div>
-      <div class="proj-info-row"><span class="proj-info-key">天數</span><span class="proj-info-val" id="info-day">D-08/45</span></div>
-      <div class="proj-info-row"><span class="proj-info-key">規格</span><span class="proj-info-val" id="info-spec">4K / 25fps</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">製作</span><span class="Pinfo-val" id="info-prod">星影製作</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">導演</span><span class="Pinfo-val" id="info-dir">陳大明</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">天數</span><span class="Pinfo-val" id="info-day">D-08/45</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">規格</span><span class="Pinfo-val" id="info-spec">4K / 25fps</span></div>
     </div>
   </nav>
 
@@ -276,9 +276,20 @@
         <div>
           <div class="home-kicker">Production Hub</div>
           <div class="home-title">選擇要進入的 <span>專案</span></div>
+          <div class="identity-name-row">
+
           <button class="home-profile-summary" id="home-profile-summary" onclick="openProfileEditor()" type="button">
             <span>目前身份</span><strong>尚未設定</strong><small>點擊修改個人檔案</small>
           </button>
+
+          <div class="profile-name-compact">
+            <label>個人名稱</label>
+            <div class="profile-name-controls">
+              <input type="text" id="quick-profile-name" placeholder="輸入個人名稱">
+              <button class="btn btn-gold btn-sm" onclick="saveQuickProfileName()">儲存</button>
+            </div>
+          </div>
+          </div>
           <div class="home-profile-editor" aria-label="主頁個人名稱編輯">
             <label for="home-profile-name-input">個人名稱</label>
             <div class="home-profile-editor-row">
@@ -288,13 +299,12 @@
             <small>這個名稱會用在編輯紀錄、公告與同步標註。</small>
           </div>
           <div class="home-sync-help">
-            <strong>手機看不到電腦資料？</strong> 手機必須輸入同一個「專案同步碼」，而且正式同步要連上 Supabase Realtime；如果只用 Prototype / localStorage，資料只會存在目前裝置，手機不會自動看到電腦資料。
+            <strong>手機看不到電腦資料？</strong> 手機必須輸入同一個「專案專案碼」，而且正式同步要連上 Supabase Realtime；如果只用 Prototype / localStorage，資料只會存在目前裝置，手機不會自動看到電腦資料。
           </div>
 
-        </div>
-        <div class="home-actions">
+        </div><div class="home-actions">
           <button class="btn btn-outline" onclick="openProfileEditor()">👤 修改個人檔案</button>
-          <button class="btn btn-outline" onclick="joinSharedProject()">📱 手機同步</button>
+          <button class="btn btn-gold join-project-big" onclick="joinSharedProject()">＋ 加入專案（輸入專案碼）</button>
           <button class="btn btn-gold" onclick="openNewProjectModal()">＋ 新增專案</button>
         </div>
       </div>
@@ -307,7 +317,7 @@
               <small>點擊卡片即可進入專案工作區</small>
             </div>
           </div>
-          <div class="home-project-grid" id="home-project-grid"></div>
+          <div class="home-project-grid home-project-list" id="home-project-grid"></div>
         </div>
 
         <aside class="home-side-card">
@@ -2370,7 +2380,7 @@ function saveProject(){
     spec:document.getElementById('p-spec').value
   };
   if(mode==='create'){
-    const id='proj-'+Date.now();
+    const id='P' + Math.random().toString(36).slice(2, 6).toUpperCase();
     projects.forEach(p=>p.active=false);
     projects.push({...data,id,active:true,scenes:[],shots:{},announcements:[],crew:[],equipment:clone(equipment),script:''});
     currentProjectId=id;
@@ -2393,10 +2403,10 @@ function saveProject(){
 }
 function applyProjectMeta(p){
   if(!p) return;
-  document.getElementById('proj-name-badge').textContent=`《${p.name}》`;
+  document.getElementById('Pname-badge').textContent=`《${p.name}》`;
   const workspaceName=document.getElementById('workspace-project-name');
   if(workspaceName) workspaceName.textContent=p.name;
-  document.getElementById('proj-type-badge').textContent=p.type||'FILM';
+  document.getElementById('Ptype-badge').textContent=p.type||'FILM';
   document.getElementById('info-prod').textContent=p.prod||'—';
   document.getElementById('info-dir').textContent=p.dir||'—';
   document.getElementById('info-day').textContent=`D-08/${p.days||45}`;
@@ -2974,7 +2984,7 @@ function renderHomeProjects(){
       <div class="home-project-meta">
         <span>${st.total} 場景</span><span>${st.pct}% 完成</span><span>${st.anns} 公告</span>
       </div>
-      <button class="home-sync-code" onclick="event.stopPropagation();copyProjectCode('${p.id}')">同步碼：${p.id}</button>
+      <button class="home-sync-code" onclick="event.stopPropagation();copyProjectCode('${p.id}')">專案碼：${p.id}</button>
       <div class="home-card-progress"><i style="width:${st.pct}%"></i></div>
       <button onclick="enterProject('${p.id}')" class="btn btn-gold btn-sm" style="margin-top:4px;width:100%">進入專案 →</button>
     </div>`;
@@ -3005,11 +3015,11 @@ ${decodeURIComponent(msg)}
 
 function copyProjectCode(id){
   navigator.clipboard?.writeText(id);
-  toast('專案同步碼已複製，手機輸入同一組即可同步', '📋');
+  toast('專案專案碼已複製，手機輸入同一組即可同步', '📋');
 }
 
 async function joinSharedProject(){
-  const code = (prompt('請輸入電腦端同一個「專案同步碼 / 目前專案 ID」：\n\n注意：手機和電腦要看到同一份資料，必須使用同同步碼，而且正式同步需連上 Supabase Realtime。若只是 Prototype/localStorage，資料只存在單一裝置。') || '').trim();
+  const code = (prompt('請輸入專案碼（像加入房間一樣）：') || '').trim();
   if(!code) return;
   saveCurrentProjectState();
   let p = projects.find(x=>x.id===code);
