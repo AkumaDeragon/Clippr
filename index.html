@@ -6,8 +6,129 @@
 <title>CLAPPR — 專業拍攝管理平台</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="production-hub.css">
-</head>
+<style>
+/* ── PROFILE ONBOARDING ── */
+.profile-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);}
+.profile-overlay.hidden{display:none;}
+.profile-card{background:var(--bg-elevated,#1a1a1a);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px 32px;width:420px;max-width:90vw;box-shadow:0 40px 80px rgba(0,0,0,0.7);}
+.profile-logo{display:flex;justify-content:center;margin-bottom:20px;}
+.profile-title{font-family:var(--font-serif,'DM Serif Display'),serif;font-size:26px;color:var(--text-primary,#fff);text-align:center;margin-bottom:6px;}
+.profile-sub{font-size:13px;color:var(--text-muted,#888);text-align:center;margin-bottom:28px;}
+.profile-field{margin-bottom:18px;}
+.profile-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;display:block;margin-bottom:8px;}
+.profile-input{width:100%;background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.1));border-radius:8px;color:var(--text-primary,#fff);font-size:14px;padding:10px 14px;box-sizing:border-box;outline:none;transition:border-color .2s;}
+.profile-input:focus{border-color:var(--gold,#C9A84C);}
+.profile-role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.profile-role-btn{background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.1));border-radius:7px;color:var(--text-secondary,#ccc);font-size:12px;padding:7px 4px;cursor:pointer;transition:all .2s;font-family:inherit;}
+.profile-role-btn:hover{border-color:var(--gold,#C9A84C);color:var(--gold,#C9A84C);}
+.profile-role-btn.selected{background:rgba(201,168,76,0.15);border-color:var(--gold,#C9A84C);color:var(--gold,#C9A84C);}
+.profile-skip{text-align:center;font-size:12px;color:var(--text-muted,#888);margin-top:14px;cursor:pointer;text-decoration:underline;opacity:.7;}
+.profile-skip:hover{opacity:1;}
+
+/* ── BROADCAST POPUP ── */
+.broadcast-overlay{position:fixed;inset:0;z-index:8888;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .3s;}
+.broadcast-overlay.active{opacity:1;pointer-events:all;}
+.broadcast-card{background:var(--bg-elevated,#1a1a1a);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:36px 40px;width:520px;max-width:90vw;box-shadow:0 60px 100px rgba(0,0,0,0.8);transform:scale(.95) translateY(20px);transition:transform .3s ease,box-shadow .3s;text-align:center;}
+.broadcast-overlay.active .broadcast-card{transform:scale(1) translateY(0);}
+.broadcast-type-tag{display:inline-block;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:var(--font-mono,'DM Mono'),monospace;color:var(--gold,#C9A84C);border:1px solid rgba(201,168,76,0.3);border-radius:20px;padding:4px 14px;margin-bottom:20px;}
+.broadcast-type-tag.urgent{color:var(--red-light,#e74c3c);border-color:rgba(231,76,60,0.3);}
+.broadcast-type-tag.director{color:var(--amber-light,#d35400);border-color:rgba(211,84,0,0.3);}
+.broadcast-type-tag.notice{color:var(--blue-light,#2980b9);border-color:rgba(41,128,185,0.3);}
+.broadcast-from-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;justify-content:center;}
+.broadcast-avatar{width:44px;height:44px;border-radius:50%;background:rgba(201,168,76,0.2);color:var(--gold,#C9A84C);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;border:2px solid rgba(201,168,76,0.4);flex-shrink:0;}
+.broadcast-from{font-size:16px;font-weight:600;color:var(--text-primary,#fff);text-align:left;}
+.broadcast-role{font-size:12px;color:var(--text-muted,#888);text-align:left;}
+.broadcast-msg{font-size:18px;color:var(--text-primary,#fff);line-height:1.6;margin-bottom:28px;padding:20px;background:var(--bg-raised,#111);border-radius:12px;border:1px solid var(--border,rgba(255,255,255,0.08));}
+.broadcast-dismiss{background:var(--gold,#C9A84C);color:#000;border:none;border-radius:10px;padding:13px 32px;font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .2s;font-family:inherit;}
+.broadcast-dismiss:hover{background:#e0b84e;transform:translateY(-1px);}
+.broadcast-hint{font-size:11px;color:var(--text-muted,#888);margin-top:10px;}
+
+/* ── SCENE FULL PAGE DETAIL ── */
+.scene-detail-page .page-header{margin-bottom:20px;}
+.sdp-layout{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;}
+@media(max-width:900px){.sdp-layout{grid-template-columns:1fr;}}
+.sdp-main,.sdp-sidebar{display:flex;flex-direction:column;gap:16px;}
+.sdp-section{background:var(--bg-elevated,#1a1a1a);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:var(--radius-lg,12px);padding:18px 20px;}
+.sdp-section-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;margin-bottom:14px;}
+.sdp-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.sdp-info-item{background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.06));border-radius:8px;padding:10px 12px;}
+.sdp-info-item .info-key{font-size:10px;color:var(--text-muted,#888);margin-bottom:4px;font-family:var(--font-mono,'DM Mono'),monospace;}
+.sdp-info-item .info-val{font-size:13px;color:var(--text-primary,#fff);}
+.sdp-shot-list{display:flex;flex-direction:column;gap:8px;}
+.sdp-shot-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.06));border-radius:8px;transition:border-color .2s;}
+.sdp-shot-item.done-shot{border-color:rgba(39,174,96,0.3);background:rgba(39,174,96,0.05);}
+.sdp-shot-num{font-family:var(--font-mono,'DM Mono'),monospace;font-size:12px;color:var(--gold,#C9A84C);min-width:48px;}
+.sdp-shot-body{flex:1;}
+.sdp-shot-type{font-size:13px;color:var(--text-primary,#fff);font-weight:500;}
+.sdp-shot-meta{font-size:11px;color:var(--text-muted,#888);margin-top:2px;}
+.sdp-shot-btn{background:transparent;border:1px solid var(--border,rgba(255,255,255,0.1));border-radius:6px;color:var(--text-muted,#888);font-size:11px;padding:5px 10px;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:inherit;}
+.sdp-shot-btn.done-btn{border-color:rgba(39,174,96,0.5);color:var(--green-light,#2ecc71);}
+.sdp-shot-btn:hover{border-color:var(--gold,#C9A84C);color:var(--gold,#C9A84C);}
+.sdp-progress-track{background:var(--bg-raised,#111);border-radius:4px;height:8px;overflow:hidden;margin-bottom:8px;border:1px solid var(--border,rgba(255,255,255,0.06));}
+.sdp-progress-fill{height:100%;background:var(--gold,#C9A84C);transition:width .4s ease;border-radius:4px;}
+.sdp-progress-label{font-size:12px;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;}
+
+/* ── SLIDER: Shooting order dots ── */
+.scene-dot-btn.shot-order-badge{font-size:9px;font-family:var(--font-mono,'DM Mono'),monospace;color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;width:22px!important;height:22px!important;}
+
+/* ── ACTIVITY ITEM enhanced with role ── */
+.activity-role-tag{font-size:10px;color:var(--text-muted,#888);background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:4px;padding:1px 5px;margin-left:4px;font-family:var(--font-mono,'DM Mono'),monospace;}
+</style>
 <body>
+<!-- ═══ PROFILE ONBOARDING OVERLAY ═══ -->
+<div class="profile-overlay" id="profile-overlay">
+  <div class="profile-card">
+    <div class="profile-logo">
+      <div class="brand-icon" style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--gold),#a07020);display:flex;align-items:center;justify-content:center;font-size:22px;color:#000;font-weight:700;font-family:var(--font-serif);flex-shrink:0">C</div>
+    </div>
+    <div class="profile-title">歡迎來到 Clappr</div>
+    <div class="profile-sub">請先設定您的身份，團隊成員才知道誰在編輯</div>
+    <div class="profile-form">
+      <div class="profile-field">
+        <label class="profile-label">您的姓名</label>
+        <input class="profile-input" id="profile-name-input" placeholder="如：陳大明" maxlength="20">
+      </div>
+      <div class="profile-field">
+        <label class="profile-label">職位 / 部門</label>
+        <div class="profile-role-grid" id="profile-role-grid">
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'導演')">導演</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'副導演')">副導演</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'製片')">製片</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'攝影指導')">攝影指導</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'攝影師')">攝影師</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'燈光師')">燈光師</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'收音師')">收音師</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'美術指導')">美術指導</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'場記')">場記</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'演員')">演員</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'助理導演')">助理導演</button>
+          <button class="profile-role-btn" onclick="selectProfileRole(this,'其他')">其他</button>
+        </div>
+        <input class="profile-input" id="profile-role-input" placeholder="或直接輸入職位…" maxlength="20" style="margin-top:8px">
+      </div>
+    </div>
+    <button class="btn btn-gold" style="width:100%;margin-top:4px;padding:12px" onclick="submitProfile()">進入系統 →</button>
+    <div class="profile-skip" onclick="skipProfile()">先跳過（以匿名身份進入）</div>
+  </div>
+</div>
+
+<!-- ═══ LIVE BROADCAST POPUP ═══ -->
+<div class="broadcast-overlay" id="broadcast-overlay">
+  <div class="broadcast-card" id="broadcast-card">
+    <div class="broadcast-type-tag" id="broadcast-type-tag">📢 即時通告</div>
+    <div class="broadcast-from-row">
+      <div class="broadcast-avatar" id="broadcast-avatar">導</div>
+      <div>
+        <div class="broadcast-from" id="broadcast-from">導演</div>
+        <div class="broadcast-role" id="broadcast-role">剛剛</div>
+      </div>
+    </div>
+    <div class="broadcast-msg" id="broadcast-msg">公告內容</div>
+    <button class="broadcast-dismiss" onclick="dismissBroadcast()">知道了，繼續工作 ✓</button>
+    <div class="broadcast-hint">點按上方按鈕關閉通告</div>
+  </div>
+</div>
+
 <div class="app">
 
 <!-- TOP BAR -->
@@ -32,10 +153,10 @@
   </div>
   <div class="topbar-right">
     <div class="clock" id="clock">00:00</div>
-    <button class="btn btn-outline btn-sm edit-cta" onclick="openProjectModal()">✎ 編輯此專案</button>
-    <button class="btn btn-outline btn-sm" onclick="openSyncModal()">👥 共編設定</button>
+    <button class="btn btn-outline btn-sm edit-cta project-only" onclick="openProjectModal()">✎ 編輯此專案</button>
+    <button class="btn btn-outline btn-sm project-only" onclick="openSyncModal()">👥 共編設定</button>
     <button class="btn btn-gold btn-sm" onclick="openNewProjectModal()">＋ 新增專案</button>
-    <button class="btn btn-green btn-sm" onclick="markCurrentDone()">✓ 完成場景</button>
+    <button class="btn btn-green btn-sm project-only" onclick="markCurrentDone()">✓ 完成場景</button>
   </div>
 </header>
 
@@ -45,15 +166,16 @@
   <!-- SIDEBAR -->
   <nav class="sidebar">
     <div class="sidebar-section workspace-panel">
-      <div class="sidebar-label">軟體工作區</div>
+      <button class="workspace-back" onclick="showHome()">← 回主頁</button>
+      <div class="sidebar-label">目前專案</div>
       <button class="workspace-btn" onclick="openProjectModal()">
         <span>
           <strong id="workspace-project-name">彼岸之城</strong>
-          <small>目前專案 · 可點擊編輯</small>
+          <small>專案內編輯區 · 點擊編輯</small>
         </span>
         <b>✎</b>
       </button>
-      <button class="workspace-add" onclick="openNewProjectModal()">＋ 新增專案</button>
+
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">
@@ -104,8 +226,43 @@
   <!-- CONTENT -->
   <main class="content">
 
+
+    <!-- ═══ HOME / PROJECT PICKER ═══ -->
+    <section id="page-home" class="page home-page active">
+      <div class="home-hero-panel">
+        <div>
+          <div class="home-kicker">Production Hub</div>
+          <div class="home-title">選擇要進入的 <span>專案</span></div>
+
+        </div>
+        <button class="btn btn-gold" onclick="openNewProjectModal()">＋ 新增專案</button>
+      </div>
+
+      <div class="home-layout">
+        <div class="home-main-card">
+          <div class="home-section-head">
+            <div>
+              <strong>專案列表</strong>
+              <small>點擊卡片即可進入專案工作區</small>
+            </div>
+          </div>
+          <div class="home-project-grid" id="home-project-grid"></div>
+        </div>
+
+        <aside class="home-side-card">
+          <div class="home-section-head compact">
+            <div>
+              <strong>公告欄</strong>
+              <small>顯示公告來自哪個專案</small>
+            </div>
+          </div>
+          <div id="home-ann-list" class="home-ann-list"></div>
+        </aside>
+      </div>
+    </section>
+
     <!-- ═══ DASHBOARD ═══ -->
-    <section id="page-dashboard" class="page active">
+    <section id="page-dashboard" class="page">
       <div class="page-header">
         <div>
           <div class="page-title">拍攝 <span>總覽</span></div>
@@ -226,7 +383,9 @@
           <strong>最近編輯</strong>
           <span>多人共編時會顯示誰改了什麼，方便劇組同步。</span>
         </div>
-        <div class="activity-list" id="activity-list"></div>
+        <div class="activity-list" id="activity-list">
+          <div class="activity-empty">尚無編輯紀錄</div>
+        </div>
       </div>
 
       <div class="table-wrap">
@@ -246,28 +405,71 @@
           <div class="page-subtitle">管理所有場景狀態與詳細資料</div>
         </div>
         <div class="page-actions">
-          <select id="scene-filter" class="form-select" style="width:130px" onchange="renderScenes()">
-            <option value="all">全部狀態</option>
-            <option value="current">拍攝中</option>
-            <option value="done">已完成</option>
-            <option value="pending">待拍</option>
-            <option value="skip">暫緩</option>
-          </select>
           <button class="btn btn-outline" onclick="openSceneModal()">＋ 新增場景</button>
           <button class="btn btn-gold btn-sm" onclick="markCurrentDone()">✓ 完成當前場景</button>
         </div>
       </div>
-      <div class="progress-wrap">
-        <div class="progress-meta">
-          <span class="progress-title">拍攝進度</span>
-          <span class="progress-pct" id="prog-pct-scenes">0%</span>
+
+      <!-- 四格統計卡 -->
+      <div class="scene-stat-grid" id="scene-stat-grid">
+        <div class="scene-stat-card" data-filter="all" onclick="filterScenesBy('all')">
+          <div class="scene-stat-dot" style="background:var(--text-muted)"></div>
+          <div class="scene-stat-label">全部場景</div>
+          <div class="scene-stat-num" id="sst-total">0</div>
+          <div class="scene-stat-sub">點擊查看全部</div>
         </div>
-        <div class="progress-track"><div class="progress-fill" id="prog-fill-scenes" style="width:0%"></div></div>
+        <div class="scene-stat-card" data-filter="done" onclick="filterScenesBy('done')">
+          <div class="scene-stat-dot" style="background:var(--green-light)"></div>
+          <div class="scene-stat-label">已完成</div>
+          <div class="scene-stat-num green" id="sst-done">0</div>
+          <div class="scene-stat-sub">點擊查看</div>
+        </div>
+        <div class="scene-stat-card" data-filter="current" onclick="filterScenesBy('current')">
+          <div class="scene-stat-dot" style="background:var(--gold)"></div>
+          <div class="scene-stat-label">拍攝中</div>
+          <div class="scene-stat-num gold" id="sst-curr">0</div>
+          <div class="scene-stat-sub">點擊查看</div>
+        </div>
+        <div class="scene-stat-card" data-filter="pending" onclick="filterScenesBy('pending')">
+          <div class="scene-stat-dot" style="background:var(--border)"></div>
+          <div class="scene-stat-label">待拍場景</div>
+          <div class="scene-stat-num" id="sst-pend">0</div>
+          <div class="scene-stat-sub">點擊查看</div>
+        </div>
       </div>
+
+      <!-- 進度滑桿 -->
+      <div class="scene-slider-card">
+        <div class="scene-slider-header">
+          <span class="scene-slider-title">場景拍攝進度</span>
+          <span class="scene-slider-pct" id="prog-pct-scenes">0%</span>
+        </div>
+        <div class="scene-slider-track-wrap">
+          <div class="scene-slider-bg">
+            <div class="scene-slider-fill" id="prog-fill-scenes" style="width:0%"></div>
+          </div>
+          <div class="scene-dots-layer" id="scene-dots-layer"></div>
+        </div>
+        <div class="scene-slider-labels" id="scene-slider-labels"></div>
+        <div class="scene-slider-legend">
+          <span><i class="legend-dot" style="background:var(--green-light)"></i>已完成 <small style="color:var(--text-muted);font-size:10px">（數字=拍攝順序）</small></span>
+          <span><i class="legend-dot" style="background:var(--gold)"></i>拍攝中</span>
+          <span><i class="legend-dot" style="background:var(--border)"></i>待拍</span>
+          <span><i class="legend-dot" style="background:var(--amber-light)"></i>暫緩</span>
+        </div>
+      </div>
+
+      <!-- 篩選 Tab + 場景清單 -->
       <div class="table-wrap">
         <div class="table-header">
           <span class="table-title">所有場景</span>
-          <span class="click-hint">點擊任何場景 → 查看鏡頭、完成狀態、備註與編輯</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="scene-filter-tab active-tab" data-filter="all" onclick="filterScenesBy('all')">全部</button>
+            <button class="scene-filter-tab" data-filter="done" onclick="filterScenesBy('done')">已完成</button>
+            <button class="scene-filter-tab" data-filter="current" onclick="filterScenesBy('current')">拍攝中</button>
+            <button class="scene-filter-tab" data-filter="pending" onclick="filterScenesBy('pending')">待拍</button>
+            <button class="scene-filter-tab" data-filter="skip" onclick="filterScenesBy('skip')">暫緩</button>
+          </div>
         </div>
         <table class="scene-table" id="full-scene-table"></table>
       </div>
@@ -284,6 +486,16 @@
           <select id="shot-scene-sel" class="form-select" style="width:200px" onchange="renderShots()">
           </select>
           <button class="btn btn-outline" onclick="openShotModal()">＋ 新增鏡頭</button>
+        </div>
+      </div>
+      <div class="shot-progress-bar-wrap" id="shot-progress-wrap">
+        <div class="canva-slider-wrap">
+          <span class="canva-slide-num" id="shot-progress-count">0/0</span>
+          <div class="canva-slider-track" id="canva-slider-track">
+            <div class="canva-slider-fill" id="shot-progress-fill" style="width:0%"></div>
+            <input type="range" class="canva-range" id="shot-range-input" min="0" max="100" value="0" oninput="onShotRangeInput(this.value)" />
+          </div>
+          <span class="shot-progress-pct" id="shot-progress-pct">0%</span>
         </div>
       </div>
       <div class="shot-cards-grid" id="shot-cards"></div>
@@ -319,44 +531,7 @@
             <button class="editor-btn" onclick="insertTag('CUT TO:')">CUT TO</button>
             <button class="editor-btn" onclick="insertTag('DISSOLVE TO:')">DISSOLVE</button>
           </div>
-          <textarea class="script-textarea" id="script-text">FADE IN:
-
-場景 1：EXT. 大廈入口 — 日景
-
-李主任的座車緩緩駛入停車場。西裝筆挺的他推開車門，整了整領帶，目光掃過大廈外牆。
-
-張助理快步上前，手持文件夾。
-
-張助理
-（低聲）
-「主任，今天十點的簽約會議，對方已經提前到場了。」
-
-李主任
-（停頓，轉身）
-「幾個人？」
-
-張助理
-「三位，包括他們的法務。」
-
-李主任微微一笑，拾步走向大廈入口。
-
-CUT TO:
-
----
-
-場景 2：INT. 主管辦公室 — 日景
-
-落地窗灑入明亮晨光。辦公桌上整齊擺放著文件與一杯已冷卻的咖啡。
-
-陳副理正站在窗邊講電話，神情凝重。
-
-李主任走入，輕帶上門。
-
-陳副理
-（掛斷電話，回頭）
-「主任……那份合約，有個條款我一直擔心。」
-
-DISSOLVE TO:</textarea>
+          <textarea class="script-textarea" id="script-text" placeholder="✏ 可編輯 — 在這裡輸入劇本內容…"></textarea>
         </div>
         <div class="script-sidebar-panel">
           <div class="script-meta-card">
@@ -512,6 +687,54 @@ DISSOLVE TO:</textarea>
       </div>
     </section>
 
+    <!-- ═══ SCENE FULL PAGE DETAIL ═══ -->
+    <section id="page-scene-detail" class="page scene-detail-page">
+      <div class="page-header">
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="backFromSceneDetail()" style="margin-bottom:6px">← 返回場景列表</button>
+          <div class="page-title" id="sdp-title">場景 <span>詳情</span></div>
+          <div class="page-subtitle" id="sdp-subtitle">—</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-green" onclick="markSceneDoneFromPage()">✓ 完成此場景</button>
+          <button class="btn btn-danger btn-sm" onclick="skipSceneFromPage()">暫緩</button>
+        </div>
+      </div>
+
+      <div class="sdp-layout">
+        <div class="sdp-main">
+          <div class="sdp-section">
+            <div class="sdp-section-title">基本資訊</div>
+            <div class="sdp-info-grid" id="sdp-info-grid"></div>
+          </div>
+          <div class="sdp-section">
+            <div class="sdp-section-title">參與角色</div>
+            <div class="cast-list" id="sdp-cast-list"></div>
+          </div>
+          <div class="sdp-section">
+            <div class="sdp-section-title">鏡頭清單</div>
+            <div class="sdp-shot-list" id="sdp-shot-list"></div>
+          </div>
+        </div>
+        <div class="sdp-sidebar">
+          <div class="sdp-section">
+            <div class="sdp-section-title">導演備注</div>
+            <textarea class="notes-area" id="sdp-notes" placeholder="輸入導演指示或備注…" style="min-height:160px;resize:vertical"></textarea>
+            <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px" onclick="saveSceneNotes()">儲存備注</button>
+          </div>
+          <div class="sdp-section">
+            <div class="sdp-section-title">拍攝進度</div>
+            <div class="sdp-progress-wrap">
+              <div class="sdp-progress-track">
+                <div class="sdp-progress-fill" id="sdp-progress-fill" style="width:0%"></div>
+              </div>
+              <div class="sdp-progress-label" id="sdp-progress-label">0 / 0 鏡頭完成</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -524,40 +747,6 @@ DISSOLVE TO:</textarea>
 </div>
 
 </div><!-- /app -->
-
-<!-- ═══ SCENE DETAIL PANEL ═══ -->
-<div class="detail-overlay" id="detail-overlay" onclick="closeDetail()"></div>
-<div class="detail-panel" id="detail-panel">
-  <div class="detail-panel-head">
-    <div>
-      <div style="font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;font-family:var(--font-mono)">場景詳情</div>
-      <div style="font-size:16px;font-weight:500;margin-top:2px" id="dp-title">—</div>
-    </div>
-    <button class="modal-close" onclick="closeDetail()">×</button>
-  </div>
-  <div class="detail-panel-body">
-    <div class="detail-section">
-      <div class="detail-section-title">基本資訊</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="dp-info"></div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">參與角色</div>
-      <div class="cast-list" id="dp-cast"></div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">鏡頭 / 已完成清單</div>
-      <div class="detail-shot-list" id="dp-shots"></div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">導演備注</div>
-      <textarea class="notes-area" id="dp-notes" placeholder="輸入導演指示或備注…"></textarea>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn btn-green" style="flex:1" onclick="markSceneDone(currentDetailScene)">✓ 完成此場景</button>
-      <button class="btn btn-danger btn-sm" onclick="skipScene(currentDetailScene)">暫緩</button>
-    </div>
-  </div>
-</div>
 
 <!-- ═══ MODALS ═══ -->
 <!-- Project Modal -->
@@ -578,7 +767,7 @@ DISSOLVE TO:</textarea>
           <label class="form-label">製作類型</label>
           <select class="form-select" id="p-type">
             <option value="FILM">電影 FILM</option>
-            <option value="TV" selected>電視劇 TV</option>
+            <option value="TV">電視劇 TV</option>
             <option value="RADIO">廣播 RADIO</option>
             <option value="OTT">網路 OTT</option>
             <option value="DOC">紀錄片 DOC</option>
@@ -885,86 +1074,328 @@ DISSOLVE TO:</textarea>
 
 <div class="toast-container" id="toast-container"></div>
 
+<!-- ══ MOBILE TAB BAR ══ -->
+<nav class="mobile-tabbar" id="mobile-tabbar">
+  <div class="tab-item active" id="tab-dashboard" onclick="mobileTab('dashboard',this)">
+    <span class="tab-icon">◈</span>
+    <span class="tab-label">總覽</span>
+  </div>
+  <div class="tab-item" id="tab-scenes" onclick="mobileTab('scenes',this)">
+    <span class="tab-icon">☰</span>
+    <span class="tab-label">場景</span>
+  </div>
+  <div class="tab-item" id="tab-shots" onclick="mobileTab('shots',this)">
+    <span class="tab-icon">⊡</span>
+    <span class="tab-label">鏡頭</span>
+  </div>
+  <div class="tab-item" id="tab-announce" onclick="mobileTab('announce',this)">
+    <span class="tab-icon">◎</span>
+    <span class="tab-label">公告</span>
+    <span class="tab-badge" id="tab-ann-badge">2</span>
+  </div>
+  <div class="tab-item" id="tab-more" onclick="toggleProjectSheet()">
+    <span class="tab-icon">⋯</span>
+    <span class="tab-label">專案</span>
+  </div>
+</nav>
+
+<!-- ══ PROJECT SWITCHER SHEET ══ -->
+<div class="sheet-overlay" id="sheet-overlay" onclick="closeProjectSheet()"></div>
+<div class="project-switcher-sheet" id="project-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">切換 / 新增專案</div>
+  <div class="sheet-project-list" id="sheet-project-list"></div>
+  <button class="sheet-add-btn" onclick="openNewProjectSheetModal()">＋ 新增專案</button>
+</div>
+
+<!-- ══ NEW PROJECT SHEET MODAL ══ -->
+<div class="modal-overlay" id="modal-new-project-mobile">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">新增專案</span>
+      <button class="modal-close" onclick="closeModal('modal-new-project-mobile')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">專案名稱</label>
+        <input class="form-input" id="np-name" placeholder="如：彼岸之城">
+      </div>
+      <div class="form-field">
+        <label class="form-label">類型</label>
+        <select class="form-select" id="np-type">
+          <option>FILM</option><option>TV</option><option>SHORT</option><option>DOC</option><option>AD</option><option>MV</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">導演</label>
+        <input class="form-input" id="np-dir" placeholder="導演姓名">
+      </div>
+      <div class="form-field">
+        <label class="form-label">製作公司</label>
+        <input class="form-input" id="np-prod" placeholder="製作公司名稱">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-new-project-mobile')">取消</button>
+      <button class="btn btn-gold" onclick="createNewProject()">建立專案</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════
 //  DATA
 // ══════════════════════════════════════════
 const avatarColors = ['#C9A84C','#27AE60','#2980B9','#8E44AD','#C0392B','#16A085','#D35400'];
 
-let scenes = [
-  {id:'S01',name:'大廈入口',loc:'信義路五段 7 號',inout:'EXT',daynight:'DAY',cast:['李主任','張助理'],status:'current',notes:'',page:1},
-  {id:'S02',name:'主管辦公室',loc:'辦公大樓 3F',inout:'INT',daynight:'DAY',cast:['李主任','陳副理'],status:'pending',notes:'',page:2},
-  {id:'S03',name:'會議室',loc:'辦公大樓 5F',inout:'INT',daynight:'DAY',cast:['李主任','陳副理','合約方'],status:'pending',notes:'需要特寫合約',page:3},
-  {id:'S04',name:'餐廳外景',loc:'大安區復興南路',inout:'EXT',daynight:'DAY',cast:['李主任','女主角'],status:'pending',notes:'',page:4},
-  {id:'S05',name:'停車場',loc:'大廈地下室 B2',inout:'INT',daynight:'NIGHT',cast:['陳副理','神秘人'],status:'pending',notes:'低光源 需補燈',page:5},
-  {id:'S06',name:'電梯內',loc:'辦公大廈電梯',inout:'INT',daynight:'DAY',cast:['李主任','前同事'],status:'pending',notes:'',page:6},
-  {id:'S07',name:'咖啡廳',loc:'信義區精品咖啡',inout:'INT',daynight:'DAY',cast:['女主角','朋友'],status:'pending',notes:'回憶閃回 需濾鏡',page:7},
-  {id:'S08',name:'屋頂',loc:'辦公大廈頂樓',inout:'EXT',daynight:'DUSK',cast:['李主任','陳副理'],status:'pending',notes:'黃金時刻 17:42',page:8},
-  {id:'S09',name:'醫院走廊',loc:'國泰醫院外景',inout:'INT',daynight:'NIGHT',cast:['女主角','護士'],status:'pending',notes:'',page:9},
-  {id:'S10',name:'家中客廳',loc:'攝影棚 A 棚',inout:'INT',daynight:'NIGHT',cast:['李主任','太太'],status:'pending',notes:'',page:10},
-  {id:'S11',name:'街道追逐',loc:'大安森林公園週邊',inout:'EXT',daynight:'DAY',cast:['李主任','追蹤者'],status:'pending',notes:'需要許可證 已申請',page:11},
-  {id:'S12',name:'法庭',loc:'法院外景授權',inout:'INT',daynight:'DAY',cast:['李主任','律師','法官'],status:'pending',notes:'',page:12},
-  {id:'S13',name:'機場送別',loc:'桃園機場第一航廈',inout:'EXT',daynight:'DAY',cast:['李主任','女主角'],status:'pending',notes:'人群許可',page:13},
-  {id:'S14',name:'結尾空景',loc:'101 頂樓',inout:'EXT',daynight:'DUSK',cast:[],status:'pending',notes:'空拍 + 實拍',page:14},
-];
+let scenes = [];
 
 let shots = {};
-scenes.forEach((s,i)=>{
-  shots[s.id]=[
-    {id:`${s.id}-A`,type:'主鏡 (MS)',angle:'正面平拍',lens:'50mm',note:'帶入環境',done:false},
-    {id:`${s.id}-B`,type:'過肩 (OTS)',angle:'左肩後方',lens:'85mm',note:'對話鏡',done:false},
-    {id:`${s.id}-C`,type:'特寫 (CU)',angle:'45° 仰角',lens:'85mm',note:'情緒重點',done:false},
-  ];
-  if(i<3) shots[s.id].push({id:`${s.id}-D`,type:'搖鏡 (PAN)',angle:'左搖右',lens:'24mm',note:'帶景交待',done:false});
-});
 
 const editLog = [];
 
-const announcements = [
-  {from:'導演 陳大明',type:'director',msg:'今天 S01 外景優先拍攝。天氣預報下午有雨，請所有外景組在 14:00 前完成戶外鏡頭，防雨設備備妥。',time:'08:30',date:'03/15'},
-  {from:'製片 王小華',type:'notice',msg:'S05 停車場場地今日 18:00 到期。請確保在 17:30 前完成所有停車場鏡頭。場地費已預付，超時需另行報價。',time:'08:45',date:'03/15'},
-];
+const announcements = [];
 
-const crew = [
-  {name:'陳大明',char:'—',role:'導演',dept:'導演組',status:'onset',color:0},
-  {name:'王小華',char:'—',role:'製片',dept:'製片組',status:'onset',color:1},
-  {name:'林志明',char:'—',role:'攝影指導',dept:'攝影組',status:'onset',color:2},
-  {name:'張瑞恩',char:'李主任',role:'主演',dept:'演員組',status:'onset',color:3},
-  {name:'陳美如',char:'張助理',role:'主演',dept:'演員組',status:'makeup',color:4},
-  {name:'劉建國',char:'陳副理',role:'配角',dept:'演員組',status:'onway',color:5},
-  {name:'許雅婷',char:'女主角',role:'主演',dept:'演員組',status:'pending',color:6},
-  {name:'黃俊傑',char:'—',role:'燈光師',dept:'燈光組',status:'onset',color:0},
-  {name:'吳淑芬',char:'—',role:'場記',dept:'導演組',status:'onset',color:1},
-  {name:'蔡昌明',char:'—',role:'收音師',dept:'錄音組',status:'onset',color:2},
-];
+const crew = [];
 
-const equipment = [
-  {name:'ARRI Alexa Mini LF',cat:'攝影機',qty:2,owner:'林志明',status:'ok'},
-  {name:'Zeiss Supreme Prime 套組',cat:'鏡頭',qty:1,owner:'林志明',status:'ok'},
-  {name:'Sigma Cine Zoom 24-70mm',cat:'鏡頭',qty:1,owner:'攝影組',status:'ok'},
-  {name:'ARRI SkyPanel S60-C',cat:'燈光',qty:4,owner:'黃俊傑',status:'ok'},
-  {name:'Kino Flo Diva-Lite 400',cat:'燈光',qty:6,owner:'黃俊傑',status:'ok'},
-  {name:'Sennheiser MKH 416',cat:'收音',qty:2,owner:'蔡昌明',status:'ok'},
-  {name:'Tentacle Sync E',cat:'收音',qty:4,owner:'蔡昌明',status:'maintenance'},
-  {name:'DJI Ronin 4D',cat:'穩定器',qty:1,owner:'林志明',status:'ok'},
-  {name:'DJI Inspire 3 (空拍)',cat:'移動設備',qty:1,owner:'林志明',status:'ok'},
-  {name:'Chapman/Leonard 升降軌',cat:'移動設備',qty:1,owner:'攝影組',status:'ok'},
-];
+const equipment = [];
 
 let currentDetailScene = null;
 let selectedAnnType = 'general';
-const activityLog = [
-  {author:'導演', action:'更新目前拍攝場景', time:new Date().toISOString()},
-  {author:'製片', action:'新增通告提醒', time:new Date(Date.now()-300000).toISOString()},
-  {author:'場記', action:'標記 S01-A 鏡頭', time:new Date(Date.now()-720000).toISOString()},
-];
+const activityLog = [];
+
+// ══════════════════════════════════════════
+//  PROFILE SYSTEM
+// ══════════════════════════════════════════
+let currentUserProfile = { name: '', role: '' };
+
+function selectProfileRole(btn, role) {
+  document.querySelectorAll('.profile-role-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('profile-role-input').value = role;
+}
+
+function submitProfile() {
+  const name = document.getElementById('profile-name-input').value.trim();
+  const role = document.getElementById('profile-role-input').value.trim();
+  if (!name) { document.getElementById('profile-name-input').focus(); document.getElementById('profile-name-input').style.borderColor='var(--red-light,#e74c3c)'; return; }
+  currentUserProfile = { name, role: role || '成員' };
+  currentEditor = name;
+  const globalName = document.getElementById('global-editor-name');
+  if (globalName) globalName.value = name;
+  const scriptName = document.getElementById('editor-name');
+  if (scriptName) scriptName.value = name;
+  const annFrom = document.getElementById('ann-from');
+  if (annFrom) annFrom.value = name;
+  document.getElementById('profile-overlay').classList.add('hidden');
+  toast(`歡迎，${role ? role + ' ' : ''}${name} ✦`, '👤');
+}
+
+function skipProfile() {
+  currentUserProfile = { name: '匿名', role: '' };
+  document.getElementById('profile-overlay').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════
+//  LIVE BROADCAST POPUP
+// ══════════════════════════════════════════
+const typeTagLabels = { general:'📢 即時通告', director:'🎬 導演指示', notice:'⚠ 注意事項', urgent:'🚨 緊急通知' };
+const typeTagClasses = { general:'', director:'director', notice:'notice', urgent:'urgent' };
+
+function showBroadcast(ann) {
+  const overlay = document.getElementById('broadcast-overlay');
+  const msgEl = document.getElementById('broadcast-msg');
+  const fromEl = document.getElementById('broadcast-from');
+  const roleEl = document.getElementById('broadcast-role');
+  const tagEl = document.getElementById('broadcast-type-tag');
+  const avatarEl = document.getElementById('broadcast-avatar');
+  if (!overlay) return;
+  msgEl.textContent = ann.msg;
+  fromEl.textContent = ann.from;
+  roleEl.textContent = ann.date + ' ' + ann.time;
+  tagEl.textContent = typeTagLabels[ann.type] || '📢 即時通告';
+  tagEl.className = 'broadcast-type-tag ' + (typeTagClasses[ann.type] || '');
+  avatarEl.textContent = ann.from.slice(0, 1);
+  overlay.classList.add('active');
+}
+
+function dismissBroadcast() {
+  document.getElementById('broadcast-overlay').classList.remove('active');
+}
+
+// ══════════════════════════════════════════
+//  SCENE FULL PAGE DETAIL
+// ══════════════════════════════════════════
+let _prevPage = 'scenes';
+let _currentSDP = null;
+
+function openDetail(sid) {
+  const s = scenes.find(x => x.id === sid);
+  if (!s) return;
+  _currentSDP = sid;
+
+  // Figure out which page we came from to go back
+  const active = document.querySelector('.page.active');
+  _prevPage = active ? active.id.replace('page-', '') : 'scenes';
+
+  // Populate title
+  document.getElementById('sdp-title').innerHTML = `${s.id} — <span>${s.name}</span>`;
+  document.getElementById('sdp-subtitle').textContent = `${s.inout === 'INT' ? '內景' : '外景'} · ${s.daynight === 'DAY' ? '日景' : s.daynight === 'NIGHT' ? '夜景' : s.daynight === 'DUSK' ? '黃昏' : '黎明'} · ${s.loc || '—'}`;
+
+  // Info grid
+  document.getElementById('sdp-info-grid').innerHTML = [
+    { key: '場景編號', val: s.id },
+    { key: '內/外景', val: s.inout },
+    { key: '日/夜景', val: s.daynight === 'DAY' ? '日景' : s.daynight === 'NIGHT' ? '夜景' : s.daynight === 'DUSK' ? '黃昏' : '黎明' },
+    { key: '地點', val: s.loc || '—' },
+    { key: '頁碼', val: `P.${s.page || '—'}` },
+    { key: '狀態', val: s.status === 'done' ? '✓ 完成' : s.status === 'current' ? '● 拍攝中' : s.status === 'skip' ? '暫緩' : '待拍' },
+  ].map(item => `<div class="sdp-info-item"><div class="info-key">${item.key}</div><div class="info-val">${item.val}</div></div>`).join('');
+
+  // Cast
+  const castEl = document.getElementById('sdp-cast-list');
+  castEl.innerHTML = s.cast.length ? s.cast.map((c, i) => {
+    const m = crew.find(cr => cr.char === c);
+    return `<div class="cast-item">
+      <div style="width:32px;height:32px;border-radius:50%;background:${avatarColors[i % 7]}22;color:${avatarColors[i % 7]};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;border:1px solid ${avatarColors[i % 7]}33;flex-shrink:0">${c.slice(0, 1)}</div>
+      <div><div class="cast-char">${c}</div><div class="cast-actor">${m ? m.name : '—'}</div></div>
+    </div>`;
+  }).join('') : '<div style="font-size:12px;color:var(--text-muted)">無角色資訊</div>';
+
+  // Shots
+  const shotItems = shots[sid] || [];
+  const doneCount = shotItems.filter(sh => sh.done).length;
+  document.getElementById('sdp-shot-list').innerHTML = shotItems.length ? shotItems.map((sh, i) => `
+    <div class="sdp-shot-item ${sh.done ? 'done-shot' : ''}">
+      <div class="sdp-shot-num">${sh.id}</div>
+      <div class="sdp-shot-body">
+        <div class="sdp-shot-type">${sh.type}</div>
+        <div class="sdp-shot-meta">${sh.angle} · ${sh.lens}${sh.note ? ' · ' + sh.note : ''}</div>
+      </div>
+      <button class="sdp-shot-btn ${sh.done ? 'done-btn' : ''}" onclick="toggleShotFromDetail('${sid}',${i})">${sh.done ? '✓ 完成' : '標記完成'}</button>
+    </div>
+  `).join('') : '<div style="font-size:12px;color:var(--text-muted)">此場景尚未建立鏡頭</div>';
+
+  // Progress
+  const pct = shotItems.length > 0 ? Math.round(doneCount / shotItems.length * 100) : 0;
+  document.getElementById('sdp-progress-fill').style.width = pct + '%';
+  document.getElementById('sdp-progress-label').textContent = `${doneCount} / ${shotItems.length} 鏡頭完成`;
+
+  // Notes
+  document.getElementById('sdp-notes').value = s.notes || '';
+
+  // Switch to detail page
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-scene-detail').classList.add('active');
+}
+
+function backFromSceneDetail() {
+  // Save notes
+  if (_currentSDP) {
+    const s = scenes.find(x => x.id === _currentSDP);
+    if (s) s.notes = document.getElementById('sdp-notes').value;
+  }
+  _currentSDP = null;
+  // Go back to wherever we came from
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + _prevPage) || document.getElementById('page-scenes');
+  if (target) target.classList.add('active');
+  if (_prevPage === 'scenes') { renderScenes(); renderScenesStatCards(); renderSceneDots(); }
+  if (_prevPage === 'dashboard') { renderDashScenes(); renderStats(); }
+}
+
+function toggleShotFromDetail(sid, i) {
+  shots[sid][i].done = !shots[sid][i].done;
+  persistSave();
+  syncShotToDB(sid, shots[sid][i]);
+  broadcastChange(`鏡頭 ${shots[sid][i].id} ${shots[sid][i].done ? '標記完成' : '取消完成'}`);
+  openDetail(sid); // re-render in place
+}
+
+function saveSceneNotes() {
+  if (_currentSDP) {
+    const s = scenes.find(x => x.id === _currentSDP);
+    if (s) {
+      s.notes = document.getElementById('sdp-notes').value;
+      persistSave();
+      syncSceneToDB(s);
+      broadcastChange('更新場景備注 ' + _currentSDP);
+      toast('備注已儲存', '💾');
+    }
+  }
+}
+
+function markSceneDoneFromPage() {
+  if (_currentSDP) {
+    markSceneDone(_currentSDP);
+    backFromSceneDetail();
+  }
+}
+
+function skipSceneFromPage() {
+  if (_currentSDP) {
+    skipScene(_currentSDP);
+    backFromSceneDetail();
+  }
+}
+
+function markSceneDone(sid){
+  const s=scenes.find(x=>x.id===sid);
+  if(!s)return;
+  const doneCount = scenes.filter(x => x.status === 'done').length;
+  s.shootOrder = doneCount + 1;
+  s.status='done';
+  const next=scenes.find(x=>x.status==='pending');
+  if(next) next.status='current';
+  renderStats();renderDashScenes();renderFullScenes();renderTicker();
+  toast(`場景 ${sid} 完成！`,'🎬');
+  persistSave();
+  syncSceneToDB(s);
+  if(next) syncSceneToDB(next);
+  broadcastChange('完成場景 ' + sid);
+}
+
+function skipScene(sid){
+  const s=scenes.find(x=>x.id===sid);
+  if(s){
+    s.status='skip';
+    renderStats();renderDashScenes();renderFullScenes();
+    toast(`場景 ${sid} 已暫緩`,'⏭');
+    persistSave();
+    syncSceneToDB(s);
+    broadcastChange('暫緩場景 ' + sid);
+  }
+}
+
+// ── keep backward compat (old closeDetail) ──
+function closeDetail() { if (_currentSDP) backFromSceneDetail(); }
 
 // ══════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════
 function init(){
+  // 先嘗試從 localStorage 讀取
+  const loaded = persistLoad();
+
+  document.body.classList.add('home-mode');
   renderClock();
   setInterval(renderClock,1000);
+
+  if(loaded && projects.length > 0){
+    // 有儲存資料：載入目前專案狀態
+    const p = getCurrentProject();
+    if(p){
+      ensureProjectData(p);
+      replaceArray(scenes, clone(p.scenes||[]));
+      replaceObject(shots, clone(p.shots||{}));
+      replaceArray(announcements, clone(p.announcements||[]));
+      replaceArray(crew, clone(p.crew||[]));
+      replaceArray(equipment, clone(p.equipment||[]));
+      const scriptEl = document.getElementById('script-text');
+      if(scriptEl) scriptEl.value = p.script || '';
+    }
+  }
+
   renderStats();
   renderDashScenes();
   renderFullScenes();
@@ -975,6 +1406,9 @@ function init(){
   renderEquip();
   renderTicker();
   renderActivity();
+  renderHomeProjects();
+  renderHomeAnnouncements();
+  showHome(false);
 }
 
 // ══════════════════════════════════════════
@@ -996,7 +1430,7 @@ function renderStats(){
   const curr=scenes.filter(s=>s.status==='current').length;
   const total=scenes.length;
   const left=scenes.filter(s=>s.status==='pending').length;
-  const pct=Math.round(done/total*100);
+  const pct=total ? Math.round(done/total*100) : 0;
   document.getElementById('st-total').textContent=total;
   document.getElementById('st-done').textContent=done;
   document.getElementById('st-curr').textContent=curr;
@@ -1009,6 +1443,9 @@ function renderStats(){
   const ng = done > 0 ? Math.round(Math.random()*15+5)+'%' : '—';
   document.getElementById('ng-rate').textContent=ng;
   const cs=scenes.find(s=>s.status==='current');
+  if(!cs && !scenes.length){
+    ['curr-scene-id','now-name','now-detail','hero-current-title','hero-current-meta','next-name'].forEach(id=>{const el=document.getElementById(id); if(el) el.textContent='—';});
+  }
   if(cs){
     document.getElementById('curr-scene-id').textContent=cs.id;
     document.getElementById('now-name').textContent=`${cs.id} — ${cs.name}（${cs.daynight==='DAY'?'日景':cs.daynight==='NIGHT'?'夜景':cs.daynight==='DUSK'?'黃昏':'黎明'} / ${cs.inout==='INT'?'內景':'外景'}）`;
@@ -1022,6 +1459,8 @@ function renderStats(){
   const nextS=scenes.find((s,i)=>i>ni&&s.status==='pending');
   document.getElementById('next-name').textContent=nextS?`${nextS.id} — ${nextS.name}（${nextS.inout==='INT'?'內景':'外景'}）`:'—';
   renderAnnStats();
+  renderScenesStatCards();
+  renderSceneDots();
 }
 
 // ══════════════════════════════════════════
@@ -1049,20 +1488,85 @@ function renderDashScenes(){
   t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th></tr></thead><tbody>${scenes.slice(0,6).map(s=>sceneRow(s)).join('')}</tbody>`;
 }
 
+let _sceneFilter = 'all';
+
+function filterScenesBy(filter){
+  _sceneFilter = filter;
+  // update stat cards
+  document.querySelectorAll('.scene-stat-card').forEach(c=>{
+    c.classList.toggle('active-stat', c.dataset.filter===filter);
+  });
+  // update filter tabs
+  document.querySelectorAll('.scene-filter-tab').forEach(t=>{
+    t.classList.toggle('active-tab', t.dataset.filter===filter);
+  });
+  renderScenes();
+}
+
 function renderScenes(){
-  const filter=document.getElementById('scene-filter').value;
-  const filtered=filter==='all'?scenes:scenes.filter(s=>s.status===filter);
+  const filter = _sceneFilter || 'all';
+  const filtered = filter==='all' ? scenes : scenes.filter(s=>s.status===filter);
   const t=document.getElementById('full-scene-table');
+  if(!filtered.length){
+    t.innerHTML=`<tbody><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);font-size:13px">此分類目前沒有場景</td></tr></tbody>`;
+    return;
+  }
   t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th></tr></thead><tbody>${filtered.map(s=>sceneRow(s)).join('')}</tbody>`;
 }
 
 function renderFullScenes(){renderScenes();}
+
+function renderSceneDots(){
+  const layer = document.getElementById('scene-dots-layer');
+  const labelsEl = document.getElementById('scene-slider-labels');
+  if(!layer || !scenes.length){ if(layer) layer.innerHTML=''; return; }
+  const total = scenes.length;
+  const colorMap = { done:'var(--green-light)', current:'var(--gold)', pending:'rgba(255,255,255,0.18)', skip:'var(--amber-light)' };
+
+  // Scenes are positioned by their SCRIPT order (index), but
+  // the "shooting order badge" on each dot shows when they were actually shot.
+  // Done scenes get a shooting-order number (in the order they were completed).
+  // This way if you shot S1→S3→S2, S3 dot shows "2" and S2 shows "3".
+  const doneScenes = scenes.filter(s => s.status === 'done');
+  // Assign shooting order based on shootOrder property, fallback to index among done
+  doneScenes.forEach((s, i) => { if (s.shootOrder === undefined) s.shootOrder = i + 1; });
+
+  layer.innerHTML = scenes.map((s, i) => {
+    const pct = total === 1 ? 50 : Math.round(i / (total - 1) * 100);
+    const col = colorMap[s.status] || colorMap.pending;
+    const isCurr = s.status === 'current';
+    const orderBadge = s.status === 'done' && s.shootOrder
+      ? `<span style="font-size:9px;font-weight:700;color:#000;font-family:var(--font-mono,'DM Mono'),monospace;line-height:1">${s.shootOrder}</span>`
+      : '';
+    return `<div class="scene-dot-btn ${s.status === 'done' ? 'shot-order-badge' : ''}" style="left:${pct}%;background:${col};${isCurr ? 'width:20px;height:20px;box-shadow:0 0 10px ' + col + ';' : ''}" title="${s.id} — ${s.name}${s.shootOrder ? ' (第'+s.shootOrder+'個拍)' : ''}" onclick="openDetail('${s.id}')">${orderBadge}<span class="scene-dot-tooltip">${s.id}<br>${s.name}${s.shootOrder ? '<br>第 '+s.shootOrder+' 個拍攝' : ''}</span></div>`;
+  }).join('');
+
+  // labels: show first, middle, last
+  if(total<=1){ labelsEl.innerHTML=`<span style="left:50%;transform:translateX(-50%)">${scenes[0]?.id||''}</span>`; return; }
+  const show = [0, Math.floor((total-1)/2), total-1];
+  labelsEl.innerHTML = [...new Set(show)].map(i=>{
+    const pct = Math.round(i/(total-1)*100);
+    return `<span style="left:${pct}%;transform:translateX(-50%)">${scenes[i].id}</span>`;
+  }).join('');
+}
+
+function renderScenesStatCards(){
+  const done=scenes.filter(s=>s.status==='done').length;
+  const curr=scenes.filter(s=>s.status==='current').length;
+  const pend=scenes.filter(s=>s.status==='pending').length;
+  const el=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  el('sst-total',scenes.length);
+  el('sst-done',done);
+  el('sst-curr',curr);
+  el('sst-pend',pend);
+}
 
 // ══════════════════════════════════════════
 //  SHOTS
 // ══════════════════════════════════════════
 function buildShotSelect(){
   const sel=document.getElementById('shot-scene-sel');
+  if(!sel) return;
   sel.innerHTML=scenes.map(s=>`<option value="${s.id}">${s.id} — ${s.name}</option>`).join('');
   renderShots();
 }
@@ -1070,7 +1574,13 @@ function buildShotSelect(){
 function renderShots(){
   const sel=document.getElementById('shot-scene-sel');
   if(!sel)return;
-  const sid=sel.value||scenes[0].id;
+  const sid=sel.value || (scenes[0] && scenes[0].id);
+  if(!sid){
+    const grid=document.getElementById('shot-cards');
+    if(grid) grid.innerHTML='<div class="empty-state"><div class="empty-icon">⊡</div>這個專案尚無場景，請先新增場景</div>';
+    updateShotProgress('');
+    return;
+  }
   const arr=shots[sid]||[];
   const grid=document.getElementById('shot-cards');
   if(!arr.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">⊡</div>尚無鏡頭計畫</div>';return;}
@@ -1094,6 +1604,7 @@ function toggleShot(sid,i){
   renderShots();
   const doneN=shots[sid].filter(s=>s.done).length;
   const total=shots[sid].length;
+  persistSave();
   if(doneN===total) toast(`${sid} 所有鏡頭已完成！`,'✅');
   else toast(`鏡頭 ${shots[sid][i].id} ${shots[sid][i].done?'已完成':'已取消'}`,shots[sid][i].done?'🎬':'↩');
   syncShotToDB(sid, shots[sid][i]);
@@ -1112,6 +1623,7 @@ function saveScript(){
   el.innerHTML=editLog.slice(0,10).map(e=>`<div class="edit-entry"><span class="edit-author">${e.author}</span><span class="edit-time">${e.date} ${e.time}</span><span class="edit-note">${e.note}</span></div>`).join('');
   document.getElementById('history-card').style.display='block';
   document.getElementById('script-note').value='';
+  persistSave();
   toast(`劇本已儲存 — ${author}`,'💾');
   broadcastChange('更新劇本');
 }
@@ -1154,11 +1666,14 @@ function sendAnn(){
   renderAnnouncements();
   renderAnnStats();
   renderTicker();
+  persistSave();
   const badge=document.getElementById('ann-count-badge');
   badge.textContent=announcements.length;
   toast(`公告已發送 — ${from}`,'📢');
   syncAnnouncementToDB(ann);
   broadcastChange('發送公告 — ' + from);
+  // Show live broadcast popup
+  showBroadcast(ann);
 }
 
 const typeColors={general:'#888',director:'var(--amber-light)',notice:'var(--blue-light)',urgent:'var(--red-light)'};
@@ -1245,86 +1760,6 @@ function renderTicker(){
 }
 
 // ══════════════════════════════════════════
-//  SCENE DETAIL PANEL
-// ══════════════════════════════════════════
-function openDetail(sid){
-  const s=scenes.find(x=>x.id===sid);
-  if(!s)return;
-  currentDetailScene=sid;
-  document.getElementById('dp-title').textContent=`${s.id} — ${s.name}`;
-  document.getElementById('dp-info').innerHTML=`
-    <div style="background:var(--bg-raised);padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border)">
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">類型</div>
-      <div style="font-size:13px">${s.inout} / ${s.daynight}</div>
-    </div>
-    <div style="background:var(--bg-raised);padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border)">
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">頁碼</div>
-      <div style="font-size:13px;font-family:var(--font-mono)">P.${s.page}</div>
-    </div>
-    <div style="background:var(--bg-raised);padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border);grid-column:1/-1">
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">地點</div>
-      <div style="font-size:13px">${s.loc}</div>
-    </div>
-  `;
-  document.getElementById('dp-cast').innerHTML=s.cast.length?s.cast.map((c,i)=>`
-    <div class="cast-item">
-      <div style="width:28px;height:28px;border-radius:50%;background:${avatarColors[i%7]}22;color:${avatarColors[i%7]};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;border:1px solid ${avatarColors[i%7]}33;flex-shrink:0">${c.slice(0,1)}</div>
-      <div><div class="cast-char">${c}</div><div class="cast-actor" id="actor-${i}">—</div></div>
-    </div>
-  `).join(''):
-  '<div style="font-size:12px;color:var(--text-muted)">無角色資訊</div>';
-  // fill actor names from crew
-  s.cast.forEach((c,i)=>{
-    const m=crew.find(cr=>cr.char===c);
-    const el=document.getElementById(`actor-${i}`);
-    if(el&&m) el.textContent=m.name;
-  });
-  const shotItems=shots[s.id]||[];
-  document.getElementById('dp-shots').innerHTML=shotItems.length?shotItems.map((sh,i)=>`
-    <div class="detail-shot-item ${sh.done?'done':''}">
-      <div>
-        <strong>${sh.id} · ${sh.type}</strong>
-        <span>${sh.angle} · ${sh.lens}${sh.note?' · '+sh.note:''}</span>
-      </div>
-      <button class="shot-mini-btn" onclick="event.stopPropagation();toggleShot('${s.id}',${i});openDetail('${s.id}')">${sh.done?'已完成':'標記完成'}</button>
-    </div>
-  `).join(''):'<div style="font-size:12px;color:var(--text-muted)">此場景尚未建立鏡頭</div>';
-  document.getElementById('dp-notes').value=s.notes;
-  document.getElementById('detail-overlay').classList.add('open');
-  document.getElementById('detail-panel').classList.add('open');
-}
-
-function closeDetail(){
-  if(currentDetailScene){
-    const s=scenes.find(x=>x.id===currentDetailScene);
-    if(s) s.notes=document.getElementById('dp-notes').value;
-  }
-  document.getElementById('detail-overlay').classList.remove('open');
-  document.getElementById('detail-panel').classList.remove('open');
-}
-
-function markSceneDone(sid){
-  const s=scenes.find(x=>x.id===sid);
-  if(!s)return;
-  s.status='done';
-  const next=scenes.find(x=>x.status==='pending');
-  if(next) next.status='current';
-  renderStats();renderDashScenes();renderFullScenes();renderTicker();
-  toast(`場景 ${sid} 完成！`,'🎬');
-  syncSceneToDB(s);
-  if(next) syncSceneToDB(next);
-  broadcastChange('完成場景 ' + sid);
-  closeDetail();
-}
-
-function skipScene(sid){
-  const s=scenes.find(x=>x.id===sid);
-  if(s){s.status='skip';renderStats();renderDashScenes();renderFullScenes();toast(`場景 ${sid} 已暫緩`,'⏭');
-    syncSceneToDB(s);
-    broadcastChange('暫緩場景 ' + sid);}
-  closeDetail();
-}
-
 // ══════════════════════════════════════════
 //  MARK CURRENT DONE
 // ══════════════════════════════════════════
@@ -1342,9 +1777,8 @@ function openCurrentSceneDetail(){
 
 function openNewProjectModal(){
   document.getElementById('project-modal-title').textContent='新增專案';
-  document.getElementById('p-name').value='新拍攝專案';
-  document.getElementById('p-prod').value='';
-  document.getElementById('p-dir').value='';
+  document.getElementById('modal-project').dataset.mode='create';
+  fillProjectForm({name:'',type:'FILM',prod:'',dir:'',spec:'4K / 25fps',days:30});
   openModal('modal-project');
 }
 
@@ -1388,6 +1822,7 @@ function addScene(){
   renderStats();renderDashScenes();renderFullScenes();buildShotSelect();renderTicker();
   closeModal('modal-scene');
   toast(`場景 ${id} 已新增`,'➕');
+  persistSave();
   const newScene = scenes[scenes.length-1];
   syncSceneToDB(newScene);
   syncShotToDB(id, shots[id][0]);
@@ -1405,6 +1840,7 @@ function addCrew(){
   renderCrew();
   closeModal('modal-crew');
   toast(`${name} 已加入劇組`,'👤');
+  persistSave();
   syncCrewToDB(crew[crew.length-1]);
   broadcastChange('新增成員 ' + name);
 }
@@ -1443,38 +1879,85 @@ function addEquip(){
   if(!name){toast('請輸入器材名稱','⚠');return;}
   equipment.push({name,cat:document.getElementById('eq-cat').value,qty:parseInt(document.getElementById('eq-qty').value)||1,owner:document.getElementById('eq-owner').value||'—',status:'ok'});
   renderEquip();closeModal('modal-equip');toast(`${name} 已新增`,'◧');
+  persistSave();
   broadcastChange('新增器材');
 }
 
 // ══════════════════════════════════════════
 //  PROJECT SETTINGS
 // ══════════════════════════════════════════
-function openProjectModal(){document.getElementById('project-modal-title').textContent='專案設定 / 可編輯';openModal('modal-project');}
+function fillProjectForm(p){
+  document.getElementById('p-name').value=p?.name||'';
+  document.getElementById('p-type').value=p?.type||'FILM';
+  document.getElementById('p-prod').value=p?.prod||'';
+  document.getElementById('p-dir').value=p?.dir||'';
+  document.getElementById('p-spec').value=p?.spec||'4K / 25fps';
+  document.getElementById('p-days').value=p?.days||45;
+}
+function openProjectModal(){
+  const p=getCurrentProject();
+  document.getElementById('project-modal-title').textContent='專案設定 / 可編輯';
+  document.getElementById('modal-project').dataset.mode='edit';
+  fillProjectForm(p);
+  openModal('modal-project');
+}
 function saveProject(){
-  const name=document.getElementById('p-name').value.trim();
-  const type=document.getElementById('p-type').value;
-  document.getElementById('proj-name-badge').textContent=`《${name}》`;
-  const workspaceName=document.getElementById('workspace-project-name');
-  if(workspaceName) workspaceName.textContent=name;
-  document.getElementById('proj-type-badge').textContent=type;
-  document.getElementById('info-prod').textContent=document.getElementById('p-prod').value;
-  document.getElementById('info-dir').textContent=document.getElementById('p-dir').value;
-  const days=document.getElementById('p-days').value;
-  document.getElementById('info-day').textContent=`D-08/${days}`;
-  document.getElementById('info-spec').textContent=document.getElementById('p-spec').value.replace(' / ','·');
+  const mode=document.getElementById('modal-project').dataset.mode||'edit';
+  const name=document.getElementById('p-name').value.trim()||'未命名專案';
+  const data={
+    name,
+    type:document.getElementById('p-type').value,
+    prod:document.getElementById('p-prod').value.trim(),
+    dir:document.getElementById('p-dir').value.trim(),
+    days:document.getElementById('p-days').value||45,
+    spec:document.getElementById('p-spec').value
+  };
+  if(mode==='create'){
+    const id='proj-'+Date.now();
+    projects.forEach(p=>p.active=false);
+    projects.push({...data,id,active:true,scenes:[],shots:{},announcements:[],crew:[],equipment:clone(equipment),script:''});
+    currentProjectId=id;
+    persistSave();
+    loadProjectState(getCurrentProject());
+    closeModal('modal-project');
+    renderHomeProjects();
+    enterProject(id);
+    toast(`《${name}》已建立`, '🎬');
+    return;
+  }
+  const p=getCurrentProject();
+  Object.assign(p,data);
+  applyProjectMeta(p);
+  persistSave();
   closeModal('modal-project');toast('專案設定已儲存','⚙');
+  renderHomeProjects();
+  renderHomeAnnouncements();
   broadcastChange('編輯專案設定');
+}
+function applyProjectMeta(p){
+  if(!p) return;
+  document.getElementById('proj-name-badge').textContent=`《${p.name}》`;
+  const workspaceName=document.getElementById('workspace-project-name');
+  if(workspaceName) workspaceName.textContent=p.name;
+  document.getElementById('proj-type-badge').textContent=p.type||'FILM';
+  document.getElementById('info-prod').textContent=p.prod||'—';
+  document.getElementById('info-dir').textContent=p.dir||'—';
+  document.getElementById('info-day').textContent=`D-08/${p.days||45}`;
+  document.getElementById('info-spec').textContent=(p.spec||'4K / 25fps').replace(' / ','·');
 }
 
 // ══════════════════════════════════════════
 //  NAV / PAGE
 // ══════════════════════════════════════════
 function switchPage(id,el){
+  document.body.classList.remove('home-mode');
+  document.body.classList.add('project-mode');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('page-'+id).classList.add('active');
-  if(id==='scenes')renderScenes();
+  if(el) el.classList.add('active');
+  const page=document.getElementById('page-'+id);
+  if(page) page.classList.add('active');
+  if(id==='scenes'){renderScenes();renderScenesStatCards();renderSceneDots();}
   if(id==='shots'){buildShotSelect();}
   if(id==='crew')renderCrew();
   if(id==='equipment')renderEquip();
@@ -1514,7 +1997,9 @@ function formatDate(d){return (d.getMonth()+1).toString().padStart(2,'0')+'/'+(d
 // ══════════════════════════════════════════
 const SUPABASE_URL = 'https://gdnharkyealkkzymrxls.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdkbmhhcmt5ZWFsa2t6eW1yeGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjEzOTEsImV4cCI6MjA5Mzk5NzM5MX0.zZJ0fBOMp2ouXjxbUPzzf0hD9yVYUEu9ogAGeEYDbOE';
-const PROJECT_ID   = 'clappr-default'; // 可改成你的專案名稱
+window._activeProjectId = null;
+const getProjectId = () => window._activeProjectId || currentProjectId || 'clappr-default';
+
 
 let supabase = null;
 let currentEditor = '導演';
@@ -1545,7 +2030,7 @@ async function setupTables(){
   const { data, error } = await supabase
     .from('scenes')
     .select('id')
-    .eq('project_id', PROJECT_ID)
+    .eq('project_id', getProjectId())
     .limit(1);
   if (!error && (!data || data.length === 0)) {
     await seedDefaultData();
@@ -1555,7 +2040,7 @@ async function setupTables(){
 // ── 寫入預設資料 ─────────────────────────
 async function seedDefaultData(){
   const sceneRows = scenes.map(s => ({
-    project_id: PROJECT_ID,
+    project_id: getProjectId(),
     scene_id: s.id,
     name: s.name,
     loc: s.loc,
@@ -1572,7 +2057,7 @@ async function seedDefaultData(){
   Object.entries(shots).forEach(([sid, arr]) => {
     arr.forEach(sh => {
       shotRows.push({
-        project_id: PROJECT_ID,
+        project_id: getProjectId(),
         shot_id: sh.id,
         scene_id: sid,
         type: sh.type,
@@ -1586,7 +2071,7 @@ async function seedDefaultData(){
   await supabase.from('shots').upsert(shotRows, { onConflict: 'project_id,shot_id' });
 
   const annRows = announcements.map((a, i) => ({
-    project_id: PROJECT_ID,
+    project_id: getProjectId(),
     from_name: a.from,
     type: a.type,
     msg: a.msg,
@@ -1597,7 +2082,7 @@ async function seedDefaultData(){
   await supabase.from('announcements').upsert(annRows);
 
   const crewRows = crew.map(c => ({
-    project_id: PROJECT_ID,
+    project_id: getProjectId(),
     name: c.name,
     char_name: c.char,
     role: c.role,
@@ -1611,11 +2096,11 @@ async function seedDefaultData(){
 // ── 從 DB 載入全部資料 ───────────────────
 async function loadAllFromDB(){
   const [sc, sh, an, cr, act] = await Promise.all([
-    supabase.from('scenes').select('*').eq('project_id', PROJECT_ID).order('page'),
-    supabase.from('shots').select('*').eq('project_id', PROJECT_ID),
-    supabase.from('announcements').select('*').eq('project_id', PROJECT_ID).order('created_at', { ascending: false }),
-    supabase.from('crew').select('*').eq('project_id', PROJECT_ID),
-    supabase.from('activity_log').select('*').eq('project_id', PROJECT_ID).order('created_at', { ascending: false }).limit(20)
+    supabase.from('scenes').select('*').eq('project_id', getProjectId()).order('page'),
+    supabase.from('shots').select('*').eq('project_id', getProjectId()),
+    supabase.from('announcements').select('*').eq('project_id', getProjectId()).order('created_at', { ascending: false }),
+    supabase.from('crew').select('*').eq('project_id', getProjectId()),
+    supabase.from('activity_log').select('*').eq('project_id', getProjectId()).order('created_at', { ascending: false }).limit(20)
   ]);
 
   if (sc.data && sc.data.length) {
@@ -1662,7 +2147,7 @@ async function loadAllFromDB(){
   }
 
   // 重新渲染所有區塊
-  renderStats(); renderDashScenes(); renderScenes();
+  renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots();
   buildShotSelect(); renderAnnouncements(); renderAnnStats();
   renderCrew(); renderTicker(); renderActivity();
 }
@@ -1672,12 +2157,12 @@ function subscribeRealtime(){
   if (realtimeChannel) supabase.removeChannel(realtimeChannel);
 
   realtimeChannel = supabase
-    .channel(`project-${PROJECT_ID}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'scenes',        filter: `project_id=eq.${PROJECT_ID}` }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'shots',         filter: `project_id=eq.${PROJECT_ID}` }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements', filter: `project_id=eq.${PROJECT_ID}` }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'crew',          filter: `project_id=eq.${PROJECT_ID}` }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log',  filter: `project_id=eq.${PROJECT_ID}` }, handleActivityChange)
+    .channel(`project-${getProjectId()}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'scenes',        filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shots',         filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements', filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'crew',          filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log',  filter: `project_id=eq.${getProjectId()}` }, handleActivityChange)
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') setSyncStatus('即時同步中', true);
       if (status === 'CHANNEL_ERROR') setSyncStatus('同步錯誤', false);
@@ -1712,7 +2197,7 @@ async function broadcastChange(action){
   // 寫入 Supabase（觸發其他人的 Realtime）
   if (supabase) {
     await supabase.from('activity_log').insert({
-      project_id: PROJECT_ID, author, action, created_at: time
+      project_id: getProjectId(), author, action, created_at: time
     });
   }
 }
@@ -1721,7 +2206,7 @@ async function broadcastChange(action){
 async function syncSceneToDB(scene){
   if (!supabase) return;
   await supabase.from('scenes').upsert({
-    project_id: PROJECT_ID,
+    project_id: getProjectId(),
     scene_id:  scene.id,
     name:      scene.name,
     loc:       scene.loc,
@@ -1738,7 +2223,7 @@ async function syncSceneToDB(scene){
 async function syncShotToDB(sceneId, shot){
   if (!supabase) return;
   await supabase.from('shots').upsert({
-    project_id: PROJECT_ID,
+    project_id: getProjectId(),
     shot_id:    shot.id,
     scene_id:   sceneId,
     type:       shot.type,
@@ -1753,7 +2238,7 @@ async function syncShotToDB(sceneId, shot){
 async function syncAnnouncementToDB(ann){
   if (!supabase) return;
   await supabase.from('announcements').insert({
-    project_id: PROJECT_ID,
+    project_id: getProjectId(),
     from_name:  ann.from,
     type:       ann.type,
     msg:        ann.msg,
@@ -1767,7 +2252,7 @@ async function syncAnnouncementToDB(ann){
 async function syncCrewToDB(member){
   if (!supabase) return;
   await supabase.from('crew').upsert({
-    project_id: PROJECT_ID,
+    project_id: getProjectId(),
     name:       member.name,
     char_name:  member.char,
     role:       member.role,
@@ -1821,12 +2306,22 @@ function renderSyncStatus(author='導演', action='已同步', time=null, remote
 function renderActivity(){
   const el = document.getElementById('activity-list');
   if (!el) return;
-  el.innerHTML = activityLog.slice(0, 4).map(item => {
+  if(!activityLog.length){
+    el.innerHTML='<div class="activity-empty">尚無編輯紀錄</div>';
+    return;
+  }
+  el.innerHTML = activityLog.slice(0, 6).map(item => {
     const d = new Date(item.time);
+    const initials = item.author.slice(0,1);
+    const isMe = item.author === (currentUserProfile.name || currentEditor);
+    const roleTag = isMe && currentUserProfile.role ? `<span class="activity-role-tag">${currentUserProfile.role}</span>` : '';
     return `<div class="activity-item">
-      <span class="editor-avatar">${item.author.slice(0,1)}</span>
-      <div><strong>${item.author}</strong><small>${item.action}</small></div>
-      <em>${formatTime(d)}</em>
+      <div class="editor-avatar">${initials}</div>
+      <div class="activity-body">
+        <div class="activity-author">${item.author}${roleTag}</div>
+        <div class="activity-action">${item.action}</div>
+      </div>
+      <div class="activity-time">${formatTime(d)}</div>
     </div>`;
   }).join('');
 }
@@ -1834,9 +2329,246 @@ function renderActivity(){
 function openSyncModal(){ openModal('modal-sync'); }
 
 function copyRealtimePlan(){
-  const plan = `Clappr Production Hub — Supabase Realtime\nURL: ${SUPABASE_URL}\nProject: ${PROJECT_ID}\nTables: scenes, shots, announcements, crew, activity_log\nRealtime: postgres_changes subscribed on all tables`;
+  const plan = `Clappr Production Hub — Supabase Realtime\nURL: ${SUPABASE_URL}\nProject: ${getProjectId()}\nTables: scenes, shots, announcements, crew, activity_log\nRealtime: postgres_changes subscribed on all tables`;
   navigator.clipboard?.writeText(plan);
   toast('同步規格已複製', '📋');
+}
+
+// ══════════════════════════════════════════
+//  MOBILE TAB BAR
+// ══════════════════════════════════════════
+function mobileTab(pageId, el){
+  // 切換頁面
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  // 切換 Tab 狀態
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  // 同步桌面版 sidebar
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if(pageId === 'scenes') renderScenes();
+  if(pageId === 'shots'){ buildShotSelect(); }
+  if(pageId === 'announce'){ renderAnnouncements(); renderAnnStats(); }
+}
+
+// ══════════════════════════════════════════
+//  LOCAL STORAGE PERSISTENCE
+// ══════════════════════════════════════════
+const LS_KEY = 'clappr_v1';
+
+function persistSave(){
+  try {
+    const data = {
+      projects: projects.map(p => {
+        const cp = clone(p);
+        return cp;
+      }),
+      currentProjectId
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  } catch(e){ console.warn('persistSave error', e); }
+}
+
+function persistLoad(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(data.projects && Array.isArray(data.projects) && data.projects.length){
+      projects.splice(0, projects.length, ...data.projects);
+      currentProjectId = data.currentProjectId || projects[0]?.id || null;
+      return true;
+    }
+  } catch(e){ console.warn('persistLoad error', e); }
+  return false;
+}
+
+
+let projects = [];
+let currentProjectId = null;
+
+function clone(v){ return JSON.parse(JSON.stringify(v)); }
+function getCurrentProject(){ return projects.find(p=>p.id===currentProjectId) || projects[0] || null; }
+
+function ensureProjectData(p){
+  if(!p) return;
+  if(!p.scenes){
+    p.scenes=[];
+    p.shots={};
+    p.announcements=[];
+    p.crew=[];
+    p.equipment=[];
+    p.script='';
+  }
+}
+
+function saveCurrentProjectState(){
+  const p=getCurrentProject();
+  if(!p) return;
+  ensureProjectData(p);
+  p.scenes=clone(scenes);
+  p.shots=clone(shots);
+  p.announcements=clone(announcements);
+  p.crew=clone(crew);
+  p.equipment=clone(equipment);
+  p.script=document.getElementById('script-text')?.value||p.script||'';
+  persistSave();
+}
+
+function replaceArray(target, data){ target.splice(0, target.length, ...(data||[])); }
+function replaceObject(target, data){ Object.keys(target).forEach(k=>delete target[k]); Object.assign(target, clone(data||{})); }
+
+function loadProjectState(p){
+  ensureProjectData(p);
+  replaceArray(scenes, clone(p.scenes||[]));
+  replaceObject(shots, clone(p.shots||{}));
+  replaceArray(announcements, clone(p.announcements||[]));
+  replaceArray(crew, clone(p.crew||[]));
+  replaceArray(equipment, clone(p.equipment||[]));
+  const script=document.getElementById('script-text');
+  if(script) script.value=p.script||'';
+  applyProjectMeta(p);
+  renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots(); buildShotSelect(); renderAnnouncements(); renderCrew(); renderEquip(); renderTicker(); renderActivity();
+}
+
+function projectSummary(p){
+  ensureProjectData(p);
+  const total=(p.scenes||[]).length;
+  const done=(p.scenes||[]).filter(s=>s.status==='done').length;
+  const anns=(p.announcements||[]).length;
+  const pct=total?Math.round(done/total*100):0;
+  return {total,done,anns,pct};
+}
+
+function renderHomeProjects(){
+  const grid=document.getElementById('home-project-grid');
+  if(!grid) return;
+  grid.innerHTML=projects.map(p=>{
+    const st=projectSummary(p);
+    return `<button class="home-project-card" onclick="enterProject('${p.id}')">
+      <span class="home-project-type">${p.type||'FILM'}</span>
+      <strong>《${p.name}》</strong>
+      <small>${p.prod||'未填製作公司'} · 導演 ${p.dir||'—'}</small>
+      <div class="home-project-meta">
+        <span>${st.total} 場景</span><span>${st.pct}% 完成</span><span>${st.anns} 公告</span>
+      </div>
+      <div class="home-card-progress"><i style="width:${st.pct}%"></i></div>
+      <em>進入專案 →</em>
+    </button>`;
+  }).join('') + `<button class="home-project-card add" onclick="openNewProjectModal()"><b>＋</b><strong>新增專案</strong><small>建立一個乾淨的新專案工作區</small></button>`;
+}
+
+function renderHomeAnnouncements(){
+  const list=document.getElementById('home-ann-list');
+  if(!list) return;
+  const items=[];
+  projects.forEach(p=>{
+    ensureProjectData(p);
+    (p.announcements||[]).slice(0,3).forEach(a=>items.push({...a,project:p.name,typeCode:p.type}));
+  });
+  list.innerHTML=items.length?items.slice(0,8).map(a=>`<button class="home-ann-item" onclick="showAnnouncementPopup('${a.project}', '${encodeURIComponent(a.from)}', '${encodeURIComponent(a.msg)}')">
+    <span>${a.project}</span><strong>${a.from}</strong><small>${a.msg}</small>
+  </button>`).join(''):'<div class="empty-state small">目前沒有公告</div>';
+}
+
+function showAnnouncementPopup(project, from, msg){
+  alert(`《${project}》公告\n\n${decodeURIComponent(from)}：\n${decodeURIComponent(msg)}\n\n已標記為已讀`);
+}
+
+function showHome(shouldSave=true){
+  if(shouldSave) saveCurrentProjectState();
+  document.body.classList.add('home-mode');
+  document.body.classList.remove('project-mode');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-home')?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  renderHomeProjects();
+  renderHomeAnnouncements();
+}
+
+function enterProject(id){
+  saveCurrentProjectState();
+  projects.forEach(p=>p.active=p.id===id);
+  currentProjectId=id;
+  window._activeProjectId = id;
+  const p=getCurrentProject();
+  loadProjectState(p);
+  document.body.classList.remove('home-mode');
+  document.body.classList.add('project-mode');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-dashboard')?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const firstNav=document.querySelector('.nav-item');
+  if(firstNav) firstNav.classList.add('active');
+  persistSave();
+  toast(`進入《${p.name}》`, '◈');
+}
+
+function renderProjectSheet(){ renderHomeProjects(); }
+function toggleProjectSheet(){ showHome(); }
+function closeProjectSheet(){}
+function switchProject(id){ enterProject(id); }
+function openNewProjectSheetModal(){ openNewProjectModal(); }
+function createNewProject(){ saveProject(); }
+
+// ══════════════════════════════════════════
+//  SHOT PROGRESS BAR
+// ══════════════════════════════════════════
+function updateShotProgress(sid){
+  const arr = shots[sid] || [];
+  const total = arr.length;
+  const done  = arr.filter(s => s.done).length;
+  const pct   = total > 0 ? Math.round(done / total * 100) : 0;
+
+  const countEl = document.getElementById('shot-progress-count');
+  const fillEl  = document.getElementById('shot-progress-fill');
+  const pctEl   = document.getElementById('shot-progress-pct');
+  const rangeEl = document.getElementById('shot-range-input');
+
+  if(countEl) countEl.textContent = `${done}/${total}`;
+  if(fillEl)  fillEl.style.width  = pct + '%';
+  if(pctEl)   pctEl.textContent   = pct + '%';
+  if(rangeEl){ rangeEl.max = total; rangeEl.value = done; }
+  // sync thumb position
+  const track = document.getElementById('canva-slider-track');
+  if(track) track.style.setProperty('--thumb-pos', pct + '%');
+}
+
+function onShotRangeInput(val){
+  // Scrub through shots visually (just show which shot index is "active")
+  const sel = document.getElementById('shot-scene-sel');
+  if(!sel) return;
+  const sid = sel.value || (scenes[0] && scenes[0].id);
+  const arr = shots[sid] || [];
+  const total = arr.length;
+  const idx = parseInt(val);
+  const pct = total > 0 ? Math.round(idx / total * 100) : 0;
+  const fillEl = document.getElementById('shot-progress-fill');
+  const pctEl  = document.getElementById('shot-progress-pct');
+  const countEl= document.getElementById('shot-progress-count');
+  if(fillEl) fillEl.style.width = pct + '%';
+  if(pctEl)  pctEl.textContent = pct + '%';
+  if(countEl) countEl.textContent = `${idx}/${total}`;
+  const track = document.getElementById('canva-slider-track');
+  if(track) track.style.setProperty('--thumb-pos', pct + '%');
+}
+
+// ══════════════════════════════════════════
+//  PATCH: sync shot progress on render
+// ══════════════════════════════════════════
+const _origRenderShots = renderShots;
+renderShots = function(){
+  _origRenderShots();
+  const sel = document.getElementById('shot-scene-sel');
+  if(sel) updateShotProgress(sel.value || (scenes[0] && scenes[0].id));
+};
+
+// ══════════════════════════════════════════
+//  PATCH: update ann badge on mobile tab
+// ══════════════════════════════════════════
+function updateMobileAnnBadge(){
+  const b = document.getElementById('tab-ann-badge');
+  if(b) b.textContent = announcements.length;
 }
 
 // ══════════════════════════════════════════
