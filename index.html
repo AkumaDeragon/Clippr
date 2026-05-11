@@ -2418,7 +2418,7 @@ function subscribeRealtime(){
     .channel(`project-${getProjectId()}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'scenes',        filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'shots',         filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements', filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements', filter: `project_id=eq.${getProjectId()}` }, handleRemoteAnnouncement)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'crew',          filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log',  filter: `project_id=eq.${getProjectId()}` }, handleActivityChange)
     .subscribe((status) => {
@@ -2429,8 +2429,63 @@ function subscribeRealtime(){
 
 // ── 遠端變更處理 ─────────────────────────
 async function handleRemoteChange(payload){
+  // Supabase realtime payload: { schema, table, commit_timestamp, eventType, new, old, errors }
+  const tbl = payload && (payload.table || '');
+  const evt = payload && (payload.eventType || payload.type || '');
+  const isNewAnn = tbl === 'announcements' && (evt === 'INSERT' || evt === '*');
+  const prevAnnCount = announcements.length;
+  const myName = (currentUserProfile && currentUserProfile.name) || currentEditor || '匿名';
+
   // 重新載入全部資料並 re-render
   await loadAllFromDB();
+
+  // 如果遠端有新公告，對所有人顯示 broadcast 彈窗
+  if (isNewAnn && announcements.length > prevAnnCount) {
+    const newest = announcements[0];
+    // 只跳給「不是自己發的那個人」(發送者本機已顯示過)
+    if (newest && newest.from !== myName) {
+      showBroadcast(newest);
+    }
+  } else if (tbl === 'announcements' && !isNewAnn) {
+    // fallback: 如果 eventType 不明確，比對最新公告的發送者
+    if (announcements.length > prevAnnCount) {
+      const newest = announcements[0];
+      if (newest && newest.from !== myName) showBroadcast(newest);
+    }
+  }
+}
+
+// ── 遠端公告專屬處理（INSERT only）──────
+async function handleRemoteAnnouncement(payload){
+  // payload.new 就是剛插入的那筆公告
+  const r = payload && payload.new;
+  if (!r) { await loadAllFromDB(); return; }
+
+  const myName = (currentUserProfile && currentUserProfile.name) || currentEditor || '匿名';
+  const ann = {
+    from: r.from_name || r.from || '?',
+    type: r.type || 'general',
+    msg:  r.msg || '',
+    time: r.time_str || '',
+    date: r.date_str || ''
+  };
+
+  // 加到本機列表（避免重複）
+  const alreadyHave = announcements.some(a => a.msg === ann.msg && a.from === ann.from && a.time === ann.time);
+  if (!alreadyHave) {
+    announcements.unshift(ann);
+    renderAnnouncements();
+    renderAnnStats();
+    renderTicker();
+    const badge = document.getElementById('ann-count-badge');
+    if(badge) badge.textContent = announcements.length;
+    persistSave();
+  }
+
+  // 只對「不是自己發」的人跳彈窗
+  if (ann.from !== myName) {
+    showBroadcast(ann);
+  }
 }
 
 async function handleActivityChange(payload){
@@ -2507,17 +2562,30 @@ async function syncAnnouncementToDB(ann){
 }
 
 // ── 成員同步寫回 DB ──────────────────────
+// 每次儲存全部 crew（避免 unique constraint 問題）
+async function syncAllCrewToDB(){
+  if (!supabase) return;
+  try {
+    // 先刪除此專案所有 crew，再重新插入
+    await supabase.from('crew').delete().eq('project_id', getProjectId());
+    if (!crew.length) return;
+    const rows = crew.map((c, i) => ({
+      project_id: getProjectId(),
+      name:       c.name,
+      char_name:  c.char || '—',
+      role:       c.role || '',
+      dept:       c.dept || '',
+      status:     c.status || 'pending',
+      color:      c.color !== undefined ? c.color : i % 7
+    }));
+    const { error } = await supabase.from('crew').insert(rows);
+    if (error) console.error('crew sync error:', error);
+  } catch(e) { console.error('syncAllCrewToDB error:', e); }
+}
+
 async function syncCrewToDB(member){
   if (!supabase) return;
-  await supabase.from('crew').upsert({
-    project_id: getProjectId(),
-    name:       member.name,
-    char_name:  member.char,
-    role:       member.role,
-    dept:       member.dept,
-    status:     member.status,
-    color:      member.color
-  }, { onConflict: 'project_id,name' });
+  await syncAllCrewToDB();
 }
 
 // ── 同步狀態 UI ──────────────────────────
