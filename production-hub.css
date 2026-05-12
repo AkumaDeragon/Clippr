@@ -39,6 +39,30 @@ html, body {
   font-size: 14px;
   line-height: 1.6;
   overflow: hidden;
+  /* 手機觸控修復：防止 iOS 橡皮筋效果造成卡頓 */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+}
+
+/* 手機觸控：確保可滾動區域不被攔截 */
+.content,
+.sidebar,
+.modal-body,
+.ann-board,
+.shot-cards-grid,
+.crew-grid,
+.script-editor-wrap,
+.callsheet-card,
+.table-wrap {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* 防止 iOS Safari 觸控事件卡住的通用修復 */
+button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
 }
 
 /* ── SCROLLBAR ── */
@@ -762,7 +786,7 @@ body { font-size: 13px; }
    ════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  html, body { overflow: hidden; font-size: 13px; }
+  html, body { overflow: hidden; font-size: 13px; overscroll-behavior: none; }
 
   /* ── 隱藏桌面版側欄 ── */
   .sidebar { display: none !important; }
@@ -821,7 +845,12 @@ body { font-size: 13px; }
     width: 100%;
     height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    /* 修復 iOS 手指滑動卡頓 */
+    will-change: scroll-position;
+    transform: translateZ(0);
   }
 
   /* ── Page padding ── */

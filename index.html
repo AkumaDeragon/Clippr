@@ -7,6 +7,417 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="production-hub.css">
 <style>
+/* ── AI IMPORT ── */
+.ai-import-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;}
+.ai-import-badge{flex-shrink:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:var(--font-mono,'DM Mono'),monospace;color:var(--gold,#C9A84C);border:1px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.1);border-radius:20px;padding:5px 14px;white-space:nowrap;}
+.ai-import-desc{font-size:13px;color:var(--text-secondary,#aaa);line-height:1.6;margin:0;}
+.ai-tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:0;}
+.ai-tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-muted,#888);font-size:12px;padding:8px 14px;cursor:pointer;font-family:inherit;transition:all .2s;margin-bottom:-1px;}
+.ai-tab:hover{color:var(--text-primary,#fff);}
+.ai-tab.active{color:var(--gold,#C9A84C);border-bottom-color:var(--gold,#C9A84C);}
+.ai-input-textarea{width:100%;min-height:180px;max-height:300px;resize:vertical;background:var(--bg-raised,#111);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text-primary,#fff);font-size:13px;line-height:1.7;padding:14px 16px;font-family:'DM Mono','Courier New',monospace;outline:none;box-sizing:border-box;}
+.ai-input-textarea:focus{border-color:var(--gold,#C9A84C);}
+.ai-file-preview{margin-top:12px;}
+.ai-file-name{font-size:12px;color:var(--gold,#C9A84C);font-family:var(--font-mono,'DM Mono'),monospace;margin-bottom:8px;padding:6px 10px;background:rgba(201,168,76,0.08);border-radius:6px;}
+.ai-import-options{margin-top:14px;display:flex;flex-direction:column;gap:10px;padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;}
+.ai-option-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.ai-option-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;min-width:64px;}
+.ai-checkboxes{display:flex;flex-wrap:wrap;gap:10px;}
+.ai-checkbox{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary,#aaa);cursor:pointer;}
+.ai-checkbox input{accent-color:var(--gold,#C9A84C);width:14px;height:14px;}
+.ai-result-wrap{margin-top:14px;border:1px solid rgba(201,168,76,0.3);border-radius:10px;overflow:hidden;}
+.ai-result-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(201,168,76,0.08);border-bottom:1px solid rgba(201,168,76,0.2);}
+.ai-result-badge{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold,#C9A84C);font-family:var(--font-mono,'DM Mono'),monospace;}
+.ai-result-body{padding:14px;max-height:280px;overflow-y:auto;font-size:12px;color:var(--text-secondary,#aaa);line-height:1.7;}
+.ai-result-section{margin-bottom:14px;}
+.ai-result-section-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold,#C9A84C);font-family:var(--font-mono,'DM Mono'),monospace;margin-bottom:8px;}
+.ai-result-item{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:6px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.06);}
+.ai-result-item strong{font-size:12px;color:var(--text-primary,#fff);}
+.ai-result-item small{font-size:11px;color:var(--text-muted,#888);}
+.ai-status{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-top:10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:8px;font-size:13px;color:var(--gold,#C9A84C);}
+.ai-loading-dots{display:flex;gap:4px;}
+.ai-loading-dots span{width:6px;height:6px;border-radius:50%;background:var(--gold,#C9A84C);animation:dot-pulse 1.4s ease-in-out infinite;}
+.ai-loading-dots span:nth-child(2){animation-delay:.2s;}
+.ai-loading-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes dot-pulse{0%,60%,100%{transform:scale(.6);opacity:.4}30%{transform:scale(1);opacity:1}}
+
+/* ── CALLSHEET V2 — 更直觀的卡片式通告單 ── */
+.callsheet-v2-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;}
+.callsheet-v2-field{display:flex;flex-direction:column;gap:4px;padding:12px 14px;background:var(--bg-elevated,#1a1a1a);border:1px solid rgba(255,255,255,0.07);border-radius:8px;}
+.callsheet-v2-field .field-key{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;}
+.callsheet-v2-field .field-val{font-size:13px;color:var(--text-primary,#fff);}
+.callsheet-v2-field .field-val input{width:100%;background:transparent;border:none;color:var(--text-primary,#fff);font-size:13px;font-family:inherit;outline:none;padding:0;}
+.callsheet-v2-field .field-val input:focus{color:var(--gold,#C9A84C);}
+.callsheet-v2-rows{display:flex;flex-direction:column;gap:8px;}
+.callsheet-v2-row{display:grid;grid-template-columns:90px 1fr auto;gap:12px;align-items:start;padding:14px 16px;background:var(--bg-elevated,#1a1a1a);border:1px solid rgba(255,255,255,0.07);border-radius:10px;transition:border-color .2s;}
+.callsheet-v2-row:hover{border-color:rgba(201,168,76,0.25);}
+.callsheet-v2-row.row-done{border-color:rgba(39,174,96,0.3);background:rgba(39,174,96,0.04);}
+.callsheet-v2-row.row-current{border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.04);}
+.cs-row-time-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:2px;}
+.cs-row-time{font-family:var(--font-mono,'DM Mono'),monospace;font-size:20px;color:var(--gold,#C9A84C);font-weight:600;line-height:1;}
+.cs-row-time input{font-family:var(--font-mono,'DM Mono'),monospace;font-size:18px;color:var(--gold,#C9A84C);font-weight:600;background:transparent;border:none;outline:none;width:72px;padding:0;}
+.cs-row-time input:focus{border-bottom:1px solid var(--gold,#C9A84C);}
+.cs-row-body{display:flex;flex-direction:column;gap:5px;}
+.cs-row-title{font-size:14px;font-weight:600;color:var(--text-primary,#fff);}
+.cs-row-title input{font-size:14px;font-weight:600;color:var(--text-primary,#fff);background:transparent;border:none;outline:none;width:100%;padding:0;}
+.cs-row-title input:focus{border-bottom:1px solid rgba(255,255,255,0.2);}
+.cs-row-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+.cs-row-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted,#888);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:2px 7px;}
+.cs-row-chip input{font-size:11px;color:var(--text-secondary,#aaa);background:transparent;border:none;outline:none;min-width:60px;max-width:120px;padding:0;}
+.cs-row-actions{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0;}
+.cs-scene-link{font-size:10px;color:var(--gold,#C9A84C);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:4px;padding:3px 8px;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.cs-scene-link:hover{background:rgba(201,168,76,0.15);}
+.cs-status-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;font-family:var(--font-mono,'DM Mono'),monospace;padding:2px 7px;border-radius:3px;}
+.cs-status-badge.done{color:var(--green-light,#2ecc71);background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.2);}
+.cs-status-badge.current{color:var(--gold,#C9A84C);background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);}
+.cs-status-badge.pending{color:var(--text-muted,#888);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);}
+.cs-status-badge.manual{color:var(--blue-light,#3498db);background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.15);}
+.cs-add-row-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px dashed rgba(255,255,255,0.12);border-radius:10px;color:var(--text-muted,#888);font-size:13px;cursor:pointer;background:transparent;font-family:inherit;transition:all .2s;width:100%;}
+.cs-add-row-btn:hover{border-color:var(--gold,#C9A84C);color:var(--gold,#C9A84C);}
+@media(max-width:768px){
+  .callsheet-v2-row{grid-template-columns:80px 1fr;grid-template-rows:auto auto;}
+  .cs-row-actions{grid-column:1/-1;flex-direction:row;justify-content:flex-end;flex-wrap:wrap;}
+  .callsheet-v2-meta{grid-template-columns:1fr 1fr;}
+}
+
+/* ── CALLSHEET DAY TABS + DELETE + ADD BTN REDESIGN ── */
+.callsheet-day-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  margin-bottom:12px;
+}
+.callsheet-day-tab-wrap{
+  position:relative;
+  display:inline-flex;
+  align-items:stretch;
+}
+.callsheet-day-tab-wrap .callsheet-day-tab{
+  border-radius:8px 0 0 8px;
+  border-right:none !important;
+  padding-right:10px;
+}
+.callsheet-day-tab-wrap:only-of-type .callsheet-day-tab{
+  border-radius:8px;
+  border-right:1px solid rgba(255,255,255,0.07) !important;
+}
+.callsheet-day-tab{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  padding:8px 14px;
+  background:var(--bg-elevated,#1a1a1a);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:8px;
+  color:var(--text-secondary,#aaa);
+  cursor:pointer;
+  font-family:inherit;
+  transition:all .18s;
+  line-height:1.2;
+}
+.callsheet-day-tab strong{
+  font-family:var(--font-mono,'DM Mono'),monospace;
+  font-size:12px;
+  font-weight:600;
+  color:var(--text-primary,#F0EBE0);
+}
+.callsheet-day-tab span{
+  font-size:10px;
+  color:var(--text-muted,#888);
+  font-family:var(--font-mono,'DM Mono'),monospace;
+}
+.callsheet-day-tab:hover{
+  border-color:rgba(201,168,76,0.35);
+  background:rgba(201,168,76,0.05);
+}
+.callsheet-day-tab.active{
+  background:rgba(201,168,76,0.1);
+  border-color:rgba(201,168,76,0.5);
+}
+.callsheet-day-tab.active strong{
+  color:var(--gold,#C9A84C);
+}
+.callsheet-day-delete{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:26px;
+  background:var(--bg-elevated,#1a1a1a);
+  border:1px solid rgba(255,255,255,0.07);
+  border-left:none;
+  border-radius:0 8px 8px 0;
+  color:var(--text-muted,#666);
+  font-size:14px;
+  cursor:pointer;
+  transition:all .18s;
+  padding:0;
+  line-height:1;
+  flex-shrink:0;
+}
+.callsheet-day-delete:hover{
+  background:rgba(231,76,60,0.15);
+  border-color:rgba(231,76,60,0.4);
+  color:var(--red-light,#E74C3C);
+}
+.callsheet-day-tab-wrap.active .callsheet-day-delete{
+  border-color:rgba(201,168,76,0.4);
+  border-left:none;
+}
+/* 新增一天按鈕 — pill 形式 */
+.callsheet-add-day-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:0 14px;
+  height:44px;
+  background:transparent;
+  border:1.5px dashed rgba(201,168,76,0.3);
+  border-radius:8px;
+  color:var(--gold,#C9A84C);
+  font-size:12px;
+  font-family:inherit;
+  cursor:pointer;
+  transition:all .2s;
+  white-space:nowrap;
+}
+.callsheet-add-day-btn:hover{
+  background:rgba(201,168,76,0.08);
+  border-color:rgba(201,168,76,0.6);
+  border-style:solid;
+}
+.add-day-icon{
+  font-size:16px;
+  line-height:1;
+  font-weight:300;
+}
+.add-day-label{
+  font-size:12px;
+  letter-spacing:0.5px;
+}
+
+/* ── CALLSHEET PAGE — MOBILE RESCALE ── */
+@media(max-width:768px){
+  /* page header 行動版堆疊 */
+  #page-callsheet .page-header{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .callsheet-page-actions{
+    width:100%;
+    flex-wrap:wrap;
+    gap:6px !important;
+  }
+  .callsheet-page-actions .btn{
+    flex:1 1 auto;
+    min-width:80px;
+    font-size:12px;
+    padding:8px 10px;
+    justify-content:center;
+  }
+  /* safe bar 堆疊 */
+  .callsheet-safe-bar{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+    padding:10px 12px;
+  }
+  .callsheet-safe-bar .safe-edit-actions{
+    width:100%;
+    justify-content:flex-start;
+    gap:6px;
+  }
+  .callsheet-safe-bar .btn{
+    font-size:12px;
+    padding:7px 10px;
+  }
+  /* day tabs 捲動 */
+  .callsheet-day-tabs{
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    padding-bottom:4px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .callsheet-day-tabs::-webkit-scrollbar{ display:none; }
+  .callsheet-day-tab{
+    flex-shrink:0;
+  }
+  .callsheet-add-day-btn{
+    flex-shrink:0;
+  }
+  /* meta fields: 單欄 */
+  .callsheet-v2-meta{
+    grid-template-columns:1fr !important;
+  }
+  .callsheet-v2-field[style*="grid-column"]{
+    grid-column:span 1 !important;
+  }
+  /* row cards */
+  .callsheet-v2-row{
+    grid-template-columns:70px 1fr !important;
+    gap:8px;
+    padding:10px 12px;
+  }
+  .cs-row-time input,
+  .cs-row-time{
+    font-size:15px !important;
+  }
+  .cs-row-title input,
+  .cs-row-title{
+    font-size:13px !important;
+  }
+  .cs-row-chips{
+    gap:4px;
+  }
+  .cs-row-chip{
+    font-size:10px;
+    padding:2px 5px;
+  }
+  /* add row button */
+  #cs-add-row-wrap .cs-add-row-btn{
+    font-size:13px;
+    padding:14px;
+  }
+  /* pager */
+  .callsheet-pager{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .callsheet-page-btn{
+    flex:1 1 auto;
+    font-size:12px;
+    padding:8px;
+    min-width:80px;
+  }
+}
+
+/* ── CALLSHEET INPUT — 強制深色，覆蓋瀏覽器預設白底 ── */
+.callsheet-input,
+.callsheet-cell-input {
+  width: 100%;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  color: var(--text-primary, #F0EBE0) !important;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  padding: 0;
+  box-sizing: border-box;
+  color-scheme: dark;
+  -webkit-text-fill-color: var(--text-primary, #F0EBE0) !important;
+  appearance: none;
+  -webkit-appearance: none;
+}
+/* placeholder 淺色 */
+.callsheet-input::placeholder,
+.callsheet-cell-input::placeholder {
+  color: rgba(255,255,255,0.22) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.22) !important;
+  opacity: 1;
+}
+.callsheet-input:focus,
+.callsheet-cell-input:focus {
+  color: var(--gold, #C9A84C) !important;
+  -webkit-text-fill-color: var(--gold, #C9A84C) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+.callsheet-input[readonly],
+.callsheet-cell-input[readonly] {
+  cursor: default;
+  opacity: 1;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+/* date input 特別處理 */
+input[type="date"].callsheet-input,
+input[type="date"].callsheet-cell-input {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--text-primary, #F0EBE0) !important;
+  -webkit-text-fill-color: var(--text-primary, #F0EBE0) !important;
+  color-scheme: dark;
+}
+input[type="date"].callsheet-input::-webkit-calendar-picker-indicator,
+input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.4);
+  cursor: pointer;
+}
+/* 覆蓋瀏覽器 autofill 白底 */
+.callsheet-input:-webkit-autofill,
+.callsheet-input:-webkit-autofill:hover,
+.callsheet-input:-webkit-autofill:focus,
+.callsheet-cell-input:-webkit-autofill,
+.callsheet-cell-input:-webkit-autofill:hover,
+.callsheet-cell-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+  box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+  -webkit-text-fill-color: var(--text-primary, #F0EBE0) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+/* 確保 callsheet-v2-field 內所有 input 都是深色 */
+.callsheet-v2-field input,
+.callsheet-v2-row input,
+.cs-row-chip input,
+#callsheet-v2-meta input {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--text-primary, #F0EBE0) !important;
+  -webkit-text-fill-color: var(--text-primary, #F0EBE0) !important;
+  color-scheme: dark;
+  border: none !important;
+  outline: none;
+}
+.callsheet-v2-field input::placeholder,
+.callsheet-v2-row input::placeholder,
+.cs-row-chip input::placeholder,
+#callsheet-v2-meta input::placeholder {
+  color: rgba(255,255,255,0.22) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.22) !important;
+  opacity: 1;
+}
+.callsheet-v2-field input:focus,
+.callsheet-v2-row input:focus,
+.cs-row-chip input:focus,
+#callsheet-v2-meta input:focus {
+  color: var(--gold, #C9A84C) !important;
+  -webkit-text-fill-color: var(--gold, #C9A84C) !important;
+}
+/* 編輯模式：meta 欄位顯示可編輯邊框提示 */
+.callsheet-safe-bar.editing ~ #callsheet-v2-meta .callsheet-v2-field {
+  border-color: rgba(201,168,76,0.35);
+  background: rgba(201,168,76,0.04);
+}
+.callsheet-safe-bar.editing ~ #callsheet-v2-meta .callsheet-v2-field:hover {
+  border-color: rgba(201,168,76,0.6);
+}
+.callsheet-safe-bar.editing ~ #callsheet-v2-meta .callsheet-input:not([readonly]) {
+  cursor: text;
+}
+/* callsheet-cell-input (行列 input) 樣式 */
+.callsheet-cell-input {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  color: var(--text-primary, #F0EBE0) !important;
+  -webkit-text-fill-color: var(--text-primary, #F0EBE0) !important;
+  color-scheme: dark;
+  font-family: inherit;
+  outline: none;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.callsheet-cell-input:focus {
+  color: var(--gold, #C9A84C) !important;
+  -webkit-text-fill-color: var(--gold, #C9A84C) !important;
+}
+
 /* ── PROFILE ONBOARDING ── */
 .profile-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);}
 .profile-overlay.hidden{display:none;}
@@ -177,7 +588,7 @@
   <div class="topbar-center">
     <div class="project-badge">
       <span class="Ptype" id="Ptype-badge">FILM</span>
-      <span class="Pname" id="Pname-badge">《彼岸之城》</span>
+      <span class="Pname" id="Pname-badge">—</span>
     </div>
     <div class="sync-pill" id="sync-pill" title="多人同步狀態">
       <span class="sync-dot"></span>
@@ -201,7 +612,7 @@
       <div class="sidebar-label">目前專案</div>
       <button class="workspace-btn" onclick="openProjectModal()">
         <span>
-          <strong id="workspace-project-name">彼岸之城</strong>
+          <strong id="workspace-project-name">—</strong>
           <small>專案內編輯區 · 點擊編輯</small>
         </span>
         <b>✎</b>
@@ -229,7 +640,7 @@
       </div>
       <div class="nav-item" onclick="switchPage('announce',this)">
         <span class="nav-icon">◎</span> 公告欄
-        <span class="nav-badge live" id="ann-count-badge">2</span>
+        <span class="nav-badge live" id="ann-count-badge" style="display:none">0</span>
       </div>
       <div class="nav-item" onclick="switchPage('crew',this)">
         <span class="nav-icon">◉</span> 劇組成員
@@ -254,10 +665,10 @@
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-project-info">
-      <div class="Pinfo-row"><span class="Pinfo-key">製作</span><span class="Pinfo-val" id="info-prod">星影製作</span></div>
-      <div class="Pinfo-row"><span class="Pinfo-key">導演</span><span class="Pinfo-val" id="info-dir">陳大明</span></div>
-      <div class="Pinfo-row"><span class="Pinfo-key">天數</span><span class="Pinfo-val" id="info-day">D-08/45</span></div>
-      <div class="Pinfo-row"><span class="Pinfo-key">規格</span><span class="Pinfo-val" id="info-spec">4K / 25fps</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">製作</span><span class="Pinfo-val" id="info-prod">—</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">導演</span><span class="Pinfo-val" id="info-dir">—</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">天數</span><span class="Pinfo-val" id="info-day">—</span></div>
+      <div class="Pinfo-row"><span class="Pinfo-key">規格</span><span class="Pinfo-val" id="info-spec">—</span></div>
     </div>
   </nav>
 
@@ -337,7 +748,7 @@
       <div class="dashboard-hero">
         <div class="hero-main" onclick="openCurrentSceneDetail()">
           <div class="hero-kicker">目前最重要</div>
-          <div class="hero-title" id="hero-current-title">S01 — 大廈入口</div>
+          <div class="hero-title" id="hero-current-title">—</div>
           <div class="hero-meta" id="hero-current-meta">日景 / 外景 · 角色：李主任、張助理 · 點擊查看場景內所有鏡頭與完成狀態</div>
           <div class="hero-actions">
             <button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openCurrentSceneDetail()">查看細節</button>
@@ -386,7 +797,7 @@
         <div class="stat-card stat-focus stat-card-clickable" onclick="goScenesFilter('current')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')goScenesFilter('current')">
           <div class="label">拍攝中</div>
           <div class="value gold" id="st-curr">1</div>
-          <div class="sub">Scene <span id="curr-scene-id">S01</span></div>
+          <div class="sub">Scene <span id="curr-scene-id">—</span></div>
           <div class="corner-deco">●</div>
         </div>
         <div class="stat-card">
@@ -417,12 +828,12 @@
         <div class="now-accent"></div>
         <div class="now-content">
           <div class="now-label">▶ 目前拍攝場景</div>
-          <div class="now-name" id="now-name">S01 — 大廈入口（日景 / 外景）</div>
-          <div class="now-detail" id="now-detail">角色：李主任、張助理 ／ 預計 3 個鏡頭</div>
+          <div class="now-name" id="now-name">—</div>
+          <div class="now-detail" id="now-detail"></div>
         </div>
         <div class="now-next">
           <div class="now-label" style="color:var(--text-muted)">下一場景</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px" id="next-name">S02 — 主管辦公室（日景 / 內景）</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px" id="next-name">—</div>
         </div>
       </div>
 
@@ -441,9 +852,7 @@
           <strong>最近編輯</strong>
           <span>多人共編時會顯示誰改了什麼，方便劇組同步。</span>
         </div>
-        <div class="activity-list" id="activity-list">
-          <div class="activity-empty">尚無編輯紀錄</div>
-        </div>
+        <div class="activity-list" id="activity-list"></div>
       </div>
 
       <div class="table-wrap">
@@ -662,10 +1071,10 @@
         <div>
           <div class="ann-stats" style="margin-bottom:12px">
             <div class="card-head" style="padding:8px 14px;margin:-14px -14px 10px;border-radius:var(--radius-lg) var(--radius-lg) 0 0">公告統計</div>
-            <div class="ann-stat-row"><span>總公告數</span><span style="font-family:var(--font-mono);color:var(--gold)" id="ann-stat-total">2</span></div>
-            <div class="ann-stat-row"><span>導演指示</span><span style="font-family:var(--font-mono);color:var(--amber-light)" id="ann-stat-dir">1</span></div>
+            <div class="ann-stat-row"><span>總公告數</span><span style="font-family:var(--font-mono);color:var(--gold)" id="ann-stat-total">0</span></div>
+            <div class="ann-stat-row"><span>導演指示</span><span style="font-family:var(--font-mono);color:var(--amber-light)" id="ann-stat-dir">0</span></div>
             <div class="ann-stat-row"><span>緊急通知</span><span style="font-family:var(--font-mono);color:var(--red-light)" id="ann-stat-urg">0</span></div>
-            <div class="ann-stat-row"><span>注意事項</span><span style="font-family:var(--font-mono);color:var(--blue-light)" id="ann-stat-not">1</span></div>
+            <div class="ann-stat-row"><span>注意事項</span><span style="font-family:var(--font-mono);color:var(--blue-light)" id="ann-stat-not">0</span></div>
           </div>
         </div>
       </div>
@@ -691,81 +1100,78 @@
       <div class="page-header">
         <div>
           <div class="page-title">通告 <span>單</span></div>
-          <div class="page-subtitle">會自動讀取場景、地點、演員與狀態；需要改時才按筆，避免誤觸。</div>
+          <div class="page-subtitle">自動讀取場景、地點、演員與狀態，隨時可手動微調。</div>
         </div>
         <div class="page-actions callsheet-page-actions">
           <button class="btn btn-outline" onclick="toast('已複製通告單連結','🔗')">分享連結</button>
           <button class="btn btn-outline" onclick="resetCallsheetFromScenes()">↻ 依場景重排</button>
-          <button class="btn btn-outline callsheet-global-edit-shortcut" onclick="enableCallsheetEdit()">✎ 編輯</button>
-          <button class="btn btn-outline" onclick="quickAddCallsheetRow()">＋ 新增行程</button>
-          <button class="btn btn-outline" onclick="createNewCallsheetDay()">＋ 新增一天</button>
-          <button class="btn btn-gold" onclick="window.print ? window.print() : toast('通告單已列印','🖨️')">列印通告單</button>
+          <button class="btn btn-gold" onclick="window.print ? window.print() : toast('通告單已列印','🖨️')">🖨️ 列印</button>
         </div>
       </div>
 
+      <!-- Edit Lock Bar -->
       <div class="callsheet-safe-bar" id="callsheet-safe-bar">
         <div>
-          <div class="safe-edit-title">Call Sheet Edit Lock</div>
-          <div class="safe-edit-status" id="callsheet-lock-status">唯讀 · 按「✎ 編輯通告單」才可修改</div>
+          <div class="safe-edit-title">Call Sheet</div>
+          <div class="safe-edit-status" id="callsheet-lock-status">唯讀 · 按「✎ 編輯」可修改任何欄位</div>
         </div>
         <div class="safe-edit-actions">
           <button class="btn btn-outline btn-sm" id="callsheet-edit-btn" onclick="enableCallsheetEdit()">✎ 編輯通告單</button>
           <button class="btn btn-outline btn-sm" id="callsheet-add-row-btn" onclick="addManualCallsheetRow()" style="display:none">＋ 新增行程</button>
           <button class="btn btn-outline btn-sm" id="callsheet-cancel-btn" onclick="cancelCallsheetEdit()" style="display:none">取消</button>
-          <button class="btn btn-gold btn-sm" id="callsheet-save-btn" onclick="saveCallsheetEdit()" style="display:none">💾 儲存通告單</button>
+          <button class="btn btn-gold btn-sm" id="callsheet-save-btn" onclick="saveCallsheetEdit()" style="display:none">💾 儲存</button>
         </div>
       </div>
 
+      <!-- Day Tabs -->
       <div class="callsheet-day-tabs" id="callsheet-day-tabs"></div>
-      <div class="callsheet-pager" id="callsheet-pager-top"></div>
 
-      <div class="callsheet-meta-grid" id="callsheet-meta-grid">
-        <div class="callsheet-meta-field">
-          <div class="callsheet-field-head"><span>拍攝日</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-day')">✎</button></div>
-          <input id="cs-day" class="callsheet-input" readonly>
+      <!-- Meta Fields — Card Style -->
+      <div class="callsheet-v2-meta" id="callsheet-v2-meta">
+        <div class="callsheet-v2-field">
+          <div class="field-key">拍攝日</div>
+          <div class="field-val"><input id="cs-day" class="callsheet-input" readonly placeholder="D-01"></div>
         </div>
-        <div class="callsheet-meta-field">
-          <div class="callsheet-field-head"><span>日期</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-date')">✎</button></div>
-          <input id="cs-date" class="callsheet-input" type="date" readonly>
+        <div class="callsheet-v2-field">
+          <div class="field-key">日期</div>
+          <div class="field-val"><input id="cs-date" class="callsheet-input" type="date" readonly></div>
         </div>
-        <div class="callsheet-meta-field wide">
-          <div class="callsheet-field-head"><span>通告標題</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-title')">✎</button></div>
-          <input id="cs-title" class="callsheet-input" readonly>
+        <div class="callsheet-v2-field" style="grid-column:span 2">
+          <div class="field-key">通告標題</div>
+          <div class="field-val"><input id="cs-title" class="callsheet-input" readonly placeholder="拍攝通告"></div>
         </div>
-        <div class="callsheet-meta-field wide">
-          <div class="callsheet-field-head"><span>集合地點</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-meet')">✎</button></div>
-          <input id="cs-meet" class="callsheet-input" readonly>
+        <div class="callsheet-v2-field" style="grid-column:span 2">
+          <div class="field-key">📍 集合地點</div>
+          <div class="field-val"><input id="cs-meet" class="callsheet-input" readonly placeholder="集合地點"></div>
         </div>
-        <div class="callsheet-meta-field wide">
-          <div class="callsheet-field-head"><span>天氣 / 注意事項</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-weather')">✎</button></div>
-          <input id="cs-weather" class="callsheet-input" readonly>
+        <div class="callsheet-v2-field" style="grid-column:span 2">
+          <div class="field-key">☁ 天氣 / 注意事項</div>
+          <div class="field-val"><input id="cs-weather" class="callsheet-input" readonly placeholder="天氣、交通、安全注意事項"></div>
         </div>
-        <div class="callsheet-meta-field wide">
-          <div class="callsheet-field-head"><span>製作備注</span><button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('cs-note')">✎</button></div>
-          <input id="cs-note" class="callsheet-input" readonly>
+        <div class="callsheet-v2-field" style="grid-column:span 2">
+          <div class="field-key">📝 製作備注</div>
+          <div class="field-val"><input id="cs-note" class="callsheet-input" readonly placeholder="備注事項"></div>
         </div>
       </div>
 
-      <div class="weather-warning" id="callsheet-warning">⚠ 通告單會跟場景資料同步；若時間要微調，請按「編輯通告單」。</div>
-      <div class="callsheet-card">
-        <div class="callsheet-header">
-          <div>
-            <div class="callsheet-day" id="callsheet-day-label">—</div>
-            <div id="callsheet-title-label" style="font-size:14px;font-weight:500;color:var(--text-primary);margin-top:2px">拍攝通告</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:10px;color:var(--text-muted)">集合地點</div>
-            <div id="callsheet-location-label" style="font-size:13px;color:var(--text-primary)">—</div>
-          </div>
-        </div>
+      <!-- Rows — Card Style -->
+      <div class="callsheet-v2-rows" id="callsheet-v2-rows"></div>
+
+      <!-- Add Row Button (only in edit mode) -->
+      <div id="cs-add-row-wrap" style="margin-top:8px;display:none">
+        <button class="cs-add-row-btn" onclick="addManualCallsheetRow()">＋ 新增行程</button>
+      </div>
+
+      <!-- Pager -->
+      <div class="callsheet-pager" id="callsheet-pager-top" style="margin-top:14px"></div>
+
+      <!-- Keep the original table for print purposes (hidden) -->
+      <div style="display:none">
         <table class="callsheet-table" id="callsheet-table">
           <thead><tr><th>時間</th><th>場景 / 行程</th><th>地點</th><th>演員</th><th>工作人員</th><th>備注</th><th>操作</th></tr></thead>
-          <tbody>
-            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:34px">通告單會依照目前專案場景自動生成</td></tr>
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
-      <div class="callsheet-pager bottom" id="callsheet-pager-bottom"></div>
     </section>
 
     <!-- ═══ EQUIPMENT ═══ -->
@@ -1099,7 +1505,7 @@ INT./EXT. 地點 — 日/夜
       <div class="form-grid2">
         <div class="form-field">
           <label class="form-label">專案名稱</label>
-          <input class="form-input" id="p-name" value="彼岸之城">
+          <input class="form-input" id="p-name" value="" placeholder="專案名稱">
         </div>
         <div class="form-field">
           <label class="form-label">製作類型</label>
@@ -1117,11 +1523,11 @@ INT./EXT. 地點 — 日/夜
       <div class="form-grid2">
         <div class="form-field">
           <label class="form-label">製作公司</label>
-          <input class="form-input" id="p-prod" value="星影製作">
+          <input class="form-input" id="p-prod" value="" placeholder="製作公司">
         </div>
         <div class="form-field">
           <label class="form-label">導演</label>
-          <input class="form-input" id="p-dir" value="陳大明">
+          <input class="form-input" id="p-dir" value="" placeholder="導演姓名">
         </div>
       </div>
       <div class="form-grid2">
@@ -1183,6 +1589,16 @@ INT./EXT. 地點 — 日/夜
             <option value="DUSK">黃昏</option>
             <option value="DAWN">黎明</option>
           </select>
+        </div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-field">
+          <label class="form-label">⏰ 拍攝時間（通告單用）</label>
+          <input class="form-input" id="sc-time" type="time" placeholder="08:00">
+        </div>
+        <div class="form-field">
+          <label class="form-label">預估時長（分鐘）</label>
+          <input class="form-input" id="sc-duration" type="number" placeholder="90" min="15" step="15">
         </div>
       </div>
       <div class="form-field">
@@ -1338,29 +1754,137 @@ INT./EXT. 地點 — 日/夜
 
 <!-- Toast -->
 
-<!-- Import Schedule Modal -->
+<!-- Import Schedule Modal - AI POWERED -->
 <div class="modal-overlay" id="modal-import">
-  <div class="modal">
+  <div class="modal modal-wide">
     <div class="modal-head">
-      <span class="modal-title">匯入檔案 → 自動建立行事曆</span>
+      <span class="modal-title">✦ AI 智慧匯入 — 自動建立場景 &amp; 通告單</span>
       <button class="modal-close" onclick="closeModal('modal-import')">×</button>
     </div>
     <div class="modal-body">
-      <div class="edit-hint">支援 PDF、Excel、CSV。此原型會先偵測檔名與格式，之後可接後端 OCR / Excel parser 自動產生通告單與行事曆事件。</div>
-      <label class="file-drop" for="schedule-file">
-        <input id="schedule-file" type="file" accept=".pdf,.xlsx,.xls,.csv" onchange="detectScheduleFile(event)" hidden>
-        <strong>拖曳或點擊選擇檔案</strong>
-        <span>PDF 通告單、Excel 排程表、CSV 都可以</span>
-      </label>
-      <div class="import-result" id="import-result">尚未選擇檔案</div>
-      <div class="form-field">
-        <label class="form-label">行事曆名稱</label>
-        <input class="form-input" id="calendar-name" value="彼岸之城拍攝行程">
+      <div class="ai-import-header">
+        <div class="ai-import-badge">✦ Claude AI</div>
+        <p class="ai-import-desc">貼上或上傳任何資料，AI 會自動解析並幫你建立場景、通告單與劇組資料。支援劇本、通告單、行程表、Excel、純文字、任何格式。</p>
       </div>
+
+      <!-- Tabs -->
+      <div class="ai-tabs" id="ai-import-tabs">
+        <button class="ai-tab active" data-tab="paste" onclick="switchAiTab('paste',this)">✎ 貼上文字</button>
+        <button class="ai-tab" data-tab="file" onclick="switchAiTab('file',this)">📄 上傳檔案</button>
+        <button class="ai-tab" data-tab="describe" onclick="switchAiTab('describe',this)">💬 直接描述</button>
+      </div>
+
+      <!-- Paste Tab -->
+      <div class="ai-tab-pane active" id="ai-tab-paste">
+        <textarea class="ai-input-textarea" id="ai-paste-input" placeholder="貼入任何格式的資料：
+• 通告單（有時間、場景、地點）
+• 劇本文字（有 INT./EXT. 場景標記）
+• Excel 複製過來的表格資料
+• 行程安排的純文字
+• 任何你覺得相關的資料
+
+AI 會自動辨識格式並整合..."></textarea>
+      </div>
+
+      <!-- File Tab -->
+      <div class="ai-tab-pane" id="ai-tab-file" style="display:none">
+        <label class="file-drop" for="ai-schedule-file">
+          <input id="ai-schedule-file" type="file" accept=".pdf,.xlsx,.xls,.csv,.txt,.doc,.docx" onchange="handleAiFileUpload(event)" hidden>
+          <div style="font-size:36px;margin-bottom:12px">📄</div>
+          <strong>拖曳或點擊選擇檔案</strong>
+          <span>PDF、Excel、CSV、Word、純文字 都可以</span>
+        </label>
+        <div id="ai-file-preview" style="display:none" class="ai-file-preview">
+          <div class="ai-file-name" id="ai-file-name"></div>
+          <textarea class="ai-input-textarea" id="ai-file-content" placeholder="檔案內容將顯示在這裡，您也可以手動編輯..."></textarea>
+        </div>
+      </div>
+
+      <!-- Describe Tab -->
+      <div class="ai-tab-pane" id="ai-tab-describe" style="display:none">
+        <textarea class="ai-input-textarea" id="ai-describe-input" placeholder="用自然語言描述你的拍攝計劃，例如：
+
+「這是一部愛情電影，明天要在台北信義區拍外景，早上8點在ATT集合，主要場景有：
+1. 百貨公司外部 — 男女主角相遇，演員：李曉明、王美麗
+2. 咖啡廳內部 — 對話場景
+3. 天橋上 — 分手場景，需要在黃昏拍攝
+預計晚上7點收工，導演是陳大明，攝影師是張小華」
+
+AI 會根據描述建立完整的場景資料和通告單。"></textarea>
+      </div>
+
+      <!-- AI Options -->
+      <div class="ai-import-options">
+        <div class="ai-option-row">
+          <label class="ai-option-label">建立選項</label>
+          <div class="ai-checkboxes">
+            <label class="ai-checkbox"><input type="checkbox" id="ai-opt-scenes" checked> 建立場景</label>
+            <label class="ai-checkbox"><input type="checkbox" id="ai-opt-callsheet" checked> 建立通告單</label>
+            <label class="ai-checkbox"><input type="checkbox" id="ai-opt-crew"> 建立劇組成員</label>
+            <label class="ai-checkbox"><input type="checkbox" id="ai-opt-equipment"> 建立器材清單</label>
+          </div>
+        </div>
+        <div class="ai-option-row">
+          <label class="ai-option-label">衝突處理</label>
+          <select class="form-select" id="ai-conflict-mode" style="width:auto;min-width:180px">
+            <option value="merge">合併（保留現有資料）</option>
+            <option value="replace">覆蓋（清空後重建）</option>
+            <option value="append">追加（不刪現有資料）</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- AI Result Preview -->
+      <div class="ai-result-wrap" id="ai-result-wrap" style="display:none">
+        <div class="ai-result-head">
+          <span class="ai-result-badge">AI 解析結果</span>
+          <button class="btn btn-outline btn-sm" onclick="clearAiResult()">✕ 清除</button>
+        </div>
+        <div class="ai-result-body" id="ai-result-body"></div>
+      </div>
+
+      <!-- Status -->
+      <div class="ai-status" id="ai-status" style="display:none">
+        <div class="ai-loading-dots"><span></span><span></span><span></span></div>
+        <span id="ai-status-text">AI 正在解析資料...</span>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-import')">取消</button>
-      <button class="btn btn-gold" onclick="createCalendarFromImport()">建立 / 更新行事曆</button>
+      <button class="btn btn-outline" id="ai-parse-btn" onclick="runAiImport()">✦ AI 解析</button>
+      <button class="btn btn-gold" id="ai-apply-btn" onclick="applyAiImport()" style="display:none">✓ 套用到專案</button>
+    </div>
+  </div>
+</div>
+
+<!-- Join Project Modal -->
+<div class="modal-overlay" id="modal-join-project">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <span class="modal-title">⤵ 加入共享專案</span>
+      <button class="modal-close" onclick="closeModal('modal-join-project')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="edit-hint" style="margin-bottom:16px">輸入其他成員給你的專案碼，即可跨裝置進入同一個專案並即時同步。</div>
+      <div class="form-field">
+        <label class="form-label">專案碼</label>
+        <input class="form-input" id="join-code-input" placeholder="proj-12345"
+          style="font-family:var(--font-mono);font-size:16px;letter-spacing:2px;text-align:center"
+          maxlength="11"
+          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"
+          onkeydown="if(event.key==='Enter')doJoinProject()">
+        <div id="join-code-error" style="font-size:12px;color:var(--red-light);margin-top:6px;min-height:18px"></div>
+      </div>
+      <div style="margin-top:10px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:8px">你的專案碼（分享給他人）</div>
+        <div id="join-my-code-display" style="font-family:var(--font-mono);font-size:18px;color:var(--gold);letter-spacing:3px;cursor:pointer" onclick="copyMyProjectCode()">—</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">點擊複製</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-join-project')">取消</button>
+      <button class="btn btn-gold" id="join-code-btn" onclick="doJoinProject()">加入專案</button>
     </div>
   </div>
 </div>
@@ -1448,7 +1972,7 @@ INT./EXT. 地點 — 日/夜
   <div class="tab-item" id="tab-announce" onclick="mobileTab('announce',this)">
     <span class="tab-icon">◎</span>
     <span class="tab-label">公告</span>
-    <span class="tab-badge" id="tab-ann-badge">2</span>
+    <span class="tab-badge" id="tab-ann-badge" style="display:none">0</span>
   </div>
   <div class="tab-item" id="tab-more" onclick="toggleProjectSheet()">
     <span class="tab-icon">⋯</span>
@@ -2351,10 +2875,15 @@ function renderAnnouncements(){
 }
 
 function renderAnnStats(){
-  document.getElementById('ann-stat-total').textContent=announcements.length;
-  document.getElementById('ann-stat-dir').textContent=announcements.filter(a=>a.type==='director').length;
-  document.getElementById('ann-stat-urg').textContent=announcements.filter(a=>a.type==='urgent').length;
-  document.getElementById('ann-stat-not').textContent=announcements.filter(a=>a.type==='notice').length;
+  const total = announcements.length;
+  const badge = document.getElementById('ann-count-badge');
+  const tabBadge = document.getElementById('tab-ann-badge');
+  if(badge){ badge.textContent = total; badge.style.display = total > 0 ? '' : 'none'; }
+  if(tabBadge){ tabBadge.textContent = total; tabBadge.style.display = total > 0 ? '' : 'none'; }
+  document.getElementById('ann-stat-total').textContent = total;
+  document.getElementById('ann-stat-dir').textContent = announcements.filter(a=>a.type==='director').length;
+  document.getElementById('ann-stat-urg').textContent = announcements.filter(a=>a.type==='urgent').length;
+  document.getElementById('ann-stat-not').textContent = announcements.filter(a=>a.type==='notice').length;
 }
 
 // ══════════════════════════════════════════
@@ -2456,8 +2985,8 @@ function makeDefaultCallsheet(dayIndex = 0, base = {}){
     date: base.date || todayISO(dayIndex),
     title: base.title || `《${p.name || '未命名專案'}》拍攝通告`,
     meetingLocation: base.meetingLocation || firstLoc || '尚未設定集合地點',
-    weather: base.weather || '請在正式拍攝前更新天氣、交通與安全注意事項',
-    note: base.note || '器材、妝髮、演員與交通請依現場製片確認。',
+    weather: base.weather || '',
+    note: base.note || '',
     rows: Array.isArray(base.rows) ? base.rows : []
   };
 }
@@ -2496,7 +3025,10 @@ function getOrCreateCallsheet(){
 }
 
 function makeCallsheetRowFromScene(scene, index, existing){
-  const startTime = existing?.time || addMinutesToTime('08:00', index * 75);
+  // Priority: existing manual override > scene's own shootTime > auto-calculated
+  const startTime = (existing && existing._timeManuallySet)
+    ? existing.time
+    : (scene.shootTime || existing?.time || addMinutesToTime('08:00', index * 75));
   const cast = Array.isArray(scene.cast) && scene.cast.length ? scene.cast.join('、') : '—';
   const location = scene.loc && scene.loc !== '—' ? scene.loc : `${scene.inout || '—'} / ${scene.daynight || '—'}`;
   return {
@@ -2504,6 +3036,7 @@ function makeCallsheetRowFromScene(scene, index, existing){
     sceneId: scene.id,
     manual: false,
     locked: false,
+    _timeManuallySet: existing?._timeManuallySet || false,
     time: startTime,
     title: `${scene.id} — ${scene.name || '未命名場景'}`,
     location,
@@ -2520,14 +3053,13 @@ function syncCallsheetRowsWithScenes(cs){
   const oldByScene = new Map(oldRows.filter(r => r.sceneId).map(r => [r.sceneId, r]));
   const manualRows = oldRows.filter(r => r.manual && !['crew-call','wrap'].includes(r.id));
   const sceneRows = scenes.map((scene, index) => makeCallsheetRowFromScene(scene, index, oldByScene.get(scene.id)));
-  const crewCall = oldRows.find(r=>r.id==='crew-call') || {};
-  const wrap = oldRows.find(r=>r.id==='wrap') || {};
-  cs.rows = [
-    { id:'crew-call', manual:true, locked:true, time:crewCall.time || '07:30', title:crewCall.title || '全組集合 / 場地佈置', location:crewCall.location || cs.meetingLocation || '集合地點', cast:crewCall.cast || '—', crew:crewCall.crew || '全組', note:crewCall.note || '器材、場地、妝髮確認', status:'manual' },
-    ...sceneRows,
-    ...manualRows,
-    { id:'wrap', manual:true, locked:true, time:wrap.time || '19:00', title:wrap.title || '收工 / 備份素材', location:wrap.location || cs.meetingLocation || '現場', cast:wrap.cast || '—', crew:wrap.crew || '全組', note:wrap.note || '素材備份、器材歸位', status:'manual' }
-  ];
+  // 只保留使用者曾手動存過的 crew-call / wrap，新通告單不自動注入預設行
+  const existingCrewCall = oldRows.find(r => r.id === 'crew-call');
+  const existingWrap = oldRows.find(r => r.id === 'wrap');
+  const newRows = [...sceneRows, ...manualRows];
+  if(existingCrewCall) newRows.unshift(existingCrewCall);
+  if(existingWrap) newRows.push(existingWrap);
+  cs.rows = newRows;
 }
 
 function cloneCallsheet(cs){ return JSON.parse(JSON.stringify(cs || {})); }
@@ -2554,13 +3086,14 @@ function updateCallsheetLockUI(){
   const add = document.getElementById('callsheet-add-row-btn');
   const cancel = document.getElementById('callsheet-cancel-btn');
   const save = document.getElementById('callsheet-save-btn');
+  const addRowWrap = document.getElementById('cs-add-row-wrap');
   bar?.classList.toggle('editing', _callsheetEditing);
-  if(status) status.textContent = _callsheetEditing ? '編輯中 · 這一天可修改；按「💾 儲存」後鎖回唯讀' : '唯讀 · 點任一個「✎」才可修改，避免誤觸';
+  if(status) status.textContent = _callsheetEditing ? '✎ 編輯中 · 直接點選任何欄位修改；按「💾 儲存」後鎖回唯讀' : '唯讀 · 點擊任何欄位或按「✎ 編輯通告單」開始修改';
   if(edit) edit.style.display = _callsheetEditing ? 'none' : 'inline-flex';
   if(add) add.style.display = _callsheetEditing ? 'inline-flex' : 'none';
   if(cancel) cancel.style.display = _callsheetEditing ? 'inline-flex' : 'none';
   if(save) save.style.display = _callsheetEditing ? 'inline-flex' : 'none';
-  document.querySelectorAll('.mini-pencil,.callsheet-global-edit-shortcut').forEach(btn => btn.style.display = _callsheetEditing ? 'none' : 'inline-flex');
+  if(addRowWrap) addRowWrap.style.display = _callsheetEditing ? 'block' : 'none';
 }
 
 function renderCallsheetDayTabs(){
@@ -2570,11 +3103,14 @@ function renderCallsheetDayTabs(){
   const days = normalizeProjectCallsheets(p);
   const active = p.activeCallsheetIndex || 0;
   wrap.innerHTML = days.map((cs, i) => `
-    <button class="callsheet-day-tab ${i===active?'active':''}" type="button" onclick="switchCallsheetDay(${i})">
-      <strong>${htmlEscape(cs.day || `D-${String(i+1).padStart(2,'0')}`)}</strong>
-      <span>${htmlEscape(cs.date || '')}</span>
-    </button>
-  `).join('') + `<button class="callsheet-day-tab add" type="button" onclick="createNewCallsheetDay()">＋ 新增一天</button>`;
+    <div class="callsheet-day-tab-wrap ${i===active?'active':''}">
+      <button class="callsheet-day-tab ${i===active?'active':''}" type="button" onclick="switchCallsheetDay(${i})">
+        <strong>${htmlEscape(cs.day || `D-${String(i+1).padStart(2,'0')}`)}</strong>
+        <span>${htmlEscape(cs.date || '')}</span>
+      </button>
+      ${days.length > 1 ? `<button class="callsheet-day-delete" type="button" title="刪除第${i+1}天" onclick="deleteCallsheetDay(${i})">×</button>` : ''}
+    </div>
+  `).join('') + `<button class="callsheet-add-day-btn" type="button" onclick="createNewCallsheetDay()"><span class="add-day-icon">＋</span><span class="add-day-label">新增一天</span></button>`;
 }
 
 function renderCallsheetPager(){
@@ -2595,79 +3131,103 @@ function renderCallsheetPager(){
 }
 
 function renderCallsheetMetaFields(cs){
+  // Write to the V2 card inputs directly
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.value = val || '';
+    el.readOnly = !_callsheetEditing;
+    el.classList.toggle('callsheet-readonly', !_callsheetEditing);
+  };
+  set('cs-day', cs.day || '');
+  set('cs-date', cs.date || '');
+  set('cs-title', cs.title || '');
+  set('cs-meet', cs.meetingLocation || '');
+  set('cs-weather', cs.weather || '');
+  set('cs-note', cs.note || '');
+
+  // legacy grid (kept for backward compat, may not exist)
   const grid = document.getElementById('callsheet-meta-grid');
-  if(!grid) return;
-  const fields = [
-    {id:'cs-day', key:'day', label:'拍攝日', value:cs.day || '', type:'text'},
-    {id:'cs-date', key:'date', label:'日期', value:cs.date || '', type:'date'},
-    {id:'cs-title', key:'title', label:'通告標題', value:cs.title || '', wide:true, type:'text'},
-    {id:'cs-meet', key:'meetingLocation', label:'集合地點', value:cs.meetingLocation || '', wide:true, type:'text'},
-    {id:'cs-weather', key:'weather', label:'天氣 / 注意事項', value:cs.weather || '', wide:true, type:'text'},
-    {id:'cs-note', key:'note', label:'製作備注', value:cs.note || '', wide:true, type:'text'}
-  ];
-  grid.innerHTML = fields.map(f => {
-    const body = _callsheetEditing
-      ? `<input id="${f.id}" class="callsheet-input" type="${f.type}" value="${htmlEscape(f.value)}">`
-      : `<div class="callsheet-meta-value" onclick="enableCallsheetEditAndFocus('${f.id}')">${htmlEscape(f.value || '—')}</div>`;
-    const pencil = _callsheetEditing ? '' : `<button class="mini-pencil" type="button" onclick="enableCallsheetEditAndFocus('${f.id}')">✎</button>`;
-    return `<div class="callsheet-meta-field ${f.wide?'wide':''}">
-      <div class="callsheet-field-head"><span>${f.label}</span>${pencil}</div>
-      ${body}
-    </div>`;
-  }).join('');
+  if(grid && grid.children.length === 0){
+    // grid exists but is empty — the new HTML doesn't use it
+  }
 }
 
 
 function renderCallsheet(){
   const cs = getActiveCallsheet();
-  const table = document.getElementById('callsheet-table');
-  if(!cs || !table) return;
+  if(!cs) return;
 
   renderCallsheetDayTabs();
-  renderCallsheetPager();
   renderCallsheetMetaFields(cs);
-  const day = document.getElementById('callsheet-day-label');
-  const title = document.getElementById('callsheet-title-label');
-  const locLabel = document.getElementById('callsheet-location-label');
-  const warning = document.getElementById('callsheet-warning');
-  if(day) day.textContent = `${cs.day || 'D-01'} ／ ${cs.date || todayISO()}`;
-  if(title) title.textContent = cs.title || '拍攝通告';
-  if(locLabel) locLabel.textContent = cs.meetingLocation || '尚未設定集合地點';
-  if(warning){
-    warning.innerHTML = _callsheetEditing
-      ? '✎ 編輯中：可以直接改這一天的通告單。改完按「💾 儲存通告單」會自動鎖回。'
-      : '⚠ 目前是唯讀。要修改任何欄位，直接按旁邊的「✎ 編輯」。';
+  updateCallsheetLockUI();
+
+  // V2 card-based rows
+  const rowsWrap = document.getElementById('callsheet-v2-rows');
+  const addRowWrap = document.getElementById('cs-add-row-wrap');
+  if(!rowsWrap) return;
+
+  if(!cs.rows || !cs.rows.length){
+    rowsWrap.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:34px 0;font-size:13px">通告單會依照目前專案場景自動生成</div>';
+    return;
   }
 
-  const rows = (cs.rows || []).map((row, i) => {
-    const safeScene = htmlEscape(row.sceneId || '');
-    const sceneButton = row.sceneId ? `<button class="callsheet-scene-link" type="button" onclick="openDetail('${safeScene}')">查看場景</button>` : '';
-    const deleteBtn = (!row.locked && row.manual) ? `<button class="btn btn-danger btn-sm callsheet-row-delete" type="button" onclick="deleteCallsheetRow('${htmlEscape(row.id)}')">刪除</button>` : '';
-    const moveBtns = (!row.locked) ? `<button class="btn btn-outline btn-sm callsheet-row-move" type="button" onclick="moveCallsheetRow(${i},-1)">↑</button><button class="btn btn-outline btn-sm callsheet-row-move" type="button" onclick="moveCallsheetRow(${i},1)">↓</button>` : '';
-    const editBtn = `<button class="btn btn-outline btn-sm callsheet-row-edit" type="button" onclick="enableCallsheetEditAndFocus('tr[data-row-id=&quot;${htmlEscape(row.id)}&quot;] input')">✎ 編輯</button>`;
-    const saveBtn = `<button class="btn btn-gold btn-sm callsheet-row-save" type="button" onclick="saveCallsheetEdit()">💾 儲存</button>`;
-    const statusBadge = row.sceneId ? `<span class="badge ${getCallsheetBadgeClass(row.status)}">${sceneStatusText(row.status)}</span>` : `<span class="badge badge-pending">手動</span>`;
-    const rowActions = _callsheetEditing ? `${moveBtns}${deleteBtn}${saveBtn}` : editBtn;
-    const cell = (field, extraClass='', placeholder='') => _callsheetEditing
-      ? `<input class="callsheet-cell-input ${extraClass}" data-cs-field="${field}" data-cs-index="${i}" value="${htmlEscape(row[field])}" placeholder="${placeholder}">`
-      : `<div class="callsheet-cell-view ${extraClass}" onclick="enableCallsheetEditAndFocus('tr[data-row-id=&quot;${htmlEscape(row.id)}&quot;] input[data-cs-field=&quot;${field}&quot;]')">${htmlEscape(row[field] || '—')}</div>`;
-    return `<tr data-row-id="${htmlEscape(row.id)}">
-      <td>${cell('time','time-col','08:00')}</td>
-      <td>
-        ${cell('title','strong','場景 / 行程')}
-        <div class="callsheet-row-sub">${statusBadge}${sceneButton}</div>
-      </td>
-      <td>${cell('location','','地點')}</td>
-      <td>${cell('cast','','演員')}</td>
-      <td>${cell('crew','','工作人員')}</td>
-      <td>${cell('note','','備注')}</td>
-      <td><div class="callsheet-actions-cell">${rowActions}</div></td>
-    </tr>`;
+  rowsWrap.innerHTML = (cs.rows || []).map((row, i) => {
+    const safeVal = s => { const v = String(s ?? ''); return htmlEscape(v === '—' ? '' : v); };
+    const statusCls = row.status === 'done' ? 'done' : row.status === 'current' ? 'current' : row.manual ? 'manual' : 'pending';
+    const statusLabel = row.status === 'done' ? '已拍完' : row.status === 'current' ? '拍攝中' : row.manual ? '手動' : '待拍';
+    const sceneLink = row.sceneId ? `<button class="cs-scene-link" onclick="openDetail('${htmlEscape(row.sceneId)}')">查看場景 →</button>` : '';
+    const rowClass = `callsheet-v2-row row-${statusCls}`;
+
+    if(_callsheetEditing){
+      const deleteBtn = (!row.locked && row.manual) ? `<button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="deleteCallsheetRow('${htmlEscape(row.id)}')">🗑</button>` : '';
+      const moveBtns = !row.locked ? `<button class="btn btn-outline btn-sm" style="padding:4px 8px" onclick="moveCallsheetRow(${i},-1)">↑</button><button class="btn btn-outline btn-sm" style="padding:4px 8px" onclick="moveCallsheetRow(${i},1)">↓</button>` : '';
+      return `<div class="${rowClass}" data-row-id="${htmlEscape(row.id)}">
+        <div class="cs-row-time-wrap">
+          <input class="cs-row-time callsheet-cell-input" data-cs-field="time" data-cs-index="${i}" value="${safeVal(row.time)}" placeholder="08:00">
+        </div>
+        <div class="cs-row-body">
+          <div class="cs-row-title"><input class="callsheet-cell-input" data-cs-field="title" data-cs-index="${i}" value="${safeVal(row.title)}" placeholder="場景 / 行程名稱" style="font-size:14px;font-weight:600;width:100%"></div>
+          <div class="cs-row-chips">
+            <span class="cs-row-chip">📍 <input class="callsheet-cell-input" data-cs-field="location" data-cs-index="${i}" value="${safeVal(row.location)}" placeholder="地點" style="min-width:80px"></span>
+            <span class="cs-row-chip">🎭 <input class="callsheet-cell-input" data-cs-field="cast" data-cs-index="${i}" value="${safeVal(row.cast)}" placeholder="演員" style="min-width:70px"></span>
+            <span class="cs-row-chip">👥 <input class="callsheet-cell-input" data-cs-field="crew" data-cs-index="${i}" value="${safeVal(row.crew)}" placeholder="工作人員" style="min-width:70px"></span>
+            <span class="cs-row-chip">📝 <input class="callsheet-cell-input" data-cs-field="note" data-cs-index="${i}" value="${safeVal(row.note)}" placeholder="備注" style="min-width:80px"></span>
+          </div>
+        </div>
+        <div class="cs-row-actions">${moveBtns}${deleteBtn}</div>
+      </div>`;
+    } else {
+      return `<div class="${rowClass}" data-row-id="${htmlEscape(row.id)}" onclick="enableCallsheetEdit()">
+        <div class="cs-row-time-wrap">
+          <div class="cs-row-time">${safeVal(row.time) || "—"}</div>
+        </div>
+        <div class="cs-row-body">
+          <div class="cs-row-title">${safeVal(row.title)}</div>
+          <div class="cs-row-chips">
+            ${row.location && row.location !== '—' && row.location ? `<span class="cs-row-chip">📍 ${safeVal(row.location)}</span>` : ''}
+            ${row.cast && row.cast !== '—' && row.cast ? `<span class="cs-row-chip">🎭 ${safeVal(row.cast)}</span>` : ''}
+            ${row.crew && row.crew !== '—' && row.crew ? `<span class="cs-row-chip">👥 ${safeVal(row.crew)}</span>` : ''}
+            ${row.note && row.note !== '—' && row.note ? `<span class="cs-row-chip">📝 ${safeVal(row.note)}</span>` : ''}
+          </div>
+        </div>
+        <div class="cs-row-actions">
+          <span class="cs-status-badge ${statusCls}">${statusLabel}</span>
+          ${sceneLink}
+        </div>
+      </div>`;
+    }
   }).join('');
 
-  table.innerHTML = `<thead><tr><th>時間</th><th>場景 / 行程</th><th>地點</th><th>演員</th><th>工作人員</th><th>備注</th><th>操作</th></tr></thead><tbody>${rows}</tbody>`;
+  if(addRowWrap) addRowWrap.style.display = _callsheetEditing ? 'block' : 'none';
+
+  // Also update the hidden print table
+  const table = document.getElementById('callsheet-table');
+  if(table){
+    const rows = (cs.rows || []).map((row,i) => `<tr><td>${htmlEscape(row.time||'')}</td><td>${htmlEscape(row.title||'')}</td><td>${htmlEscape(row.location||'')}</td><td>${htmlEscape(row.cast||'')}</td><td>${htmlEscape(row.crew||'')}</td><td>${htmlEscape(row.note||'')}</td><td></td></tr>`).join('');
+    table.innerHTML = `<thead><tr><th>時間</th><th>場景</th><th>地點</th><th>演員</th><th>工作人員</th><th>備注</th><th></th></tr></thead><tbody>${rows}</tbody>`;
+  }
   setCallsheetInputsLocked(!_callsheetEditing);
-  updateCallsheetLockUI();
 }
 
 function enableCallsheetEdit(){
@@ -2694,10 +3254,15 @@ function readCallsheetFormIntoDraft(){
   _callsheetDraft.meetingLocation = document.getElementById('cs-meet')?.value || '尚未設定集合地點';
   _callsheetDraft.weather = document.getElementById('cs-weather')?.value || '';
   _callsheetDraft.note = document.getElementById('cs-note')?.value || '';
-  document.querySelectorAll('#callsheet-table input[data-cs-field]').forEach(input => {
+  // Read from both old table inputs and new V2 card inputs
+  document.querySelectorAll('[data-cs-field]').forEach(input => {
     const idx = Number(input.dataset.csIndex);
     const field = input.dataset.csField;
-    if(_callsheetDraft.rows[idx]) _callsheetDraft.rows[idx][field] = input.value;
+    if(Number.isFinite(idx) && _callsheetDraft.rows[idx]){
+      _callsheetDraft.rows[idx][field] = input.value;
+      // Mark time as manually set so scene sync won't overwrite it
+      if(field === 'time' && input.value) _callsheetDraft.rows[idx]._timeManuallySet = true;
+    }
   });
 }
 
@@ -2781,8 +3346,8 @@ function resetCallsheetFromScenes(){
     date: keep.date || todayISO(idx),
     title: keep.title || `《${p.name || '未命名專案'}》拍攝通告`,
     meetingLocation: keep.meetingLocation || scenes.find(s=>s.loc && s.loc !== '—')?.loc || '尚未設定集合地點',
-    weather: keep.weather || '請在正式拍攝前更新天氣、交通與安全注意事項',
-    note: keep.note || '器材、妝髮、演員與交通請依現場製片確認。',
+    weather: keep.weather || '',
+    note: keep.note || '',
     rows: []
   });
   syncCallsheetRowsWithScenes(p.callsheetDays[idx]);
@@ -2830,6 +3395,22 @@ function switchCallsheetDay(index){
   renderCallsheet();
 }
 
+function deleteCallsheetDay(index){
+  const p = getCurrentProject();
+  if(!p) return;
+  const days = normalizeProjectCallsheets(p);
+  if(days.length <= 1){ toast('至少保留一天通告單，無法刪除', '⚠'); return; }
+  if(!confirm(`確定要刪除「${days[index]?.day || `D-${String(index+1).padStart(2,'0')}`}」這一天的通告單？此操作無法復原。`)) return;
+  if(_callsheetEditing) cancelCallsheetEdit();
+  days.splice(index, 1);
+  const newActive = Math.min(p.activeCallsheetIndex || 0, days.length - 1);
+  p.activeCallsheetIndex = newActive;
+  p.callsheet = days[newActive];
+  persistSave();
+  renderCallsheet();
+  toast('已刪除該天通告單', '🗑');
+}
+
 function prevCallsheetDay(){
   const p = getCurrentProject();
   if(!p) return;
@@ -2873,7 +3454,9 @@ setTimeout(bindCallsheetButtons, 0);
 document.addEventListener('click', (e) => {
   const input = e.target.closest('.callsheet-input, .callsheet-cell-input');
   if(input && !_callsheetEditing){
-    toast('要修改通告單，請先按旁邊的 ✎ 編輯', '✎');
+    // 點擊任何通告單欄位時自動進入編輯模式，然後 focus 到被點的欄位
+    enableCallsheetEdit();
+    setTimeout(() => { input.focus(); if(input.select) input.select(); }, 0);
   }
 });
 
@@ -2918,22 +3501,292 @@ function openNewProjectModal(){
 
 function openImportModal(){openModal('modal-import');}
 
-function detectScheduleFile(event){
-  const file=event.target.files && event.target.files[0];
-  const result=document.getElementById('import-result');
-  if(!file){result.textContent='尚未選擇檔案';return;}
-  const ext=file.name.split('.').pop().toLowerCase();
-  const typeMap={pdf:'PDF 通告單 / 劇本',xlsx:'Excel 排程表',xls:'Excel 排程表',csv:'CSV 排程資料'};
-  result.innerHTML=`<strong>已偵測：</strong>${typeMap[ext]||'未知格式'}<br><span>${file.name}</span><br><small>下一步：解析日期、時間、場景、地點與人員，轉成行事曆事件。</small>`;
+// ── AI IMPORT SYSTEM ─────────────────────────────────────────────
+let _aiImportResult = null;
+let _activeAiTab = 'paste';
+
+function switchAiTab(tab, btn){
+  _activeAiTab = tab;
+  document.querySelectorAll('.ai-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.ai-tab-pane').forEach(p => p.style.display = 'none');
+  const pane = document.getElementById(`ai-tab-${tab}`);
+  if(pane) pane.style.display = 'block';
 }
 
-function createCalendarFromImport(){
-  const file=document.getElementById('schedule-file').files[0];
-  const cal=document.getElementById('calendar-name').value.trim()||'拍攝行程';
-  if(!file){toast('請先選擇 PDF 或 Excel 檔案','⚠');return;}
+function handleAiFileUpload(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const preview = document.getElementById('ai-file-preview');
+  const name = document.getElementById('ai-file-name');
+  const content = document.getElementById('ai-file-content');
+  if(name) name.textContent = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+  if(preview) preview.style.display = 'block';
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(['txt','csv'].includes(ext)){
+    const reader = new FileReader();
+    reader.onload = e => { if(content) content.value = e.target.result; };
+    reader.readAsText(file);
+  } else {
+    if(content) content.value = `[${file.name}]\n\n此格式需要後端解析。\n請將通告單內容複製貼上到「貼上文字」分頁，或在「直接描述」中說明拍攝計劃。`;
+  }
+}
+
+function getAiInputText(){
+  if(_activeAiTab === 'paste') return document.getElementById('ai-paste-input')?.value || '';
+  if(_activeAiTab === 'file') return document.getElementById('ai-file-content')?.value || '';
+  if(_activeAiTab === 'describe') return document.getElementById('ai-describe-input')?.value || '';
+  return '';
+}
+
+function clearAiResult(){
+  _aiImportResult = null;
+  const wrap = document.getElementById('ai-result-wrap');
+  if(wrap) wrap.style.display = 'none';
+  const applyBtn = document.getElementById('ai-apply-btn');
+  if(applyBtn) applyBtn.style.display = 'none';
+}
+
+async function runAiImport(){
+  const inputText = getAiInputText().trim();
+  if(!inputText){
+    toast('請先輸入或貼上資料', '⚠');
+    return;
+  }
+
+  const statusEl = document.getElementById('ai-status');
+  const statusText = document.getElementById('ai-status-text');
+  const parseBtn = document.getElementById('ai-parse-btn');
+  const applyBtn = document.getElementById('ai-apply-btn');
+  const resultWrap = document.getElementById('ai-result-wrap');
+  const resultBody = document.getElementById('ai-result-body');
+
+  if(statusEl) statusEl.style.display = 'flex';
+  if(statusText) statusText.textContent = 'AI 正在解析資料...';
+  if(parseBtn){ parseBtn.disabled = true; parseBtn.textContent = '解析中...'; }
+  if(resultWrap) resultWrap.style.display = 'none';
+
+  const p = getCurrentProject();
+  const projectName = p?.name || '未命名專案';
+  const existingScenes = scenes.map(s => s.id + ':' + s.name).join(', ') || '無';
+
+  const systemPrompt = `你是一個專業的電影製作助理。用戶會提供各種格式的拍攝資料，你需要解析並以嚴格的 JSON 格式回傳結果。
+回傳格式：
+{
+  "scenes": [
+    { "id": "S01", "name": "場景名稱", "loc": "地點", "inout": "INT", "daynight": "DAY", "cast": ["演員A","演員B"], "notes": "備注", "time": "08:00", "duration": 90 }
+  ],
+  "callsheetRows": [
+    { "time": "08:00", "title": "行程標題", "location": "地點", "cast": "演員", "crew": "工作人員", "note": "備注" }
+  ],
+  "crew": [
+    { "name": "姓名", "role": "職稱", "dept": "部門" }
+  ],
+  "projectInfo": { "name": "", "dir": "", "prod": "", "date": "", "meetingLocation": "" },
+  "summary": "解析摘要（30字以內）"
+}
+- inout 只能是: INT, EXT, INT/EXT
+- daynight 只能是: DAY, NIGHT, DUSK, DAWN
+- 場景 id 用 S01, S02... 格式，如果已有 ID 就用原本的
+- 若資料不足某欄位，用合理預設值填入
+- 只回傳 JSON，不要加任何說明文字或 markdown 代碼塊`;
+
+  const userPrompt = `專案名稱：${projectName}
+現有場景：${existingScenes}
+tab模式：${_activeAiTab}
+
+資料內容：
+${inputText}
+
+請解析以上資料，回傳 JSON。`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    if(!response.ok) throw new Error(`API 錯誤 ${response.status}`);
+    const data = await response.json();
+    const rawText = data.content?.map(c => c.text || '').join('') || '';
+
+    // Parse JSON from response
+    let parsed;
+    try {
+      const clean = rawText.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      throw new Error('AI 回傳格式錯誤，請重試');
+    }
+
+    _aiImportResult = parsed;
+
+    // Show preview
+    let previewHtml = '';
+
+    if(parsed.summary){
+      previewHtml += `<div style="margin-bottom:12px;font-size:13px;color:var(--text-primary)">${parsed.summary}</div>`;
+    }
+
+    if(parsed.scenes?.length){
+      previewHtml += `<div class="ai-result-section">
+        <div class="ai-result-section-title">📽 場景 (${parsed.scenes.length})</div>
+        ${parsed.scenes.map(s => `<div class="ai-result-item">
+          <strong>${s.id} — ${s.name}</strong>
+          <small>${s.inout || ''} / ${s.daynight || ''} · ${s.loc || '—'} · 演員：${Array.isArray(s.cast)?s.cast.join('、'):s.cast||'—'} ${s.time?'· '+s.time:''}</small>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    if(parsed.callsheetRows?.length){
+      previewHtml += `<div class="ai-result-section">
+        <div class="ai-result-section-title">📋 通告單行程 (${parsed.callsheetRows.length})</div>
+        ${parsed.callsheetRows.map(r => `<div class="ai-result-item">
+          <strong>${r.time || '—'} ${r.title}</strong>
+          <small>${r.location || ''} ${r.cast ? '· '+r.cast : ''}</small>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    if(parsed.crew?.length){
+      previewHtml += `<div class="ai-result-section">
+        <div class="ai-result-section-title">👥 劇組 (${parsed.crew.length})</div>
+        ${parsed.crew.map(c => `<div class="ai-result-item"><strong>${c.name}</strong><small>${c.role} · ${c.dept}</small></div>`).join('')}
+      </div>`;
+    }
+
+    if(!previewHtml){
+      previewHtml = '<div style="color:var(--text-muted)">AI 未解析出可用資料，請嘗試提供更詳細的資料。</div>';
+    }
+
+    if(resultBody) resultBody.innerHTML = previewHtml;
+    if(resultWrap) resultWrap.style.display = 'block';
+    if(applyBtn) applyBtn.style.display = 'inline-flex';
+    if(statusText) statusText.textContent = '解析完成！確認後按「套用到專案」';
+
+  } catch(err) {
+    if(statusText) statusText.textContent = `解析失敗：${err.message}`;
+    console.error('AI import error:', err);
+  } finally {
+    if(parseBtn){ parseBtn.disabled = false; parseBtn.textContent = '✦ AI 解析'; }
+  }
+}
+
+function applyAiImport(){
+  if(!_aiImportResult){
+    toast('請先按 AI 解析', '⚠');
+    return;
+  }
+
+  const parsed = _aiImportResult;
+  const conflictMode = document.getElementById('ai-conflict-mode')?.value || 'merge';
+  const doScenes = document.getElementById('ai-opt-scenes')?.checked;
+  const doCallsheet = document.getElementById('ai-opt-callsheet')?.checked;
+  const doCrew = document.getElementById('ai-opt-crew')?.checked;
+
+  let addedCount = 0;
+
+  // Apply scenes
+  if(doScenes && parsed.scenes?.length){
+    if(conflictMode === 'replace') scenes.length = 0;
+    parsed.scenes.forEach(s => {
+      const exists = scenes.find(sc => sc.id === s.id);
+      if(exists && conflictMode === 'merge'){
+        Object.assign(exists, {
+          name: s.name || exists.name,
+          loc: s.loc || exists.loc,
+          inout: s.inout || exists.inout,
+          daynight: s.daynight || exists.daynight,
+          cast: s.cast || exists.cast,
+          notes: s.notes || exists.notes
+        });
+      } else if(!exists || conflictMode !== 'merge'){
+        scenes.push({
+          id: s.id, name: s.name || '未命名',
+          loc: s.loc || '—',
+          inout: s.inout || 'INT',
+          daynight: s.daynight || 'DAY',
+          cast: Array.isArray(s.cast) ? s.cast : (s.cast ? [s.cast] : []),
+          status: 'pending',
+          notes: s.notes || '',
+          dialogue: '', sceneScript: '',
+          page: scenes.length + 1
+        });
+        if(!shots[s.id]) shots[s.id] = [{id:`${s.id}-A`,type:'主鏡 (MS)',angle:'正面平拍',lens:'50mm',note:'',done:false}];
+        addedCount++;
+      }
+    });
+  }
+
+  // Apply callsheet rows (as manual override)
+  if(doCallsheet && parsed.callsheetRows?.length){
+    const p = getCurrentProject();
+    if(p){
+      normalizeProjectCallsheets(p);
+      const cs = p.callsheetDays[p.activeCallsheetIndex || 0];
+      if(cs){
+        // Add manual rows for items not matching scenes
+        parsed.callsheetRows.forEach((r, i) => {
+          const alreadyScene = (cs.rows || []).find(row => row.title === r.title);
+          if(!alreadyScene){
+            if(!cs.rows) cs.rows = [];
+            cs.rows.push({
+              id: `ai-manual-${Date.now()}-${i}`,
+              manual: true, locked: false,
+              time: r.time || '',
+              title: r.title || '行程',
+              location: r.location || '',
+              cast: r.cast || '—',
+              crew: r.crew || '全組',
+              note: r.note || '',
+              status: 'manual'
+            });
+          }
+        });
+        // Update meeting location if provided
+        if(parsed.projectInfo?.meetingLocation){
+          cs.meetingLocation = parsed.projectInfo.meetingLocation;
+          if(document.getElementById('cs-meet')) document.getElementById('cs-meet').value = cs.meetingLocation;
+        }
+        p.callsheet = cs;
+      }
+    }
+  }
+
+  // Apply crew
+  if(doCrew && parsed.crew?.length){
+    parsed.crew.forEach(c => {
+      const exists = crew.find(m => m.name === c.name);
+      if(!exists){
+        crew.push({ name: c.name, char: '—', role: c.role || '成員', dept: c.dept || '其他', status: 'pending', color: crew.length % 7 });
+      }
+    });
+  }
+
+  // Re-render everything
+  renderStats(); renderDashScenes(); renderFullScenes(); renderScenesStatCards(); renderSceneDots();
+  buildShotSelect(); buildScriptSceneSelect(true); renderCallsheet(); renderCrew(); renderTicker();
+  persistSave();
+
   closeModal('modal-import');
-  toast(`${cal} 已建立，${file.name} 的排程已加入待確認清單`,'📅');
-  broadcastChange('匯入行事曆');
+  clearAiResult();
+  toast(`✦ AI 整合完成！已新增 ${addedCount} 個場景，通告單已更新`, '✓');
+  broadcastChange('AI 匯入資料');
+}
+
+// 保留舊的函式以防其他地方呼叫
+function detectScheduleFile(event){ handleAiFileUpload(event); }
+function createCalendarFromImport(){
+  const file = document.getElementById('schedule-file')?.files[0];
+  if(!file){ toast('請先選擇檔案','⚠'); return; }
+  closeModal('modal-import');
+  toast('請使用新版 AI 匯入功能', '✦');
 }
 
 // ══════════════════════════════════════════
@@ -2944,13 +3797,16 @@ function addScene(){
   const id=document.getElementById('sc-id').value.trim();
   const name=document.getElementById('sc-name').value.trim();
   if(!id||!name){toast('請填寫場景編號與名稱','⚠');return;}
+  const shootTime = document.getElementById('sc-time')?.value || '';
+  const duration = parseInt(document.getElementById('sc-duration')?.value) || 90;
   scenes.push({
     id,name,
     loc:document.getElementById('sc-loc').value.trim()||'—',
     inout:document.getElementById('sc-inout').value,
     daynight:document.getElementById('sc-daynight').value,
     cast:document.getElementById('sc-cast').value.split(',').map(s=>s.trim()).filter(Boolean),
-    status:'pending',notes:document.getElementById('sc-note').value.trim(),dialogue:'',sceneScript:'',page:scenes.length+1
+    status:'pending',notes:document.getElementById('sc-note').value.trim(),dialogue:'',sceneScript:'',page:scenes.length+1,
+    shootTime, duration
   });
   shots[id]=[{id:`${id}-A`,type:'主鏡 (MS)',angle:'正面平拍',lens:'50mm',note:'',done:false}];
   renderStats();renderDashScenes();renderFullScenes();renderScenesStatCards();renderSceneDots();buildShotSelect();buildScriptSceneSelect(true);renderCallsheet();renderTicker();
@@ -3048,7 +3904,7 @@ function saveProject(){
     spec:document.getElementById('p-spec').value
   };
   if(mode==='create'){
-    const id='proj-' + String(Math.floor(1000 + Math.random() * 9000));
+    const id='proj-' + String(Math.floor(10000 + Math.random() * 90000));
     projects.forEach(p=>p.active=false);
     projects.push({...data,id,active:true,scenes:[],shots:{},announcements:[],crew:[],equipment:[],callsheet:{},script:''});
     currentProjectId=id;
@@ -3077,7 +3933,7 @@ function applyProjectMeta(p){
   document.getElementById('Ptype-badge').textContent=p.type||'FILM';
   document.getElementById('info-prod').textContent=p.prod||'—';
   document.getElementById('info-dir').textContent=p.dir||'—';
-  document.getElementById('info-day').textContent=`D-08/${p.days||45}`;
+  document.getElementById('info-day').textContent=`D-01/${p.days||45}`;
   document.getElementById('info-spec').textContent=(p.spec||'4K / 25fps').replace(' / ','·');
 }
 
@@ -3374,8 +4230,16 @@ async function broadcastChange(action){
   const author = getEditor();
   const time   = new Date().toISOString();
 
+  // Dedupe：同一 author + action 在 5 秒內不重複記錄
+  const recent = activityLog[0];
+  if(recent && recent.author === author && recent.action === action){
+    const diff = new Date(time) - new Date(recent.time);
+    if(diff < 5000) return; // 5 秒內相同操作不重複
+  }
+
   // 本機即時更新
   activityLog.unshift({ author, action, time });
+  if(activityLog.length > 20) activityLog.length = 20; // 最多保留 20 筆
   renderActivity();
   renderSyncStatus(author, action, time, false);
 
@@ -3715,48 +4579,78 @@ function copyProjectCode(id){
   toast('專案專案碼已複製，手機輸入同一組即可同步', '📋');
 }
 
-async function joinSharedProject(){
-  const code = (prompt('請輸入專案碼（格式：proj-1234）：') || '').trim();
-  if(!code) return;
+function copyMyProjectCode(){
+  const code = getProjectId();
+  if(!code || code === 'clappr-default'){ toast('請先建立或進入一個專案', '⚠'); return; }
+  navigator.clipboard?.writeText(code).then(() => toast('專案碼已複製：' + code, '📋'));
+}
 
-  // Validate format
-  if(!/^proj-\d{4}$/.test(code)){
-    alert('專案碼格式不正確，請輸入像「proj-1234」這樣的格式。');
+// Update join modal to show current project code whenever opened
+const _origOpenModal = openModal;
+openModal = function(id){
+  _origOpenModal(id);
+  if(id === 'modal-join-project'){
+    const el = document.getElementById('join-my-code-display');
+    const code = getProjectId();
+    if(el) el.textContent = (code && code !== 'clappr-default') ? code : '（請先進入一個專案）';
+  }
+};
+
+async function joinSharedProject(){
+  openModal('modal-join-project');
+  // Clear previous state
+  const inp = document.getElementById('join-code-input');
+  const err = document.getElementById('join-code-error');
+  const btn = document.getElementById('join-code-btn');
+  if(inp) inp.value = '';
+  if(err) err.textContent = '';
+  if(btn){ btn.textContent = '加入專案'; btn.disabled = false; }
+}
+
+async function doJoinProject(){
+  const code = (document.getElementById('join-code-input')?.value || '').trim().toLowerCase();
+  const err = document.getElementById('join-code-error');
+  const btn = document.getElementById('join-code-btn');
+  if(!code){ if(err) err.textContent = '請輸入專案碼'; return; }
+  if(!/^proj-\d{5}$/.test(code)){
+    if(err) err.textContent = '格式不正確，請輸入像「proj-12345」這樣的5位數格式';
     return;
   }
+  if(err) err.textContent = '';
+  if(btn){ btn.textContent = '驗證中...'; btn.disabled = true; }
 
-  // If Supabase is connected, verify the project actually exists
+  // If Supabase is connected, verify the project exists
   if(supabase){
-    setSyncStatus('驗證專案碼…', false);
     try {
-      const { data: scenesData, error: scenesError } = await supabase
-        .from('scenes').select('project_id').eq('project_id', code).limit(1);
-      if(scenesError) throw scenesError;
-      const { data: crewData, error: crewError } = await supabase
-        .from('crew').select('project_id').eq('project_id', code).limit(1);
-      if(crewError) throw crewError;
-      const exists = (scenesData && scenesData.length > 0) || (crewData && crewData.length > 0);
+      setSyncStatus('驗證專案碼…', false);
+      const { data: scenesData } = await supabase.from('scenes').select('project_id').eq('project_id', code).limit(1);
+      const { data: crewData } = await supabase.from('crew').select('project_id').eq('project_id', code).limit(1);
+      const { data: annData } = await supabase.from('announcements').select('project_id').eq('project_id', code).limit(1);
+      const exists = (scenesData?.length > 0) || (crewData?.length > 0) || (annData?.length > 0);
       if(!exists){
         setSyncStatus('未連線', false);
-        alert('找不到專案碼「' + code + '」，請確認碼是否正確。');
+        if(err) err.textContent = '找不到此專案碼，請確認後再試';
+        if(btn){ btn.textContent = '加入專案'; btn.disabled = false; }
         return;
       }
     } catch(e) {
-      setSyncStatus('驗證失敗', false);
-      alert('無法驗證專案碼，請檢查網路連線後再試。');
-      return;
+      // Supabase unavailable — still allow joining (will load locally)
+      setSyncStatus('離線模式', false);
     }
   }
 
+  // Create or switch to this project
   saveCurrentProjectState();
-  let p = projects.find(x=>x.id===code);
+  let p = projects.find(x => x.id === code);
   if(!p){
-    p = { id: code, name: '同步專案', type:'FILM', prod:'', dir:'', days:45, spec:'4K / 25fps', active:true, scenes:[], shots:{}, announcements:[], crew:[], equipment:[], callsheet:{}, script:'' };
+    p = { id: code, name: '同步專案 ' + code, type:'FILM', prod:'', dir:'', days:45, spec:'4K / 25fps',
+          active:true, scenes:[], shots:{}, announcements:[], crew:[], equipment:[], callsheet:{}, script:'' };
     projects.push(p);
   }
-  projects.forEach(x=>x.active=x.id===code);
+  projects.forEach(x => x.active = x.id === code);
   currentProjectId = code;
   window._activeProjectId = code;
+
   if(supabase){
     setSyncStatus('載入同步資料…', false);
     await loadAllFromDB();
@@ -3766,12 +4660,18 @@ async function joinSharedProject(){
   } else {
     loadProjectState(p);
   }
+
+  closeModal('modal-join-project');
   document.body.classList.remove('home-mode');
   document.body.classList.add('project-mode');
-  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
   document.getElementById('page-dashboard')?.classList.add('active');
   persistSave();
-  toast('已加入同步專案', '📱');
+
+  // Update topbar with project name
+  applyProjectMeta(getCurrentProject());
+  renderHomeProjects();
+  toast(`已進入專案 ${code}`, '📱');
 }
 
 function showHome(shouldSave=true){
