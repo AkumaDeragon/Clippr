@@ -3602,12 +3602,45 @@ function _loadScriptOnce(src){
   });
 }
 
-// 用 mammoth 在瀏覽器讀出 .docx 的純文字
+// 用 mammoth 把 .docx 轉成「保留表格列/欄」的文字
+// （原本用 extractRawText 會把表格壓成一團、欄位對應全丟，導致 AI 只解析出一半）
 async function readDocxFile(file){
   await _loadScriptOnce('https://cdn.jsdelivr.net/npm/mammoth/mammoth.browser.min.js');
   const arrayBuffer = await file.arrayBuffer();
-  const result = await window.mammoth.extractRawText({ arrayBuffer });
-  return (result.value || '').trim();
+  const result = await window.mammoth.convertToHtml({ arrayBuffer });
+  const doc = new DOMParser().parseFromString(result.value || '', 'text/html');
+  let out = '';
+  doc.body.childNodes.forEach(n => { out += _docxNodeToText(n); });
+  return out.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// 把 Word 內容轉成文字：表格保留成「欄1 | 欄2 | 欄3」每列一行，AI 才看得懂對應關係
+function _docxNodeToText(node){
+  if(node.nodeType === Node.TEXT_NODE){
+    const t = node.textContent.trim();
+    return t ? t + '\n' : '';
+  }
+  if(node.nodeType !== Node.ELEMENT_NODE) return '';
+  const tag = node.tagName.toLowerCase();
+  if(tag === 'table'){
+    let t = '';
+    node.querySelectorAll('tr').forEach(tr => {
+      const cells = Array.from(tr.querySelectorAll('th,td'))
+        .map(td => td.textContent.replace(/\s+/g, ' ').trim());
+      if(cells.some(c => c)) t += cells.join(' | ') + '\n';
+    });
+    return t + '\n';
+  }
+  if(tag === 'ul' || tag === 'ol'){
+    let t = '';
+    node.querySelectorAll('li').forEach(li => {
+      const v = li.textContent.trim();
+      if(v) t += '- ' + v + '\n';
+    });
+    return t;
+  }
+  const txt = node.textContent.trim();
+  return txt ? txt + '\n' : '';
 }
 
 // 用 SheetJS 在瀏覽器把 .xlsx 各工作表轉成文字
