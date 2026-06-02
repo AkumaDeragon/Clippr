@@ -1867,19 +1867,30 @@ AI 會根據描述建立完整的場景資料和通告單。"></textarea>
     </div>
     <div class="modal-body">
       <div class="edit-hint" style="margin-bottom:16px">輸入其他成員給你的專案碼，即可跨裝置進入同一個專案並即時同步。</div>
+
+      <!-- Sync status indicator -->
+      <div id="join-sync-status" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:8px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;font-size:12px;color:var(--text-muted)">
+        <span id="join-sync-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0"></span>
+        <span id="join-sync-label">檢查連線中…</span>
+      </div>
+
       <div class="form-field">
-        <label class="form-label">專案碼</label>
+        <label class="form-label">對方的專案碼</label>
         <input class="form-input" id="join-code-input" placeholder="proj-12345"
-          style="font-family:var(--font-mono);font-size:16px;letter-spacing:2px;text-align:center"
+          style="font-family:var(--font-mono);font-size:18px;letter-spacing:3px;text-align:center"
           maxlength="11"
-          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'').replace(/^([a-z]+)(\d)/,'$1-$2')"
+          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'').replace(/^(proj)(\d)/,'$1-$2')"
           onkeydown="if(event.key==='Enter')doJoinProject()">
         <div id="join-code-error" style="font-size:12px;color:var(--red-light);margin-top:6px;min-height:18px"></div>
       </div>
-      <div style="margin-top:10px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:8px">你的專案碼（分享給他人）</div>
-        <div id="join-my-code-display" style="font-family:var(--font-mono);font-size:18px;color:var(--gold);letter-spacing:3px;cursor:pointer" onclick="copyMyProjectCode()">—</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">點擊複製</div>
+
+      <div style="margin-top:12px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:8px">你的專案碼（分享給對方）</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="join-my-code-display" style="font-family:var(--font-mono);font-size:18px;color:var(--gold);letter-spacing:3px;flex:1">—</div>
+          <button onclick="copyMyProjectCode()" style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:6px;color:var(--gold);font-size:11px;padding:5px 10px;cursor:pointer;white-space:nowrap;font-family:inherit">複製</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">點複製後傳給要加入的人</div>
       </div>
     </div>
     <div class="modal-footer">
@@ -4593,6 +4604,16 @@ openModal = function(id){
     const el = document.getElementById('join-my-code-display');
     const code = getProjectId();
     if(el) el.textContent = (code && code !== 'clappr-default') ? code : '（請先進入一個專案）';
+
+    // Show current sync status
+    const dot = document.getElementById('join-sync-dot');
+    const label = document.getElementById('join-sync-label');
+    const syncText = document.getElementById('sync-text');
+    const connected = syncText && !syncText.textContent.includes('離線') && !syncText.textContent.includes('錯誤') && !syncText.textContent.includes('連線中');
+    if(dot) dot.style.background = supabase ? (connected ? 'var(--green-light)' : 'var(--amber-light)') : 'var(--red-light)';
+    if(label) label.textContent = supabase
+      ? (connected ? '✓ Supabase 已連線，可以同步' : '連線中，請稍候…')
+      : '✗ 未連線 Supabase，無法跨裝置同步（只有本機）';
   }
 };
 
@@ -4614,28 +4635,21 @@ async function doJoinProject(){
   const btn = document.getElementById('join-code-btn');
   if(!code){ if(err) err.textContent = '請輸入專案碼'; return; }
   if(!/^proj-\d{5}$/.test(code)){
-    if(err) err.textContent = '格式不正確，應為「proj-」加上5位數字，例如「proj-12345」';
+    if(err) err.textContent = `格式不正確（你輸入的是「${code}」）。應為「proj-」加上5位數字，例如「proj-12345」`;
     return;
   }
   if(err) err.textContent = '';
   if(btn){ btn.textContent = '驗證中...'; btn.disabled = true; }
 
   // If Supabase is connected, verify the project exists
-  // Note: an empty project (no scenes/crew/ann yet) is still valid — we allow joining it
   if(supabase){
     try {
       setSyncStatus('驗證專案碼…', false);
-      // Check all tables; an empty brand-new project will have nothing, so we
-      // skip the "not found" block and just join — the owner can be the first person
-      // OR we detect a truly nonexistent project only after trying to load data.
-      // Strategy: attempt to join and load; if all tables return empty AND supabase
-      // returned successfully (no error), we still allow it.
       const [r1, r2, r3] = await Promise.all([
         supabase.from('scenes').select('project_id').eq('project_id', code).limit(1),
         supabase.from('crew').select('project_id').eq('project_id', code).limit(1),
         supabase.from('announcements').select('project_id').eq('project_id', code).limit(1),
       ]);
-      // If all three returned errors (not just empty), something is wrong
       const allErrors = r1.error && r2.error && r3.error;
       if(allErrors){
         setSyncStatus('連線錯誤', false);
@@ -4643,11 +4657,12 @@ async function doJoinProject(){
         if(btn){ btn.textContent = '加入專案'; btn.disabled = false; }
         return;
       }
-      // Empty results are fine — it might just be a new project
     } catch(e) {
-      // Supabase unavailable — still allow joining (will load locally)
       setSyncStatus('離線模式', false);
     }
+  } else {
+    // Supabase not connected — warn user but still allow local join
+    if(err) err.textContent = '⚠ 目前為離線模式，無法同步對方資料。加入後只有本機空專案。';
   }
 
   // Create or switch to this project
@@ -4677,12 +4692,21 @@ async function doJoinProject(){
   document.body.classList.add('project-mode');
   document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
   document.getElementById('page-dashboard')?.classList.add('active');
-  persistSave();
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const firstNav = document.querySelector('.nav-item');
+  if(firstNav) firstNav.classList.add('active');
 
-  // Update topbar with project name
-  applyProjectMeta(getCurrentProject());
+  // Update project name from scenes data if possible
+  const joinedProject = getCurrentProject();
+  if(joinedProject && scenes.length > 0 && joinedProject.name.startsWith('同步專案')){
+    // Try to infer a better name from DB data
+    // (name stays as-is; user can edit in settings)
+  }
+  applyProjectMeta(joinedProject);
+  persistSave();
   renderHomeProjects();
-  toast(`已進入專案 ${code}`, '📱');
+  renderStats(); renderDashScenes(); renderActivity();
+  toast(`已進入專案 ${code}，資料同步中…`, '📱');
 }
 
 function showHome(shouldSave=true){
