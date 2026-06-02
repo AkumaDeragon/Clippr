@@ -4807,6 +4807,33 @@ function parseProjectCode(input){
   return '';
 }
 
+// 確認這個專案碼在資料庫裡真的存在（有中繼資料或任何實際資料）
+async function projectExistsInDB(code){
+  if(!supabase) return { ok:false, reason:'offline' };
+  // 1) 先查 projects 中繼表（建立專案時會寫一筆）
+  try {
+    const { data, error } = await supabase.from('projects')
+      .select('project_id').eq('project_id', code).limit(1);
+    if(!error && data && data.length) return { ok:true };
+  } catch(e){ /* projects 表可能不存在，往下走後備檢查 */ }
+  // 2) 後備：看是否有任何場景 / 成員 / 公告資料
+  try {
+    const [sc, cr, an] = await Promise.all([
+      supabase.from('scenes').select('project_id').eq('project_id', code).limit(1),
+      supabase.from('crew').select('project_id').eq('project_id', code).limit(1),
+      supabase.from('announcements').select('project_id').eq('project_id', code).limit(1),
+    ]);
+    const hasData = (sc.data&&sc.data.length)||(cr.data&&cr.data.length)||(an.data&&an.data.length);
+    if(hasData) return { ok:true };
+    // 全部都出錯（沒有任何成功回應）→ 視為存取被拒（RLS）
+    const allErr = sc.error && cr.error && an.error && !sc.data && !cr.data && !an.data;
+    if(allErr) return { ok:false, reason:'error', error: sc.error };
+    return { ok:false, reason:'notfound' };
+  } catch(e){
+    return { ok:false, reason:'error', error:e };
+  }
+}
+
 async function doJoinProject(codeArg){
   const err = document.getElementById('join-code-error');
   const btn = document.getElementById('join-code-btn');
@@ -4822,29 +4849,40 @@ async function doJoinProject(codeArg){
     return;
   }
   if(err) err.textContent = '';
-  if(btn){ btn.textContent = '加入中...'; btn.disabled = true; }
+  if(btn){ btn.textContent = '驗證中...'; btn.disabled = true; }
+
+  const resetBtn = () => { if(btn){ btn.textContent = '加入專案'; btn.disabled = false; } };
 
   try {
-    // Supabase 連線時做「盡力而為」的預載，但不論成功與否都允許加入：
-    // 連不上就先以離線模式進入，realtime 連上後會自動補同步。
-    if(supabase){
-      try {
-        setSyncStatus('連線中…', false);
-        await Promise.race([
-          supabase.from('scenes').select('project_id').eq('project_id', code).limit(1),
-          new Promise(res => setTimeout(res, 4000)) // 最多等 4 秒，避免卡住
-        ]);
-      } catch(e) {
-        setSyncStatus('離線模式', false);
-      }
+    // 沒連上資料庫就無法確認專案是否存在 → 不要硬加一個空專案
+    if(!supabase){
+      if(err) err.textContent = '目前未連上資料庫，無法確認專案，請稍後再試';
+      resetBtn();
+      return;
     }
 
-    // Create or switch to this project
+    setSyncStatus('驗證專案碼…', false);
+    const exist = await projectExistsInDB(code);
+    if(!exist.ok){
+      if(exist.reason === 'notfound'){
+        if(err) err.textContent = '找不到這個專案碼，請確認是否正確（不會建立新的空專案）';
+      } else if(exist.reason === 'error'){
+        if(err) err.textContent = '資料庫存取被拒，請檢查 Supabase RLS 權限';
+      } else {
+        if(err) err.textContent = '目前無法連線資料庫，請稍後再試';
+      }
+      setSyncStatus('離線模式', false);
+      resetBtn();
+      return;
+    }
+
+    // 確認存在後才真正加入
+    if(btn){ btn.textContent = '加入中...'; }
     await joinProjectByCode(code);
   } catch(e){
     console.error('join error:', e);
     if(err) err.textContent = '加入時發生問題，請再試一次';
-    if(btn){ btn.textContent = '加入專案'; btn.disabled = false; }
+    resetBtn();
   }
 }
 
@@ -5590,6 +5628,10 @@ function maybeAutoJoinFromLink(){
   let tries = 0;
   (function waitAndJoin(){
     if(supabase || tries >= 25){
+      // 開啟加入彈窗，這樣若專案不存在或權限錯誤，使用者能看到提示
+      try { joinSharedProject(); } catch(e){}
+      const inp = document.getElementById('join-code-input');
+      if(inp) inp.value = code;
       doJoinProject(code);
     } else {
       tries++;
