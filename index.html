@@ -1993,11 +1993,32 @@ AI 會根據描述建立完整的場景資料和通告單。"></textarea>
     <span class="tab-label">公告</span>
     <span class="tab-badge" id="tab-ann-badge" style="display:none">0</span>
   </div>
-  <div class="tab-item" id="tab-more" onclick="toggleProjectSheet()">
-    <span class="tab-icon">⋯</span>
-    <span class="tab-label">專案</span>
+  <div class="tab-item" id="tab-more" onclick="openMobileMenu()">
+    <span class="tab-icon">☰</span>
+    <span class="tab-label">更多</span>
   </div>
 </nav>
+
+<!-- ══ MOBILE FULL MENU SHEET (拉起式選單) ══ -->
+<div class="sheet-overlay" id="menu-overlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-menu-sheet" id="mobile-menu-sheet">
+  <div class="sheet-handle" id="menu-sheet-handle"></div>
+  <div class="menu-sheet-proj" id="menu-sheet-proj">—</div>
+  <div class="menu-grid">
+    <div class="menu-item" onclick="navMobile('dashboard')"><span class="menu-ic">◈</span><span>拍攝總覽</span></div>
+    <div class="menu-item" onclick="navMobile('scenes')"><span class="menu-ic">☰</span><span>場景進度</span></div>
+    <div class="menu-item" onclick="navMobile('shots')"><span class="menu-ic">⊡</span><span>鏡頭腳位</span></div>
+    <div class="menu-item" onclick="navMobile('script')"><span class="menu-ic">✎</span><span>劇本共編</span></div>
+    <div class="menu-item" onclick="navMobile('announce')"><span class="menu-ic">◎</span><span>公告欄</span></div>
+    <div class="menu-item" onclick="navMobile('crew')"><span class="menu-ic">◉</span><span>劇組成員</span></div>
+    <div class="menu-item" onclick="navMobile('callsheet')"><span class="menu-ic">▦</span><span>通告單</span></div>
+    <div class="menu-item" onclick="navMobile('equipment')"><span class="menu-ic">◧</span><span>器材清單</span></div>
+    <div class="menu-item" onclick="navMobile('settings')"><span class="menu-ic">⚙</span><span>設定</span></div>
+  </div>
+  <div class="menu-sheet-actions">
+    <button class="btn btn-outline" style="flex:1" onclick="closeMobileMenu();showHome()">⌂ 回首頁 / 切換專案</button>
+  </div>
+</div>
 
 <!-- ══ PROJECT SWITCHER SHEET ══ -->
 <div class="sheet-overlay" id="sheet-overlay" onclick="closeProjectSheet()"></div>
@@ -3939,6 +3960,7 @@ function saveProject(){
   Object.assign(p,data);
   applyProjectMeta(p);
   persistSave();
+  syncProjectMetaToDB(p);
   closeModal('modal-project');toast('專案設定已儲存','⚙');
   renderHomeProjects();
   renderHomeAnnouncements();
@@ -4117,6 +4139,13 @@ async function loadAllFromDB(){
     supabase.from('activity_log').select('*').eq('project_id', getProjectId()).order('created_at', { ascending: false }).limit(20)
   ]);
 
+  // 浮現讀取錯誤（最常見是 RLS 權限或 Realtime 未開），讓使用者知道要去 Supabase 設定
+  const firstErr = [sc, sh, an, cr, act].map(r => r && r.error).find(Boolean);
+  if(firstErr){
+    console.error('Supabase 讀取錯誤:', firstErr);
+    toast('資料庫讀取被拒（請檢查 Supabase RLS 權限）', '⚠');
+  }
+
   if (sc.data && sc.data.length) {
     scenes = sc.data.map(r => ({
       id: r.scene_id, name: r.name, loc: r.loc,
@@ -4177,6 +4206,7 @@ function subscribeRealtime(){
     .on('postgres_changes', { event: '*', schema: 'public', table: 'shots',         filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements', filter: `project_id=eq.${getProjectId()}` }, handleRemoteAnnouncement)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'crew',          filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects',      filter: `project_id=eq.${getProjectId()}` }, () => loadProjectMetaFromDB())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log',  filter: `project_id=eq.${getProjectId()}` }, handleActivityChange)
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') setSyncStatus('即時同步中', true);
@@ -4307,6 +4337,50 @@ async function syncShotToDB(sceneId, shot){
   }, { onConflict: 'project_id,shot_id' });
 }
 
+// ── 專案中繼資料（名稱/類型/導演等）同步寫回 DB ──
+// 存在 projects 表；若該表不存在會被 try/catch 吞掉，資料仍會本機保留。
+async function syncProjectMetaToDB(p){
+  if (!supabase || !p) return;
+  const pid = p.id || getProjectId();
+  if(!pid || pid === 'clappr-default') return;
+  try {
+    const { error } = await supabase.from('projects').upsert({
+      project_id: pid,
+      name: p.name || '未命名專案',
+      type: p.type || 'FILM',
+      prod: p.prod || '',
+      dir:  p.dir || '',
+      days: parseInt(p.days) || 45,
+      spec: p.spec || '4K / 25fps',
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'project_id' });
+    if(error) console.warn('projects meta sync skipped:', error.message);
+  } catch(e){ console.warn('projects table not available:', e); }
+}
+
+async function loadProjectMetaFromDB(){
+  if (!supabase) return;
+  const pid = getProjectId();
+  if(!pid || pid === 'clappr-default') return;
+  try {
+    const { data, error } = await supabase.from('projects')
+      .select('*').eq('project_id', pid).limit(1);
+    if(error || !data || !data.length) return;
+    const r = data[0];
+    const p = getCurrentProject();
+    if(p){
+      p.name = r.name || p.name;
+      p.type = r.type || p.type;
+      p.prod = r.prod || p.prod;
+      p.dir  = r.dir  || p.dir;
+      p.days = r.days || p.days;
+      p.spec = r.spec || p.spec;
+      applyProjectMeta(p);
+      renderHomeProjects();
+    }
+  } catch(e){ console.warn('loadProjectMeta skipped:', e); }
+}
+
 // ── 公告同步寫回 DB ──────────────────────
 async function syncAnnouncementToDB(ann){
   if (!supabase) return;
@@ -4430,7 +4504,7 @@ function mobileTab(pageId, el){
   if (targetPage) targetPage.classList.add('active');
   // 切換 Tab 狀態
   document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
+  if(el) el.classList.add('active');
   // 同步桌面版 sidebar
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   // 確保資料都有 render
@@ -4441,7 +4515,75 @@ function mobileTab(pageId, el){
   if(pageId === 'callsheet'){ renderCallsheet(); }
   if(pageId === 'announce'){ renderAnnouncements(); renderAnnStats(); }
   if(pageId === 'crew'){ renderCrew(); }
+  if(pageId === 'equipment'){ renderEquip(); }
+  if(pageId === 'settings'){ refreshShareUI(); }
 }
+
+// ── 手機：拉起式完整選單 ──────────────────
+function openMobileMenu(){
+  const p = getCurrentProject();
+  const projEl = document.getElementById('menu-sheet-proj');
+  if(projEl) projEl.textContent = p ? `《${p.name}》` : '—';
+  document.getElementById('menu-overlay')?.classList.add('open');
+  document.getElementById('mobile-menu-sheet')?.classList.add('open');
+  // 標記目前頁面為 active
+  const activePage = document.querySelector('.page.active')?.id?.replace('page-','');
+  document.querySelectorAll('.menu-item').forEach(m => {
+    const on = m.getAttribute('onclick')||'';
+    m.classList.toggle('active', on.includes(`'${activePage}'`));
+  });
+}
+function closeMobileMenu(){
+  document.getElementById('menu-overlay')?.classList.remove('open');
+  document.getElementById('mobile-menu-sheet')?.classList.remove('open');
+}
+function navMobile(pageId){
+  closeMobileMenu();
+  // 底部 4 個固定 tab 也要跟著亮（若該頁有對應 tab）
+  const tabMap = { dashboard:'tab-dashboard', scenes:'tab-scenes', shots:'tab-shots', announce:'tab-announce' };
+  const tabEl = tabMap[pageId] ? document.getElementById(tabMap[pageId]) : null;
+  if(tabEl){
+    mobileTab(pageId, tabEl);
+  } else {
+    // 其餘頁面：切頁，並把「更多」tab 標為 active
+    mobileTab(pageId, document.getElementById('tab-more'));
+  }
+}
+
+// 下拉關閉手勢：在把手或選單頂部往下拉即可收起
+(function enableMenuSheetDrag(){
+  const sheet = () => document.getElementById('mobile-menu-sheet');
+  let startY = null, curY = 0;
+  function onStart(e){
+    const s = sheet();
+    if(!s || !s.classList.contains('open')) return;
+    startY = (e.touches ? e.touches[0].clientY : e.clientY);
+    curY = 0;
+    s.style.transition = 'none';
+  }
+  function onMove(e){
+    if(startY === null) return;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY);
+    curY = Math.max(0, y - startY);
+    const s = sheet();
+    if(s) s.style.transform = `translateY(${curY}px)`;
+  }
+  function onEnd(){
+    if(startY === null) return;
+    const s = sheet();
+    if(s){
+      s.style.transition = '';
+      s.style.transform = '';
+      if(curY > 80) closeMobileMenu();
+    }
+    startY = null;
+  }
+  document.addEventListener('touchstart', e => {
+    if(e.target.closest('#menu-sheet-handle') || e.target.closest('.menu-sheet-proj')) onStart(e);
+  }, {passive:true});
+  document.addEventListener('touchmove', e => { if(startY!==null) onMove(e); }, {passive:true});
+  document.addEventListener('touchend', onEnd, {passive:true});
+})();
 
 // ══════════════════════════════════════════
 //  LOCAL STORAGE PERSISTENCE
@@ -4721,6 +4863,7 @@ async function joinProjectByCode(code){
   if(supabase){
     try {
       setSyncStatus('載入同步資料…', false);
+      await loadProjectMetaFromDB();
       await loadAllFromDB();
       saveCurrentProjectState();
       subscribeRealtime();
@@ -4758,6 +4901,22 @@ function showHome(shouldSave=true){
   renderHomeAnnouncements();
 }
 
+// ── 切換到某個專案後，重新連上「該專案」的同步頻道並抓最新資料 ──
+async function activateRealtimeForCurrentProject(){
+  if(!supabase) return;
+  try {
+    setSyncStatus('載入同步資料…', false);
+    await loadProjectMetaFromDB();
+    await loadAllFromDB();
+    saveCurrentProjectState();
+    subscribeRealtime();
+    setSyncStatus('即時同步中', true);
+  } catch(e){
+    console.error('activateRealtime error:', e);
+    setSyncStatus('離線模式（稍後自動同步）', false);
+  }
+}
+
 function enterProject(id){
   saveCurrentProjectState();
   projects.forEach(p=>p.active=p.id===id);
@@ -4773,6 +4932,11 @@ function enterProject(id){
   const firstNav=document.querySelector('.nav-item');
   if(firstNav) firstNav.classList.add('active');
   persistSave();
+  // 重新訂閱「這個專案」的即時頻道 + 上傳本機專案中繼資料，確保多裝置真正同步
+  if(supabase){
+    syncProjectMetaToDB(p);
+    activateRealtimeForCurrentProject();
+  }
   toast(`進入《${p.name}》`, '◈');
 }
 
@@ -4822,7 +4986,7 @@ function saveSettingsProject(){
     days:document.getElementById('sp-days')?.value||45
   };
   const p=getCurrentProject();
-  if(p){ Object.assign(p,data); applyProjectMeta(p); persistSave(); }
+  if(p){ Object.assign(p,data); applyProjectMeta(p); persistSave(); syncProjectMetaToDB(p); }
   toast('專案參數已儲存','⚙');
   broadcastChange('更新專案參數');
 }

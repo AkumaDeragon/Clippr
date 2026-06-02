@@ -1136,6 +1136,60 @@ body { font-size: 13px; }
   }
   .sheet-overlay.open { display: block; }
 
+  /* ── 手機：拉起式完整選單 ── */
+  .mobile-menu-sheet {
+    position: fixed;
+    bottom: 64px; left: 0; right: 0;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-gold);
+    border-radius: 18px 18px 0 0;
+    z-index: 200;
+    padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(110%);
+    transition: transform .28s cubic-bezier(0.2,1,0.3,1);
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+  .mobile-menu-sheet.open { transform: translateY(0); }
+  .menu-sheet-proj {
+    text-align: center;
+    font-size: 13px;
+    color: var(--gold);
+    margin-bottom: 14px;
+    font-family: var(--font-body);
+  }
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-raised);
+    cursor: pointer;
+    transition: all .15s;
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-align: center;
+  }
+  .menu-item:active { transform: scale(.96); }
+  .menu-item .menu-ic { font-size: 22px; color: var(--text-muted); transition: color .15s; }
+  .menu-item.active {
+    border-color: var(--border-gold);
+    background: var(--gold-faint);
+    color: var(--gold);
+  }
+  .menu-item.active .menu-ic { color: var(--gold); }
+  .menu-sheet-actions { display: flex; gap: 10px; }
+
   /* ── 隱藏桌面版不需要的元素 ── */
   .collab-card-wide .collab-controls { display: none; }
   .callsheet-grid { grid-template-columns: 1fr !important; }
@@ -1146,6 +1200,7 @@ body { font-size: 13px; }
 @media (min-width: 769px) {
   .mobile-tabbar { display: none !important; }
   .project-switcher-sheet { display: none !important; }
+  .mobile-menu-sheet { display: none !important; }
   .sheet-overlay { display: none !important; }
   .shot-progress-bar-wrap { display: none !important; }
 }
@@ -1159,6 +1214,8 @@ body.home-mode .sync-pill,
 body.home-mode .rec-dot,
 body.home-mode .ticker-bar,
 body.home-mode .mobile-tabbar { display: none !important; }
+body.home-mode .mobile-menu-sheet { display: none !important; }
+body.home-mode #menu-overlay { display: none !important; }
 body.home-mode .main-body { display: block; }
 body.home-mode .content { height: calc(100vh - 54px); }
 body.project-mode .sidebar { display: flex; }
