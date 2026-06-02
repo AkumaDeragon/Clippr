@@ -1872,7 +1872,7 @@ AI 會根據描述建立完整的場景資料和通告單。"></textarea>
         <input class="form-input" id="join-code-input" placeholder="proj-12345"
           style="font-family:var(--font-mono);font-size:16px;letter-spacing:2px;text-align:center"
           maxlength="11"
-          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"
+          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'').replace(/^([a-z]+)(\d)/,'$1-$2')"
           onkeydown="if(event.key==='Enter')doJoinProject()">
         <div id="join-code-error" style="font-size:12px;color:var(--red-light);margin-top:6px;min-height:18px"></div>
       </div>
@@ -4608,31 +4608,42 @@ async function joinSharedProject(){
 }
 
 async function doJoinProject(){
-  const code = (document.getElementById('join-code-input')?.value || '').trim().toLowerCase();
+  const raw = (document.getElementById('join-code-input')?.value || '').trim();
+  const code = raw.toLowerCase().replace(/\s+/g, '');
   const err = document.getElementById('join-code-error');
   const btn = document.getElementById('join-code-btn');
   if(!code){ if(err) err.textContent = '請輸入專案碼'; return; }
   if(!/^proj-\d{5}$/.test(code)){
-    if(err) err.textContent = '格式不正確，請輸入像「proj-12345」這樣的5位數格式';
+    if(err) err.textContent = '格式不正確，應為「proj-」加上5位數字，例如「proj-12345」';
     return;
   }
   if(err) err.textContent = '';
   if(btn){ btn.textContent = '驗證中...'; btn.disabled = true; }
 
   // If Supabase is connected, verify the project exists
+  // Note: an empty project (no scenes/crew/ann yet) is still valid — we allow joining it
   if(supabase){
     try {
       setSyncStatus('驗證專案碼…', false);
-      const { data: scenesData } = await supabase.from('scenes').select('project_id').eq('project_id', code).limit(1);
-      const { data: crewData } = await supabase.from('crew').select('project_id').eq('project_id', code).limit(1);
-      const { data: annData } = await supabase.from('announcements').select('project_id').eq('project_id', code).limit(1);
-      const exists = (scenesData?.length > 0) || (crewData?.length > 0) || (annData?.length > 0);
-      if(!exists){
-        setSyncStatus('未連線', false);
-        if(err) err.textContent = '找不到此專案碼，請確認後再試';
+      // Check all tables; an empty brand-new project will have nothing, so we
+      // skip the "not found" block and just join — the owner can be the first person
+      // OR we detect a truly nonexistent project only after trying to load data.
+      // Strategy: attempt to join and load; if all tables return empty AND supabase
+      // returned successfully (no error), we still allow it.
+      const [r1, r2, r3] = await Promise.all([
+        supabase.from('scenes').select('project_id').eq('project_id', code).limit(1),
+        supabase.from('crew').select('project_id').eq('project_id', code).limit(1),
+        supabase.from('announcements').select('project_id').eq('project_id', code).limit(1),
+      ]);
+      // If all three returned errors (not just empty), something is wrong
+      const allErrors = r1.error && r2.error && r3.error;
+      if(allErrors){
+        setSyncStatus('連線錯誤', false);
+        if(err) err.textContent = '資料庫連線失敗，請稍後再試';
         if(btn){ btn.textContent = '加入專案'; btn.disabled = false; }
         return;
       }
+      // Empty results are fine — it might just be a new project
     } catch(e) {
       // Supabase unavailable — still allow joining (will load locally)
       setSyncStatus('離線模式', false);

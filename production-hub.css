@@ -2744,15 +2744,15 @@ html, body { height: 100dvh; }
 }
 
 .identity-card{
-  flex: 0 0 950px;
-  min-width: 950px;
-  max-width: 950px;
+  flex: 1 1 280px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .new-proj-card,
 .join-proj-card{
-  flex: 0 0 170px;
-  min-width: 170px;
+  flex: 0 0 150px;
+  min-width: 120px;
 }
 
 /* ══════════════════════════════════════════
@@ -2778,16 +2778,17 @@ html, body { height: 100dvh; }
   align-items: stretch !important;
   justify-content: flex-end !important;
   gap: 14px !important;
-  flex-shrink: 0 !important;
+  flex-shrink: 1 !important;
+  flex-wrap: wrap !important;
 }
 
-/* 身份卡：固定寬 */
+/* 身份卡 */
 #page-home .home-action-row .identity-card,
 .identity-card {
-  flex: 0 0 320px !important;
-  min-width: 320px !important;
-  max-width: 320px !important;
-  min-height: 140px !important;
+  flex: 1 1 260px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 120px !important;
 }
 
 /* 新增 / 加入 卡 */
@@ -2795,10 +2796,34 @@ html, body { height: 100dvh; }
 #page-home .home-action-row .join-proj-card,
 .new-proj-card,
 .join-proj-card {
-  flex: 0 0 150px !important;
-  min-width: 150px !important;
-  max-width: 150px !important;
-  min-height: 140px !important;
+  flex: 1 1 130px !important;
+  min-width: 120px !important;
+  max-width: 200px !important;
+  min-height: 120px !important;
+}
+
+/* 手機：三卡全部佔滿寬度 */
+@media (max-width: 600px) {
+  #page-home .home-hero-panel {
+    flex-direction: column !important;
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+  #page-home .home-action-row {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  #page-home .home-action-row .identity-card,
+  #page-home .home-action-row .new-proj-card,
+  #page-home .home-action-row .join-proj-card,
+  .identity-card, .new-proj-card, .join-proj-card {
+    flex: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 80px !important;
+  }
 }
 
 
