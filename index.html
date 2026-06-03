@@ -3729,7 +3729,7 @@ async function runAiImport(){
 回傳格式：
 {
   "scenes": [
-    { "id": "S01", "name": "場景名稱", "loc": "地點", "inout": "INT", "daynight": "DAY", "cast": ["演員A","演員B"], "notes": "備注", "time": "08:00", "duration": 90 }
+    { "id": "S01", "name": "場景名稱", "loc": "地點", "inout": "INT", "daynight": "DAY", "cast": ["演員A","演員B"], "dialogue": "台詞內容（逐行）", "sceneScript": "場景指示/動作描述/導演備註", "notes": "其他簡短備注", "time": "08:00", "duration": 90 }
   ],
   "callsheetRows": [
     { "time": "08:00", "title": "行程標題", "location": "地點", "cast": "演員", "crew": "工作人員", "note": "備注" }
@@ -3743,7 +3743,10 @@ async function runAiImport(){
 - inout 只能是: INT, EXT, INT/EXT
 - daynight 只能是: DAY, NIGHT, DUSK, DAWN
 - 場景 id 用 S01, S02... 格式，如果已有 ID 就用原本的
-- 若資料不足某欄位，用合理預設值填入
+- dialogue（台詞）：把所有對白抓進這裡，逐行保留「角色＋台詞」。常見格式如 A：「台詞」、角色名：「台詞」、角色名:台詞、[角色名] 台詞 都要辨識。範例：王小明：「我們走吧。」
+- sceneScript（場景指示／劇本）：場景的動作描述、場面說明、走位，以及「導演備註／導演指示」都放這裡，不要放到 notes
+- notes（備注）：只放簡短的其他提醒；不要把台詞或導演指示塞進來
+- 若資料不足某欄位，用合理預設值填入（dialogue、sceneScript、notes 沒有就給空字串 ""）
 - 只回傳 JSON，不要加任何說明文字或 markdown 代碼塊`;
 
   const userPrompt = `專案名稱：${projectName}
@@ -3899,7 +3902,9 @@ function applyAiImport(){
           inout: s.inout || exists.inout,
           daynight: s.daynight || exists.daynight,
           cast: s.cast || exists.cast,
-          notes: s.notes || exists.notes
+          notes: s.notes || exists.notes,
+          dialogue: s.dialogue || exists.dialogue || '',
+          sceneScript: s.sceneScript || exists.sceneScript || ''
         });
       } else if(!exists || conflictMode !== 'merge'){
         scenes.push({
@@ -3910,7 +3915,7 @@ function applyAiImport(){
           cast: Array.isArray(s.cast) ? s.cast : (s.cast ? [s.cast] : []),
           status: 'pending',
           notes: s.notes || '',
-          dialogue: '', sceneScript: '',
+          dialogue: s.dialogue || '', sceneScript: s.sceneScript || '',
           page: scenes.length + 1
         });
         if(!shots[s.id]) shots[s.id] = [{id:`${s.id}-A`,type:'主鏡 (MS)',angle:'正面平拍',lens:'50mm',note:'',done:false}];
