@@ -2974,3 +2974,31 @@ html, body            { font-size: 17px; font-weight: 500; }   /* 原 14px 細�
 .shot-angle, .shot-lens, .shot-num { font-size: 13px; }  /* 原 11 */
 .profile-crew-name    { font-size: 13px; }   /* 原 11 */
 .profile-crew-role    { font-size: 12px; }   /* 原 10 */
+
+/* ════════════════════════════════════════════════════════════
+   手機底部列：上滑/點擊開啟選單的「把手」提示
+   ════════════════════════════════════════════════════════════ */
+@media (max-width: 768px){
+  /* 底部列上緣中央的金色把手，會輕輕上下跳動暗示「可以往上拉」 */
+  .tabbar-pull{
+    position:absolute; top:-17px; left:50%; transform:translateX(-50%);
+    width:72px; height:19px; padding:0; cursor:pointer; z-index:101;
+    background:var(--bg-surface);
+    border:1px solid var(--border-gold); border-bottom:none;
+    border-radius:12px 12px 0 0;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .tabbar-pull-bar{
+    width:40px; height:5px; border-radius:3px; background:var(--gold);
+    animation:tabbarPullHint 2.2s ease-in-out infinite;
+  }
+  @keyframes tabbarPullHint{
+    0%,100%{ transform:translateY(0); opacity:.5; }
+    50%{ transform:translateY(-4px); opacity:1; }
+  }
+  /* 拉開的選單頂部把手加亮一點，讓人知道可以往下拉收起 */
+  .mobile-menu-sheet .sheet-handle{
+    background:var(--gold-dim); opacity:.8; height:5px; width:44px;
+  }
+}

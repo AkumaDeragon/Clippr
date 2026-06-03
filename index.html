@@ -1980,6 +1980,9 @@ AI 會根據描述建立完整的場景資料和通告單。"></textarea>
 
 <!-- ══ MOBILE TAB BAR ══ -->
 <nav class="mobile-tabbar" id="mobile-tabbar">
+  <button class="tabbar-pull" id="tabbar-pull" onclick="openMobileMenu()" aria-label="上滑或點擊開啟更多選單" type="button">
+    <span class="tabbar-pull-bar"></span>
+  </button>
   <div class="tab-item active" id="tab-dashboard" onclick="mobileTab('dashboard',this)">
     <span class="tab-icon">◈</span>
     <span class="tab-label">總覽</span>
@@ -4738,6 +4741,20 @@ function navMobile(pageId){
   }, {passive:true});
   document.addEventListener('touchmove', e => { if(startY!==null) onMove(e); }, {passive:true});
   document.addEventListener('touchend', onEnd, {passive:true});
+})();
+
+// 上滑手勢：在底部列上往上滑，也能拉開完整選單（不只點「更多」）
+(function enableTabbarSwipeUp(){
+  const bar = document.getElementById('mobile-tabbar');
+  if(!bar) return;
+  let sy = null;
+  bar.addEventListener('touchstart', e => { sy = e.touches[0].clientY; }, {passive:true});
+  bar.addEventListener('touchmove', e => {
+    if(sy === null) return;
+    const dy = sy - e.touches[0].clientY;   // 往上滑為正值
+    if(dy > 28){ openMobileMenu(); sy = null; }
+  }, {passive:true});
+  bar.addEventListener('touchend', () => { sy = null; }, {passive:true});
 })();
 
 // ══════════════════════════════════════════
