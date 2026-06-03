@@ -2948,3 +2948,25 @@ html, body { height: 100dvh; }
 #page-script .safe-edit-bar{
   grid-column:1 / -1;
 }
+
+/* ════════════════════════════════════════════════════════════
+   字體放大 — 提升整體可讀性（想再大就把各數字往上加 1~2px）
+   只改字體大小、不動版面，所以不會破壞排版
+   ════════════════════════════════════════════════════════════ */
+html, body            { font-size: 16px; }   /* 原 14px：整體基準字 */
+.nav-item             { font-size: 15px; }   /* 原 13：側欄選單 */
+.nav-icon             { font-size: 17px; }   /* 原 15 */
+.sidebar-label        { font-size: 11px; }   /* 原 9 */
+.proj-info-row        { font-size: 13px; }   /* 原 11：左下專案資訊 */
+.page-subtitle        { font-size: 14px; }   /* 原 12 */
+.table-title          { font-size: 13px; }   /* 原 12 */
+.scene-table th       { font-size: 11px; }   /* 原 10：表頭 */
+.scene-table td       { font-size: 15px; }   /* 原 13：表格內容（最常看的） */
+.scene-num            { font-size: 14px; }   /* 原 12 */
+.badge                { font-size: 11px; }   /* 原 10 */
+.now-name             { font-size: 19px; }   /* 原 17 */
+.now-detail           { font-size: 14px; }   /* 原 12 */
+.shot-type-label      { font-size: 15px; }   /* 原 13 */
+.shot-angle, .shot-lens, .shot-num { font-size: 13px; }  /* 原 11 */
+.profile-crew-name    { font-size: 13px; }   /* 原 11 */
+.profile-crew-role    { font-size: 12px; }   /* 原 10 */

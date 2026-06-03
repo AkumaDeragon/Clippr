@@ -1813,7 +1813,11 @@ AI 會自動辨識格式並整合..."></textarea>
           <span>PDF、Excel、CSV、Word、純文字 都可以</span>
         </label>
         <div id="ai-file-preview" style="display:none" class="ai-file-preview">
-          <div class="ai-file-name" id="ai-file-name"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+            <div class="ai-file-name" id="ai-file-name"></div>
+            <button type="button" onclick="clearAiFile()" title="移除這個檔案"
+              style="background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;flex-shrink:0;white-space:nowrap;">✕ 移除檔案</button>
+          </div>
           <textarea class="ai-input-textarea" id="ai-file-content" placeholder="檔案內容將顯示在這裡，您也可以手動編輯..."></textarea>
         </div>
       </div>
@@ -3588,6 +3592,18 @@ function handleAiFileUpload(event){
   } else {
     if(content) content.value = `[${file.name}]\n\n此格式（.${ext}）目前無法自動讀取。\n請將通告單內容複製貼上到「貼上文字」分頁，或在「直接描述」中說明拍攝計劃。`;
   }
+}
+
+// 移除已上傳的檔案，讓使用者可以重新選擇
+function clearAiFile(){
+  const input = document.getElementById('ai-schedule-file');
+  if(input) input.value = '';   // 清空才能重新選同一個檔案
+  const preview = document.getElementById('ai-file-preview');
+  if(preview) preview.style.display = 'none';
+  const name = document.getElementById('ai-file-name');
+  if(name) name.textContent = '';
+  const content = document.getElementById('ai-file-content');
+  if(content) content.value = '';
 }
 
 // 只在需要時動態載入一次外部函式庫
