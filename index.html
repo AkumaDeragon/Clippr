@@ -1981,7 +1981,7 @@ AI 會根據描述建立完整的場景資料和通告單。"></textarea>
 <!-- ══ MOBILE TAB BAR ══ -->
 <nav class="mobile-tabbar" id="mobile-tabbar">
   <button class="tabbar-pull" id="tabbar-pull" onclick="openMobileMenu()" aria-label="上滑或點擊開啟更多選單" type="button">
-    <span class="tabbar-pull-bar"></span>
+    <span class="tabbar-pull-chev">︿</span><span>選單</span>
   </button>
   <div class="tab-item active" id="tab-dashboard" onclick="mobileTab('dashboard',this)">
     <span class="tab-icon">◈</span>
@@ -4147,6 +4147,18 @@ function applyProjectMeta(p){
 // ══════════════════════════════════════════
 //  NAV / PAGE
 // ══════════════════════════════════════════
+// 進入專案時播放一次進場動畫（淡入＋上移）
+function playEnterProjectAnim(){
+  try{
+    const el = document.querySelector('.main-body') || document.querySelector('.content');
+    if(!el) return;
+    el.classList.remove('proj-enter-anim');
+    void el.offsetWidth;            // 強制重排，讓動畫能重新播放
+    el.classList.add('proj-enter-anim');
+    setTimeout(() => el.classList.remove('proj-enter-anim'), 700);
+  }catch(e){}
+}
+
 function switchPage(id,el){
   document.body.classList.remove('home-mode');
   document.body.classList.add('project-mode');
@@ -5098,6 +5110,7 @@ async function joinProjectByCode(code){
   // Update topbar with project name
   applyProjectMeta(getCurrentProject());
   ensureSelfInCrew();
+  playEnterProjectAnim();
   renderHomeProjects();
   toast(`已進入專案 ${code}`, '📱');
 }
@@ -5144,6 +5157,7 @@ function enterProject(id){
   const firstNav=document.querySelector('.nav-item');
   if(firstNav) firstNav.classList.add('active');
   persistSave();
+  playEnterProjectAnim();
   // 重新訂閱「這個專案」的即時頻道 + 上傳本機專案中繼資料，確保多裝置真正同步
   if(supabase){
     syncProjectMetaToDB(p);
