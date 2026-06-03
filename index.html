@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CLAPPR — 專業拍攝管理平台</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="production-hub.css">
 <style>
 /* ── AI IMPORT ── */
@@ -4009,6 +4009,22 @@ function addScene(){
 //  ADD CREW
 // ══════════════════════════════════════════
 function openCrewModal(){openModal('modal-crew');}
+
+// 進入/加入專案時，自動把「目前使用者本人」加進「該專案」的劇組（只屬於這個專案）
+function ensureSelfInCrew(){
+  try{
+    const me = ((currentUserProfile && currentUserProfile.name) || '').trim();
+    if(!me || me === '匿名') return;                 // 沒設定身份就不加
+    if(!getCurrentProject()) return;                 // 不在任何專案就不加
+    if(crew.some(c => ((c.name)||'').trim() === me)) return;  // 已在名單就不重複加
+    const member = { name: me, char: '—', role: (currentUserProfile.role || '成員'), dept: '其他', status: 'pending', color: crew.length % 7, self: true };
+    crew.push(member);
+    renderCrew();
+    persistSave();
+    try { syncCrewToDB(member); } catch(e){}
+  }catch(e){ console.warn('ensureSelfInCrew skipped:', e); }
+}
+
 function addCrew(){
   const name=document.getElementById('cr-name').value.trim();
   if(!name){toast('請輸入成員姓名','⚠');return;}
@@ -4810,6 +4826,7 @@ function loadProjectState(p){
   if(legacyScript && scenes.length && !scenes.some(x=>x.sceneScript)){ scenes[0].sceneScript = legacyScript; }
   applyProjectMeta(p);
   renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots(); buildShotSelect(); buildScriptSceneSelect(false); renderCallsheet(); renderAnnouncements(); renderCrew(); renderEquip(); renderTicker(); renderActivity();
+  ensureSelfInCrew();
 }
 
 function projectSummary(p){
@@ -5063,6 +5080,7 @@ async function joinProjectByCode(code){
 
   // Update topbar with project name
   applyProjectMeta(getCurrentProject());
+  ensureSelfInCrew();
   renderHomeProjects();
   toast(`已進入專案 ${code}`, '📱');
 }
@@ -5503,6 +5521,15 @@ function deleteProject(id) {
   const confirmBtn = document.getElementById('confirm-delete-btn');
   if (confirmBtn) confirmBtn.textContent = '確定退出';
   confirmDelete(`確定要退出專案《${p.name}》？`, async () => {
+    // 退出時自動把「本人」從該專案劇組移除（本機；雲端依原設計不動，方便日後重新加入）
+    try{
+      const meName = ((currentUserProfile && currentUserProfile.name) || '').trim();
+      if(meName && Array.isArray(p.crew)) p.crew = p.crew.filter(c => ((c.name)||'').trim() !== meName);
+      if(currentProjectId === id && Array.isArray(crew)){
+        const k = crew.findIndex(c => ((c.name)||'').trim() === meName);
+        if(k !== -1) crew.splice(k, 1);
+      }
+    }catch(e){}
     const idx = projects.findIndex(x => x.id === id);
     if (idx !== -1) projects.splice(idx, 1);
     if (currentProjectId === id) {

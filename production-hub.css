@@ -24,7 +24,7 @@
   --amber-light: #E67E22;
   --radius: 6px;
   --radius-lg: 10px;
-  --font-display: 'DM Serif Display', serif;
+  --font-display: 'Outfit', sans-serif;   /* 改成正常無襯線、不再用細尖的襯線體 */
   --font-body: 'Outfit', sans-serif;
   --font-mono: 'DM Mono', monospace;
 }
@@ -2953,7 +2953,11 @@ html, body { height: 100dvh; }
    字體放大 — 提升整體可讀性（想再大就把各數字往上加 1~2px）
    只改字體大小、不動版面，所以不會破壞排版
    ════════════════════════════════════════════════════════════ */
-html, body            { font-size: 16px; }   /* 原 14px：整體基準字 */
+html, body            { font-size: 17px; font-weight: 500; }   /* 原 14px 細：放大 + 整體加粗 */
+/* 標題類（原本是粗襯線體，改成無襯線後要補粗體才不會變細） */
+.brand-name, .page-title, .stat-card .value, .crew-avatar,
+.modal-title, .hero-title, .home-title, .home-project-card strong,
+.editor-avatar, .scene-stat-num { font-weight: 700; letter-spacing: 0.5px; }
 .nav-item             { font-size: 15px; }   /* 原 13：側欄選單 */
 .nav-icon             { font-size: 17px; }   /* 原 15 */
 .sidebar-label        { font-size: 11px; }   /* 原 9 */
