@@ -3767,7 +3767,7 @@ ${inputText}
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemPrompt }] },
           contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-          generationConfig: { maxOutputTokens: 2000, temperature: 0.2, responseMimeType: 'application/json' }
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.2, responseMimeType: 'application/json' }
         })
       });
       const data = await response.json();
@@ -3788,7 +3788,7 @@ ${inputText}
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-5',
-          max_tokens: 2000,
+          max_tokens: 8192,
           system: systemPrompt,
           messages: [{ role: 'user', content: userPrompt }]
         })
@@ -3808,10 +3808,16 @@ ${inputText}
     // Parse JSON from response
     let parsed;
     try {
-      const clean = rawText.replace(/```json|```/g, '').trim();
+      let clean = rawText.replace(/```json|```/g, '').trim();
+      // 萬一前後夾雜說明文字，只取最外層 { ... } 的內容
+      const first = clean.indexOf('{');
+      const last = clean.lastIndexOf('}');
+      if(first !== -1 && last !== -1 && last > first){
+        clean = clean.slice(first, last + 1);
+      }
       parsed = JSON.parse(clean);
     } catch(e) {
-      throw new Error('AI 回傳格式錯誤，請重試');
+      throw new Error('AI 回傳格式錯誤，請重試（內容可能太長被截斷，可試著分批匯入或縮短文件）');
     }
 
     _aiImportResult = parsed;
