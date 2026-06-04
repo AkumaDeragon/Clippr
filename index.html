@@ -535,17 +535,34 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
   z-index: 1;
   /* will be sized by JS to match textarea exactly */
 }
-.hl-wrap textarea {
+.hl-wrap textarea,
+.hl-wrap [contenteditable] {
   position: relative;
   z-index: 2;
   background: transparent !important;
   background-color: transparent !important;
-  /* keep caret visible */
   caret-color: var(--text-primary, #F0EBE0);
 }
 /* sdp-readonly overlays — make bg opaque so text is readable when locked */
-.hl-wrap textarea.sdp-readonly {
+.hl-wrap textarea.sdp-readonly,
+.hl-wrap [contenteditable].sdp-readonly {
   background: var(--bg-raised, #111) !important;
+}
+/* contenteditable div needs explicit display / overflow */
+.hl-wrap [contenteditable] {
+  display: block;
+  overflow-y: auto;
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+/* Placeholder for contenteditable divs */
+.hl-wrap [contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted, #888);
+  pointer-events: none;
+  white-space: pre-wrap;
 }
 .hl-mark { border-radius: 2px; }
 
@@ -736,17 +753,34 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
   z-index: 1;
   /* will be sized by JS to match textarea exactly */
 }
-.hl-wrap textarea {
+.hl-wrap textarea,
+.hl-wrap [contenteditable] {
   position: relative;
   z-index: 2;
   background: transparent !important;
   background-color: transparent !important;
-  /* keep caret visible */
   caret-color: var(--text-primary, #F0EBE0);
 }
 /* sdp-readonly overlays — make bg opaque so text is readable when locked */
-.hl-wrap textarea.sdp-readonly {
+.hl-wrap textarea.sdp-readonly,
+.hl-wrap [contenteditable].sdp-readonly {
   background: var(--bg-raised, #111) !important;
+}
+/* contenteditable div needs explicit display / overflow */
+.hl-wrap [contenteditable] {
+  display: block;
+  overflow-y: auto;
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+/* Placeholder for contenteditable divs */
+.hl-wrap [contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted, #888);
+  pointer-events: none;
+  white-space: pre-wrap;
 }
 .hl-mark { border-radius: 2px; }
 
@@ -1719,13 +1753,10 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <div class="hl-wrap" id="hl-wrap-dialogue">
               <div class="hl-overlay" id="hl-overlay-dialogue" aria-hidden="true"></div>
-              <textarea class="sdp-dialogue-area sdp-readonly" id="sdp-dialogue" readonly placeholder="在這裡輸入台詞…
-
-[角色名]
-台詞內容
-
-[角色名]
-台詞內容…"></textarea>
+              <div class="sdp-dialogue-area sdp-readonly" id="sdp-dialogue"
+                   contenteditable="false"
+                   data-placeholder="在這裡輸入台詞…&#10;&#10;[角色名]&#10;台詞內容&#10;&#10;[角色名]&#10;台詞內容…"
+                   spellcheck="false"></div>
             </div>
             <div class="sdp-safe-hint">避免誤按：目前預設不可修改，按上方「編輯」後才會開放輸入。</div>
           </div>
@@ -1754,11 +1785,10 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <div class="hl-wrap" id="hl-wrap-script">
               <div class="hl-overlay" id="hl-overlay-script" aria-hidden="true"></div>
-              <textarea class="sdp-script-area sdp-readonly" id="sdp-script-text" readonly placeholder="場景動作說明、場面描述…
-
-INT./EXT. 地點 — 日/夜
-
-動作描述與場景指示…"></textarea>
+              <div class="sdp-script-area sdp-readonly" id="sdp-script-text"
+                   contenteditable="false"
+                   data-placeholder="場景動作說明、場面描述…&#10;&#10;INT./EXT. 地點 — 日/夜&#10;&#10;動作描述與場景指示…"
+                   spellcheck="false"></div>
             </div>
             <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。</div>
           </div>
@@ -3367,7 +3397,7 @@ function saveScript(){
   // ── 同步到場景進度的 sdp-script-text（如果開著同一場景）
   if(_currentSDP === scene.id){
     const sdpEl = document.getElementById('sdp-script-text');
-    if(sdpEl) sdpEl.value = scene.sceneScript;
+    if(sdpEl){ if(sdpEl.tagName==='TEXTAREA') sdpEl.value = scene.sceneScript; else if(typeof ceSetContent==='function') ceSetContent('script', scene.sceneScript || ''); }
   }
   const author=getEditor();
   const note=document.getElementById('script-note').value.trim()||`儲存 ${scene.id} 劇本`;
@@ -4973,8 +5003,14 @@ async function handleRemoteChange(payload){
     if(sdpScene){
       const sdpScript = document.getElementById('sdp-script-text');
       const sdpDialogue = document.getElementById('sdp-dialogue');
-      if(sdpScript && document.activeElement !== sdpScript) sdpScript.value = sdpScene.sceneScript || '';
-      if(sdpDialogue && document.activeElement !== sdpDialogue) sdpDialogue.value = sdpScene.dialogue || '';
+      if(sdpScript && document.activeElement !== sdpScript){
+        if(sdpScript.tagName==='TEXTAREA') sdpScript.value = sdpScene.sceneScript || '';
+        else if(typeof ceSetContent==='function') ceSetContent('script', sdpScene.sceneScript || '');
+      }
+      if(sdpDialogue && document.activeElement !== sdpDialogue){
+        if(sdpDialogue.tagName==='TEXTAREA') sdpDialogue.value = sdpScene.dialogue || '';
+        else if(typeof ceSetContent==='function') ceSetContent('dialogue', sdpScene.dialogue || '');
+      }
     }
   }
 
@@ -5925,7 +5961,8 @@ function saveSceneDialogue(){
   if(!_currentSDP) return;
   const s=scenes.find(x=>x.id===_currentSDP);
   if(s){
-    s.dialogue = document.getElementById('sdp-dialogue')?.value || '';
+    const el = document.getElementById('sdp-dialogue');
+    s.dialogue = el ? (el.tagName === 'TEXTAREA' ? el.value : el.innerHTML) : '';
     saveCurrentProjectState();
     syncSceneToDB(s);
     broadcastChange('更新台詞 ' + _currentSDP);
@@ -5938,7 +5975,8 @@ function saveSceneScript(){
   if(!_currentSDP) return;
   const s=scenes.find(x=>x.id===_currentSDP);
   if(s){
-    s.sceneScript = document.getElementById('sdp-script-text')?.value || '';
+    const el = document.getElementById('sdp-script-text');
+    s.sceneScript = el ? (el.tagName === 'TEXTAREA' ? el.value : el.innerHTML) : '';
     saveCurrentProjectState();
     syncSceneToDB(s);
     broadcastChange('更新場景指示 ' + _currentSDP);
@@ -5947,7 +5985,8 @@ function saveSceneScript(){
     const scriptSel = document.getElementById('script-scene-sel');
     if(scriptSel && scriptSel.value === s.id){
       const scriptTa = document.getElementById('script-text');
-      if(scriptTa) scriptTa.value = s.sceneScript;
+      // plain text for the legacy script page textarea
+      if(scriptTa){ const d=document.getElementById('sdp-script-text'); scriptTa.value=d?(d.tagName==='TEXTAREA'?d.value:d.innerText||d.textContent||''):''; }
     }
     toast('劇本已儲存','📄');
   }
@@ -5962,8 +6001,8 @@ openDetail = function(sid){
   normalizeSceneTextFields(s);
   const dEl = document.getElementById('sdp-dialogue');
   const sEl = document.getElementById('sdp-script-text');
-  if(dEl) dEl.value = s.dialogue || '';
-  if(sEl) sEl.value = s.sceneScript || '';
+  if(dEl){ if(dEl.tagName==='TEXTAREA') dEl.value = s.dialogue || ''; else if(typeof ceSetContent==='function') ceSetContent('dialogue', s.dialogue || ''); }
+  if(sEl){ if(sEl.tagName==='TEXTAREA') sEl.value = s.sceneScript || ''; else if(typeof ceSetContent==='function') ceSetContent('script', s.sceneScript || ''); }
   setAllSceneFieldsReadOnly();
 };
 
@@ -5986,7 +6025,12 @@ function setSceneFieldReadOnly(kind, readOnly=true){
   const cancelBtn = document.getElementById(cfg.cancel);
   const saveBtn = document.getElementById(cfg.save);
   if(el){
-    el.readOnly = readOnly;
+    // Support both <textarea> (readOnly) and <div contenteditable>
+    if(el.tagName === 'TEXTAREA'){
+      el.readOnly = readOnly;
+    } else {
+      el.contentEditable = readOnly ? 'false' : 'true';
+    }
     el.classList.toggle('sdp-readonly', readOnly);
   }
   if(status) status.textContent = readOnly ? '唯讀 · 按「編輯」才可修改' : '編輯中 · 按「儲存」後會自動鎖回';
@@ -6011,8 +6055,8 @@ function enableSceneFieldEdit(kind){
 function cancelSceneFieldEdit(kind){
   const s = scenes.find(x=>x.id===_currentSDP);
   if(s){
-    if(kind==='dialogue') document.getElementById('sdp-dialogue').value = s.dialogue || '';
-    if(kind==='script') document.getElementById('sdp-script-text').value = s.sceneScript || '';
+    if(kind==='dialogue') ceSetContent('dialogue', s.dialogue || '');
+    if(kind==='script') ceSetContent('script', s.sceneScript || '');
     if(kind==='notes') document.getElementById('sdp-notes').value = s.notes || '';
   }
   setSceneFieldReadOnly(kind, true);
@@ -6025,7 +6069,8 @@ function cancelSceneFieldEdit(kind){
 document.addEventListener('pointerdown', function(e){
   const field = e.target.closest('#sdp-dialogue, #sdp-script-text, #sdp-notes');
   if(!field) return;
-  if(field.readOnly){
+  const isLocked = field.tagName === 'TEXTAREA' ? field.readOnly : field.contentEditable === 'false';
+  if(isLocked){
     toast('請先按 ✎ 編輯，改完按 💾 儲存後會自動鎖回唯讀', '✎');
   }
 }, true);
