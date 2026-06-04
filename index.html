@@ -2745,7 +2745,22 @@ function renderShots(){
   const arr=shots[sid]||[];
   const grid=document.getElementById('shot-cards');
   if(!arr.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">⊡</div>尚無鏡頭計畫</div>';return;}
-  grid.innerHTML=arr.map((sh,i)=>`
+  const _MAX_IMGS=7;
+  grid.innerHTML=arr.map((sh,i)=>{
+    const _imgs=shotImagesGet(sh.id);
+    const _thumbs=_imgs.map((src,ii)=>
+      '<div class="shot-img-thumb" onclick="event.stopPropagation();shotImgLightbox(\'' +sh.id+ '\',' +ii+ ')">'+
+        '<img src="' +src+ '" alt="">'+
+        '<button class="shot-img-del" onclick="event.stopPropagation();shotImgDelete(\'' +sh.id+ '\',' +ii+ ')">×</button>'+
+      '</div>'
+    ).join('');
+    const _canAdd=_imgs.length<_MAX_IMGS;
+    const _addBtn='<label class="shot-img-upload-btn' +(_canAdd?'':' maxed')+ '" title="' +(_canAdd?'上傳參考圖（最多7張）':'已達上限 7 張')+ '" onclick="event.stopPropagation()">'+
+      '<span>＋</span>'+
+      '<input type="file" accept="image/*" multiple style="display:none" onchange="shotImgUpload(event,\'' +sh.id+ '\')"' +(_canAdd?'':' disabled')+ '>'+
+    '</label>';
+    const _count=_imgs.length?'<div class="shot-img-count">' +_imgs.length+ '/' +_MAX_IMGS+ ' 張</div>':'';
+    return `
     <div class="shot-card ${sh.done?'done-shot':''}" id="shot-${sh.id}">
       <div class="shot-header">
         <span class="shot-num">${sh.id}</span>
@@ -2755,10 +2770,14 @@ function renderShots(){
       <div class="shot-type-label">${sh.type}</div>
       <div class="shot-angle">${sh.angle}</div>
       <div class="shot-lens">📷 ${sh.lens}</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">${sh.note}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">${sh.note}</div>
+      <div class="shot-img-gallery">
+        <div class="shot-img-row">\${_thumbs}\${_addBtn}</div>
+        \${_count}
+      </div>
       <button class="shot-check" onclick="toggleShot('${sid}',${i})">${sh.done?'✓ 已拍攝完成':'標記完成'}</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function toggleShot(sid,i){
@@ -5997,6 +6016,110 @@ document.addEventListener('pointerdown', function(e){
 
 // START 後再補一層初始化，確保動態資料載入後也會鎖住。
 setTimeout(initSafeEditMode, 0);
+
+// ══════════════════════════════════════════
+//  SHOT IMAGE GALLERY
+//  永久儲存在 localStorage（key: clappr_shot_imgs）
+//  格式：{ [shotId]: [base64, base64, ...] }
+//  最多 7 張，手動刪除才會消失
+// ══════════════════════════════════════════
+const SHOT_IMG_KEY = 'clappr_shot_imgs';
+
+function shotImagesLoad() {
+  try {
+    const raw = localStorage.getItem(SHOT_IMG_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
+function shotImagesSave(data) {
+  try { localStorage.setItem(SHOT_IMG_KEY, JSON.stringify(data)); } catch(e) {
+    console.warn('shot images save error', e);
+    toast('圖片儲存失敗，可能是儲存空間已滿', '⚠');
+  }
+}
+
+function shotImagesGet(shotId) {
+  const data = shotImagesLoad();
+  return data[shotId] || [];
+}
+
+function shotImgUpload(event, shotId) {
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
+  const data = shotImagesLoad();
+  const existing = data[shotId] || [];
+  const remaining = 7 - existing.length;
+  if (remaining <= 0) { toast('此鏡頭已達上限 7 張', '⚠'); return; }
+  const toLoad = files.slice(0, remaining);
+  if (files.length > remaining) toast(`只能再加 ${remaining} 張，已取最前面 ${remaining} 個`, '⚠');
+  let loaded = 0;
+  toLoad.forEach(file => {
+    // 壓縮後再存，避免 localStorage 爆掉
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const base64 = canvas.toDataURL('image/jpeg', 0.78);
+        const d2 = shotImagesLoad();
+        if (!d2[shotId]) d2[shotId] = [];
+        if (d2[shotId].length < 7) {
+          d2[shotId].push(base64);
+          shotImagesSave(d2);
+        }
+        loaded++;
+        if (loaded === toLoad.length) {
+          renderShots();
+          toast('圖片已上傳並永久儲存', '🖼');
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  // 清掉 input value，讓同一個檔案可再次選取
+  event.target.value = '';
+}
+
+function shotImgDelete(shotId, imgIdx) {
+  const data = shotImagesLoad();
+  if (!data[shotId]) return;
+  data[shotId].splice(imgIdx, 1);
+  if (data[shotId].length === 0) delete data[shotId];
+  shotImagesSave(data);
+  renderShots();
+  toast('圖片已刪除', '🗑');
+}
+
+function shotImgLightbox(shotId, imgIdx) {
+  const imgs = shotImagesGet(shotId);
+  const src = imgs[imgIdx];
+  if (!src) return;
+  // 移除已存在的 lightbox
+  const existing = document.getElementById('shot-lightbox');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'shot-lightbox-overlay';
+  overlay.id = 'shot-lightbox';
+  overlay.innerHTML =
+    '<button class="shot-lightbox-close" onclick="document.getElementById('shot-lightbox').remove()">×</button>' +
+    '<img src="' + src + '" alt="參考圖" onclick="event.stopPropagation()">';
+  overlay.addEventListener('click', function() { overlay.remove(); });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', esc); }
+  });
+  document.body.appendChild(overlay);
+}
 
 // ══════════════════════════════════════════
 //  START
