@@ -551,12 +551,13 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 
 /* ── HIGHLIGHT BAR ── */
 .hl-bar {
-  display: flex; align-items: center; gap: 7px;
+  display: none; align-items: center; gap: 7px;
   padding: 7px 10px; margin-bottom: 8px;
   background: rgba(255,255,255,.03);
   border: 1px solid rgba(255,255,255,.07); border-radius: 7px;
   flex-wrap: wrap;
 }
+.hl-bar.hl-bar-visible { display: flex; }
 .hl-lbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
   color: var(--text-muted,#888); font-family: var(--font-mono,'DM Mono'),monospace; }
 .hl-dot {
@@ -578,9 +579,9 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .sdp-script-area   { font-size: 15px !important; line-height: 1.85 !important; }
 
 /* ── SHOT IMAGE GALLERY ── */
-.shot-img-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.shot-img-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 6px; }
 .shot-thumb {
-  position: relative; width: 68px; height: 68px;
+  position: relative; width: 272px; height: 153px;
   border-radius: 7px; overflow: hidden;
   border: 1px solid rgba(255,255,255,.12); cursor: pointer; flex-shrink: 0;
   transition: border-color .15s;
@@ -596,7 +597,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 }
 .shot-thumb:hover .shot-thumb-del { display: block; }
 .shot-thumb-add {
-  width: 68px; height: 68px; border-radius: 7px;
+  width: 272px; height: 153px; border-radius: 7px;
   border: 1.5px dashed rgba(201,168,76,.4);
   background: rgba(201,168,76,.04); color: var(--gold,#C9A84C);
   font-size: 20px; cursor: pointer; display: flex;
@@ -1438,8 +1439,23 @@ INT./EXT. 地點 — 日/夜
           </div>
           <!-- 參與角色 -->
           <div class="sdp-section">
-            <div class="sdp-section-title">參與角色</div>
+            <div class="sdp-section-head compact-head">
+              <div class="sdp-section-title">參與角色</div>
+              <button class="btn btn-outline btn-sm" id="sdp-cast-edit-btn" onclick="clapprCastToggle()">✎ 編輯</button>
+            </div>
             <div class="cast-list" id="sdp-cast-list"></div>
+            <div id="sdp-cast-add-row" style="display:none;margin-top:10px;position:relative">
+              <div style="display:flex;gap:6px;align-items:center">
+                <div style="position:relative;flex:1">
+                  <input id="sdp-cast-inp" class="form-input" placeholder="輸入角色名稱…" style="width:100%" autocomplete="off"
+                    oninput="clapprCastSuggest(this.value)"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();clapprCastAdd()}"
+                  >
+                  <div id="sdp-cast-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:99;background:var(--bg-raised);border:1px solid var(--border-gold);border-radius:6px;overflow:hidden;margin-top:3px;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
+                </div>
+                <button class="btn btn-gold btn-sm" onclick="clapprCastAdd()">加入</button>
+              </div>
+            </div>
           </div>
           <!-- 拍攝進度 -->
           <div class="sdp-section">
@@ -2795,7 +2811,10 @@ function sceneRow(s, showDetail=false){
     ? `<button class="btn btn-green btn-sm" onclick="event.stopPropagation();resumeScene('${s.id}')">取消暫緩</button>`
     : `<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();skipScene('${s.id}')">暫緩</button>`;
   return `<tr class="${s.status==='current'?'current-row':''}" draggable="true" data-scene-id="${s.id}" ondragstart="sceneDragStart(event)" ondragover="sceneDragOver(event)" ondrop="sceneDrop(event)" ondragend="sceneDragEnd(event)">
-    <td style="width:28px;cursor:grab;color:var(--text-muted);font-size:16px;text-align:center;padding:0 4px 0 8px;user-select:none" title="拖曳排序">⠿</td>
+    <td style="width:44px;padding:0 2px 0 6px;white-space:nowrap">
+      <button onclick="event.stopPropagation();sceneMoveUp('${s.id}')" title="上移" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;display:block;width:100%">▲</button>
+      <button onclick="event.stopPropagation();sceneMoveDown('${s.id}')" title="下移" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;display:block;width:100%">▼</button>
+    </td>
     <td class="scene-num" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.id}</td>
     <td class="scene-name-cell" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.name}</td>
     <td onclick="openDetail('${s.id}')" style="cursor:pointer">${inTag} ${dnTag}</td>
@@ -5637,6 +5656,8 @@ function setSceneFieldReadOnly(kind, readOnly=true){
   if(cancelBtn) cancelBtn.style.display = readOnly ? 'none' : 'inline-flex';
   if(saveBtn) saveBtn.style.display = readOnly ? 'none' : 'inline-flex';
   _sceneFieldEditing[kind] = !readOnly;
+  const hlBarId = kind === 'dialogue' ? 'hl-bar-dialogue' : kind === 'script' ? 'hl-bar-script' : null;
+  if(hlBarId){ const hb=document.getElementById(hlBarId); if(hb) hb.classList.toggle('hl-bar-visible', !readOnly); }
 }
 function setAllSceneFieldsReadOnly(){
   Object.keys(_sceneFieldMap).forEach(k=>setSceneFieldReadOnly(k, true));
@@ -5815,6 +5836,25 @@ function deleteAnnouncement(index) {
 }
 
 // ── Delete Scene ─────────────────────────
+function sceneMoveUp(sid){
+  const idx = scenes.findIndex(s=>s.id===sid);
+  if(idx<=0) return;
+  [scenes[idx-1], scenes[idx]] = [scenes[idx], scenes[idx-1]];
+  scenes.forEach((s,i)=>{ s.page=i+1; });
+  saveCurrentProjectState(); pushAllToSupabase(); broadcastChange('調整場景順序');
+  renderScenes(); renderDashScenes(); renderScenesStatCards(); renderSceneDots();
+  buildShotSelect(); buildScriptSceneSelect(false); renderCallsheet();
+}
+function sceneMoveDown(sid){
+  const idx = scenes.findIndex(s=>s.id===sid);
+  if(idx===-1||idx>=scenes.length-1) return;
+  [scenes[idx], scenes[idx+1]] = [scenes[idx+1], scenes[idx]];
+  scenes.forEach((s,i)=>{ s.page=i+1; });
+  saveCurrentProjectState(); pushAllToSupabase(); broadcastChange('調整場景順序');
+  renderScenes(); renderDashScenes(); renderScenesStatCards(); renderSceneDots();
+  buildShotSelect(); buildScriptSceneSelect(false); renderCallsheet();
+}
+
 // ══════════════════════════════════════════
 //  SCENE DRAG-AND-DROP REORDER
 // ══════════════════════════════════════════
@@ -6482,7 +6522,7 @@ function clapprHLDraw(field) {
   var html = '', pos = 0;
   merged.forEach(function(m) {
     if (m.s > pos) html += '<span>' + esc(text.slice(pos, m.s)) + '</span>';
-    html += '<span class="hl-mark" style="background:' + m.c + ';color:' + m.c + ';border-radius:2px;">' + esc(text.slice(m.s, m.e)) + '</span>';
+    html += '<span class="hl-mark" style="background:' + m.c + ';opacity:0.35;color:transparent;border-radius:2px;">' + esc(text.slice(m.s, m.e)) + '</span>';
     pos = m.e;
   });
   if (pos < text.length) html += '<span>' + esc(text.slice(pos)) + '</span>';
@@ -6528,6 +6568,36 @@ function clapprHLReset() {
   });
   clapprHLSetup();
 }
+
+function clapprCastSuggest(val){
+  const box = document.getElementById('sdp-cast-suggest');
+  if(!box) return;
+  const q = val.trim().toLowerCase();
+  if(!q || !crew || !crew.length){ box.style.display='none'; return; }
+  // 從 crew 拿名字（name）和角色名（char），兩個都可以搜
+  const matches = crew.filter(c=>{
+    return (c.name||'').toLowerCase().includes(q) || (c.char||'').toLowerCase().includes(q) || (c.role||'').toLowerCase().includes(q);
+  }).slice(0,6);
+  if(!matches.length){ box.style.display='none'; return; }
+  box.innerHTML = matches.map(c=>{
+    const display = c.char ? `${c.char} <span style="color:var(--text-muted);font-size:11px">— ${c.name}</span>` : c.name;
+    const val = c.char || c.name;
+    const safeVal = val.replace(/'/g,"\\'");
+    return `<div onclick="clapprCastPickSuggest('${safeVal}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)" onmouseover="this.style.background='rgba(212,168,67,.1)'" onmouseout="this.style.background=''">${display}</div>`;
+  }).join('');
+  box.style.display='block';
+}
+function clapprCastPickSuggest(name){
+  const inp = document.getElementById('sdp-cast-inp');
+  const box = document.getElementById('sdp-cast-suggest');
+  if(inp) inp.value = name;
+  if(box) box.style.display='none';
+  clapprCastAdd();
+}
+// 點其他地方關掉 suggest
+document.addEventListener('click', function(e){
+  if(!e.target.closest('#sdp-cast-add-row')){ const b=document.getElementById('sdp-cast-suggest'); if(b)b.style.display='none'; }
+});
 
 /* ─── 4. EDITABLE CAST LIST ─────────────────────────────── */
 var _castEditing = false;
