@@ -459,8 +459,10 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .sdp-layout{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;}
 @media(max-width:900px){.sdp-layout{grid-template-columns:1fr;}}
 .sdp-main,.sdp-sidebar{display:flex;flex-direction:column;gap:16px;}
-.sdp-section{background:var(--bg-elevated,#1a1a1a);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:var(--radius-lg,12px);padding:18px 20px;}
-.sdp-section-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;margin-bottom:14px;}
+.sdp-section{background:var(--bg-elevated,#1a1a1a);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px 22px;}
+.sdp-section.sdp-dialogue-section,.sdp-section.sdp-script-section{border-color:rgba(201,168,76,0.18);}
+.sdp-section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;margin-bottom:14px;}
+.sdp-section-title.big{font-size:16px!important;letter-spacing:0!important;text-transform:none!important;color:var(--text-primary,#F0EBE0)!important;font-family:var(--font-body,'Outfit'),sans-serif!important;font-weight:600!important;margin-bottom:12px!important;}
 .sdp-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .sdp-info-item{background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.06));border-radius:8px;padding:10px 12px;}
 .sdp-info-item .info-key{font-size:10px;color:var(--text-muted,#888);margin-bottom:4px;font-family:var(--font-mono,'DM Mono'),monospace;}
@@ -657,6 +659,139 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .menu-item-scenes { background: rgba(201,168,76,.06) !important; }
 .menu-item-scenes .menu-ic { color: rgba(201,168,76,.7) !important; }
 .menu-item-scenes span:last-child { color: rgba(201,168,76,.85) !important; }
+</style>
+<style>
+/* ── CONTENTEDITABLE EDITOR ── */
+.sdp-ce-editor {
+  width: 100%;
+  min-height: 340px;
+  max-height: 520px;
+  overflow-y: auto;
+  background: var(--bg-raised, #111);
+  border: 1px solid var(--gold, #C9A84C);
+  border-radius: 8px;
+  color: var(--text-primary, #F0EBE0);
+  font-size: 17px;
+  line-height: 1.9;
+  padding: 16px 18px;
+  font-family: 'DM Mono', 'Courier New', monospace;
+  outline: none;
+  box-sizing: border-box;
+  letter-spacing: .3px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  resize: vertical;
+  caret-color: var(--gold, #C9A84C);
+  transition: border-color .15s;
+}
+.sdp-ce-editor:focus {
+  border-color: var(--gold, #C9A84C);
+  box-shadow: 0 0 0 2px rgba(201,168,76,.15);
+}
+.sdp-ce-editor.sdp-readonly {
+  background: var(--bg-raised, #111) !important;
+  border-color: rgba(255,255,255,.08) !important;
+  cursor: default;
+  box-shadow: none;
+}
+.sdp-ce-editor.sdp-ce-script {
+  min-height: 200px;
+  font-size: 15px;
+  line-height: 1.85;
+}
+/* placeholder for empty CE editor */
+.sdp-ce-editor:empty:before {
+  content: attr(data-placeholder);
+  color: rgba(255,255,255,.2);
+  pointer-events: none;
+  white-space: pre-wrap;
+}
+/* highlight colours shown in CE */
+.sdp-ce-editor span[style*="background"] {
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* ── SCENE DETAIL SECTION HEADERS ── */
+.sdp-section-title.big {
+  font-size: 15px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--text-primary, #F0EBE0) !important;
+  font-family: var(--font-body, 'Outfit'), sans-serif !important;
+  font-weight: 600 !important;
+  margin-bottom: 14px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+}
+.sdp-section.sdp-dialogue-section,
+.sdp-section.sdp-script-section {
+  border-color: rgba(201,168,76,.18) !important;
+}
+
+/* ── CAST DEL BTN ── */
+.cast-del {
+  background: transparent;
+  border: 1px solid rgba(231,76,60,.2); border-radius: 4px;
+  color: rgba(231,76,60,.5); font-size: 10px; padding: 2px 6px;
+  cursor: pointer; margin-left: auto; flex-shrink: 0;
+  transition: all .15s; display: none;
+}
+.cast-del:hover { border-color: rgba(231,76,60,.7); color: #e74c3c; }
+.cast-list.editing .cast-del { display: inline-flex; }
+
+/* ── HIGHLIGHT BAR — hidden by default, shown when editing ── */
+.hl-bar { display: none; }
+.hl-bar.hl-bar-visible { display: flex; }
+
+/* ── SHOT THUMB 16:9 ── */
+.shot-thumb {
+  position: relative; width: 240px; height: 135px;
+  border-radius: 7px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12); cursor: pointer; flex-shrink: 0;
+  transition: border-color .15s;
+}
+.shot-thumb:hover { border-color: rgba(201,168,76,.6); }
+.shot-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shot-thumb-del {
+  position: absolute; top: 4px; right: 4px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(0,0,0,.75); border: none;
+  color: #e74c3c; font-size: 11px; line-height: 20px;
+  text-align: center; cursor: pointer; display: none; padding: 0;
+}
+.shot-thumb:hover .shot-thumb-del { display: block; }
+.shot-thumb-add {
+  width: 240px; height: 135px; border-radius: 7px;
+  border: 1.5px dashed rgba(201,168,76,.4);
+  background: rgba(201,168,76,.04); color: var(--gold,#C9A84C);
+  font-size: 28px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all .15s;
+}
+.shot-thumb-add:hover { border-color: rgba(201,168,76,.8); background: rgba(201,168,76,.1); }
+.shot-thumb-add.maxed { opacity: .3; cursor: not-allowed; pointer-events: none; }
+.shot-img-count { font-size: 9px; letter-spacing: 1px; color: var(--text-muted,#888); font-family: var(--font-mono,'DM Mono'),monospace; }
+.shot-img-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 6px; }
+
+/* ── LIGHTBOX ── */
+.clappr-lb { position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:9999;display:flex;align-items:center;justify-content:center;animation:lb-fade .15s; }
+@keyframes lb-fade{from{opacity:0}to{opacity:1}}
+.clappr-lb img { max-width:90vw;max-height:88vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8); }
+.clappr-lb-x { position:absolute;top:16px;right:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:50%;color:#fff;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+.clappr-lb-x:hover { background:rgba(231,76,60,.5); }
+
+/* ── NAV SCENES HIGHLIGHT ── */
+.nav-scenes-special { background:rgba(201,168,76,.06)!important; border:1px solid rgba(201,168,76,.14)!important; }
+.nav-scenes-special:hover { background:rgba(201,168,76,.12)!important; }
+.nav-scenes-special.active { background:rgba(201,168,76,.14)!important; border-color:rgba(201,168,76,.5)!important; }
+.tab-scenes-special .tab-icon { color:rgba(201,168,76,.7)!important; }
+.tab-scenes-special .tab-label { color:rgba(201,168,76,.6)!important; }
+.tab-scenes-special.active .tab-icon { color:var(--gold,#C9A84C)!important; }
+.tab-scenes-special.active .tab-label { color:var(--gold,#C9A84C)!important; }
+.menu-item-scenes { background:rgba(201,168,76,.06)!important; }
+.menu-item-scenes .menu-ic { color:rgba(201,168,76,.7)!important; }
+.menu-item-scenes span:last-child { color:rgba(201,168,76,.85)!important; }
 </style>
 <body>
 <!-- ═══ PROFILE ONBOARDING OVERLAY ═══ -->
@@ -1363,7 +1498,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
           <!-- 台詞區（主要，佔較多空間） -->
           <div class="sdp-section sdp-dialogue-section">
             <div class="sdp-section-head">
-              <div class="sdp-section-title">🎭 台詞</div>
+              <div class="sdp-section-title big">🎭 台詞</div>
               <div class="sdp-edit-actions">
                 <span id="sdp-dialogue-status" class="sdp-edit-status">唯讀 · 按「編輯」才可修改</span>
                 <button class="btn btn-outline btn-sm" id="sdp-dialogue-edit-btn" onclick="enableSceneFieldEdit('dialogue')">✎ 編輯</button>
@@ -1382,23 +1517,20 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
               <button class="hl-dot" style="background:#FF9A3C" onclick="clapprHL('dialogue','#FF9A3C')"></button>
               <button class="hl-clear" onclick="clapprHLClear('dialogue')">清除</button>
             </div>
-            <div class="hl-wrap" id="hl-wrap-dialogue">
-              <div class="hl-overlay" id="hl-overlay-dialogue" aria-hidden="true"></div>
-              <textarea class="sdp-dialogue-area sdp-readonly" id="sdp-dialogue" readonly placeholder="在這裡輸入台詞…
-
-[角色名]
-台詞內容
-
-[角色名]
-台詞內容…"></textarea>
-            </div>
+            <!-- contenteditable editor (supports inline highlight) -->
+            <div class="sdp-ce-editor sdp-readonly" id="sdp-dialogue"
+              contenteditable="false"
+              data-placeholder="在這裡輸入台詞…&#10;&#10;[角色名]&#10;台詞內容&#10;&#10;[角色名]&#10;台詞內容…"
+            ></div>
+            <!-- hidden textarea keeps the raw text for save routines -->
+            <textarea id="sdp-dialogue-raw" style="display:none"></textarea>
             <div class="sdp-safe-hint">避免誤按：目前預設不可修改，按上方「編輯」後才會開放輸入。</div>
           </div>
 
           <!-- 場景指示/劇本 -->
           <div class="sdp-section sdp-script-section">
             <div class="sdp-section-head">
-              <div class="sdp-section-title">📄 場景指示 / 劇本</div>
+              <div class="sdp-section-title big">📄 場景指示 / 劇本</div>
               <div class="sdp-edit-actions">
                 <span id="sdp-script-status" class="sdp-edit-status">唯讀 · 按「編輯」才可修改</span>
                 <button class="btn btn-outline btn-sm" id="sdp-script-edit-btn" onclick="enableSceneFieldEdit('script')">✎ 編輯</button>
@@ -1417,14 +1549,11 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
               <button class="hl-dot" style="background:#FF9A3C" onclick="clapprHL('script','#FF9A3C')"></button>
               <button class="hl-clear" onclick="clapprHLClear('script')">清除</button>
             </div>
-            <div class="hl-wrap" id="hl-wrap-script">
-              <div class="hl-overlay" id="hl-overlay-script" aria-hidden="true"></div>
-              <textarea class="sdp-script-area sdp-readonly" id="sdp-script-text" readonly placeholder="場景動作說明、場面描述…
-
-INT./EXT. 地點 — 日/夜
-
-動作描述與場景指示…"></textarea>
-            </div>
+            <div class="sdp-ce-editor sdp-ce-script sdp-readonly" id="sdp-script-text"
+              contenteditable="false"
+              data-placeholder="場景動作說明、場面描述…&#10;&#10;INT./EXT. 地點 — 日/夜&#10;&#10;動作描述與場景指示…"
+            ></div>
+            <textarea id="sdp-script-text-raw" style="display:none"></textarea>
             <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。</div>
           </div>
 
@@ -1434,13 +1563,13 @@ INT./EXT. 地點 — 日/夜
         <div class="sdp-sidebar">
           <!-- 基本資訊 -->
           <div class="sdp-section">
-            <div class="sdp-section-title">基本資訊</div>
+            <div class="sdp-section-title big">基本資訊</div>
             <div class="sdp-info-grid" id="sdp-info-grid"></div>
           </div>
           <!-- 參與角色 -->
           <div class="sdp-section">
             <div class="sdp-section-head compact-head">
-              <div class="sdp-section-title">參與角色</div>
+              <div class="sdp-section-title big">參與角色</div>
               <button class="btn btn-outline btn-sm" id="sdp-cast-edit-btn" onclick="clapprCastToggle()">✎ 編輯</button>
             </div>
             <div class="cast-list" id="sdp-cast-list"></div>
@@ -1459,7 +1588,7 @@ INT./EXT. 地點 — 日/夜
           </div>
           <!-- 拍攝進度 -->
           <div class="sdp-section">
-            <div class="sdp-section-title">拍攝進度</div>
+            <div class="sdp-section-title big">拍攝進度</div>
             <div class="sdp-progress-wrap">
               <div class="sdp-progress-track">
                 <div class="sdp-progress-fill" id="sdp-progress-fill" style="width:0%"></div>
@@ -1470,7 +1599,7 @@ INT./EXT. 地點 — 日/夜
           <!-- 鏡頭清單 -->
           <div class="sdp-section">
             <div class="sdp-section-head compact-head">
-              <div class="sdp-section-title">鏡頭清單</div>
+              <div class="sdp-section-title big">鏡頭清單</div>
               <div style="display:flex;align-items:center;gap:6px">
                 <span id="sdp-shots-status" style="font-size:10px;color:var(--text-muted);letter-spacing:.5px">唯讀</span>
                 <button class="btn btn-outline btn-sm" id="sdp-shots-edit-btn" onclick="sdpShotsEdit()">✎ 編輯</button>
@@ -1482,7 +1611,7 @@ INT./EXT. 地點 — 日/夜
           <!-- 導演備注 -->
           <div class="sdp-section">
             <div class="sdp-section-head compact-head">
-              <div class="sdp-section-title">導演備注</div>
+              <div class="sdp-section-title big">導演備注</div>
               <div class="sdp-edit-actions">
                 <span id="sdp-notes-status" class="sdp-edit-status">唯讀</span>
                 <button class="btn btn-outline btn-sm" id="sdp-notes-edit-btn" onclick="enableSceneFieldEdit('notes')">✎ 編輯</button>
@@ -2812,8 +2941,8 @@ function sceneRow(s, showDetail=false){
     : `<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();skipScene('${s.id}')">暫緩</button>`;
   return `<tr class="${s.status==='current'?'current-row':''}" draggable="true" data-scene-id="${s.id}" ondragstart="sceneDragStart(event)" ondragover="sceneDragOver(event)" ondrop="sceneDrop(event)" ondragend="sceneDragEnd(event)">
     <td style="width:44px;padding:0 2px 0 6px;white-space:nowrap">
-      <button onclick="event.stopPropagation();sceneMoveUp('${s.id}')" title="上移" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;display:block;width:100%">▲</button>
-      <button onclick="event.stopPropagation();sceneMoveDown('${s.id}')" title="下移" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;display:block;width:100%">▼</button>
+      <button onclick="event.stopPropagation();sceneMoveUp('${s.id}')" title="上移" style="background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:6px 8px;line-height:1;display:block;width:100%;min-height:36px;touch-action:manipulation">▲</button>
+      <button onclick="event.stopPropagation();sceneMoveDown('${s.id}')" title="下移" style="background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:6px 8px;line-height:1;display:block;width:100%;min-height:36px;touch-action:manipulation">▼</button>
     </td>
     <td class="scene-num" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.id}</td>
     <td class="scene-name-cell" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.name}</td>
@@ -6252,527 +6381,476 @@ function maybeAutoJoinFromLink(){
 
 <script>
 /* ============================================================
-   CLAPPR EXTENSIONS v3 — completely separate script tag
+   CLAPPR EXTENSIONS v4
+   ─ contenteditable highlight editor
+   ─ shot image gallery  
+   ─ editable cast with crew autocomplete
+   ─ touch-friendly scene sort
    ============================================================ */
 
-/* ─── 1. SHOT IMAGE GALLERY ─────────────────────────────── */
+/* ─── SHOT IMAGE GALLERY ─────────────────────────────────── */
 var SIMGKEY = 'clappr_shot_imgs_v2';
+function simgLoad(){try{return JSON.parse(localStorage.getItem(SIMGKEY)||'{}');}catch(e){return{};}}
+function simgSave(d){try{localStorage.setItem(SIMGKEY,JSON.stringify(d));}catch(e){toast&&toast('儲存空間已滿','⚠');}}
+function simgGet(id){return simgLoad()[id]||[];}
+function simgDel(id,i){var d=simgLoad();if(!d[id])return;d[id].splice(i,1);if(!d[id].length)delete d[id];simgSave(d);}
 
-function simgLoad() {
-  try { return JSON.parse(localStorage.getItem(SIMGKEY) || '{}'); } catch(e) { return {}; }
+function clapprImgUpload(ev,shotId){
+  var files=Array.from(ev.target.files||[]);if(!files.length)return;
+  var existing=simgGet(shotId),slots=7-existing.length;
+  if(slots<=0){toast&&toast('已達上限7張','⚠');return;}
+  files=files.slice(0,slots);
+  var done=0;
+  files.forEach(function(file){
+    var fr=new FileReader();
+    fr.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var MAX=960,w=img.width,h=img.height;
+        if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+        var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        var d=simgLoad();if(!d[shotId])d[shotId]=[];
+        if(d[shotId].length<7){d[shotId].push(cv.toDataURL('image/jpeg',0.82));simgSave(d);}
+        done++;if(done===files.length){clapprRefreshShotCards();clapprRefreshSdpShots();toast&&toast('圖片已儲存','🖼');}
+      };img.src=e.target.result;
+    };fr.readAsDataURL(file);
+  });ev.target.value='';
 }
-function simgSave(d) {
-  try { localStorage.setItem(SIMGKEY, JSON.stringify(d)); } catch(e) {
-    if (typeof toast === 'function') toast('圖片儲存空間已滿', '⚠');
-  }
-}
-function simgGet(shotId) { return simgLoad()[shotId] || []; }
 
-function simgDel(shotId, idx) {
-  var d = simgLoad();
-  if (!d[shotId]) return;
-  d[shotId].splice(idx, 1);
-  if (!d[shotId].length) delete d[shotId];
-  simgSave(d);
-}
+function simgDelAndRefresh(id,i){simgDel(id,i);clapprRefreshShotCards();clapprRefreshSdpShots();toast&&toast('已刪除','🗑');}
 
-function clapprImgUpload(event, shotId) {
-  var files = Array.from(event.target.files || []);
-  if (!files.length) return;
-  var existing = simgGet(shotId);
-  var slots = 7 - existing.length;
-  if (slots <= 0) { if (typeof toast === 'function') toast('已達上限 7 張', '⚠'); return; }
-  files = files.slice(0, slots);
-  var done = 0;
-  files.forEach(function(file) {
-    var fr = new FileReader();
-    fr.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        var MAX = 960, w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else { w = Math.round(w * MAX / h); h = MAX; }
-        }
-        var cv = document.createElement('canvas');
-        cv.width = w; cv.height = h;
-        cv.getContext('2d').drawImage(img, 0, 0, w, h);
-        var d = simgLoad();
-        if (!d[shotId]) d[shotId] = [];
-        if (d[shotId].length < 7) { d[shotId].push(cv.toDataURL('image/jpeg', 0.82)); simgSave(d); }
-        done++;
-        if (done === files.length) {
-          clapprRefreshShotCards();
-          clapprRefreshSdpShots();
-          if (typeof toast === 'function') toast('圖片已儲存', '🖼');
-        }
-      };
-      img.src = e.target.result;
-    };
-    fr.readAsDataURL(file);
+function clapprLightbox(shotId,idx){
+  var src=simgGet(shotId)[idx];if(!src)return;
+  var lb=document.getElementById('clappr-lb');
+  if(!lb){lb=document.createElement('div');lb.id='clappr-lb';lb.className='clappr-lb';
+    lb.innerHTML='<button class="clappr-lb-x" onclick="document.getElementById(\'clappr-lb\').style.display=\'none\'">×</button><img id="clappr-lb-img">';
+    lb.addEventListener('click',function(e){if(e.target===lb)lb.style.display='none';});
+    document.body.appendChild(lb);}
+  document.getElementById('clappr-lb-img').src=src;lb.style.display='flex';
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){var lb=document.getElementById('clappr-lb');if(lb)lb.style.display='none';}});
+
+function simgRowHtml(shotId){
+  var imgs=simgGet(shotId),h='';
+  imgs.forEach(function(src,i){
+    h+='<div class="shot-thumb" onclick="clapprLightbox(\''+shotId+'\','+i+')">'
+      +'<img src="'+src+'" alt="">'
+      +'<button class="shot-thumb-del" onclick="event.stopPropagation();simgDelAndRefresh(\''+shotId+'\','+i+')">×</button>'
+      +'</div>';
   });
-  event.target.value = '';
-}
-
-function simgDelAndRefresh(shotId, idx) {
-  simgDel(shotId, idx);
-  clapprRefreshShotCards();
-  clapprRefreshSdpShots();
-  if (typeof toast === 'function') toast('已刪除', '🗑');
-}
-
-/* lightbox */
-function clapprLightbox(shotId, idx) {
-  var src = simgGet(shotId)[idx];
-  if (!src) return;
-  var lb = document.getElementById('clappr-lb');
-  if (!lb) {
-    lb = document.createElement('div');
-    lb.id = 'clappr-lb';
-    lb.className = 'clappr-lb';
-    lb.innerHTML = '<button class="clappr-lb-x" onclick="document.getElementById(\'clappr-lb\').style.display=\'none\'">×</button><img id="clappr-lb-img">';
-    lb.addEventListener('click', function(e){ if(e.target===lb) lb.style.display='none'; });
-    document.body.appendChild(lb);
-  }
-  document.getElementById('clappr-lb-img').src = src;
-  lb.style.display = 'flex';
-}
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { var lb=document.getElementById('clappr-lb'); if(lb) lb.style.display='none'; }
-});
-
-/* build image row HTML for a given shotId */
-function simgRowHtml(shotId) {
-  var imgs = simgGet(shotId);
-  var h = '';
-  imgs.forEach(function(src, i) {
-    h += '<div class="shot-thumb" onclick="clapprLightbox(\'' + shotId + '\',' + i + ')">' +
-         '<img src="' + src + '" alt="">' +
-         '<button class="shot-thumb-del" onclick="event.stopPropagation();simgDelAndRefresh(\'' + shotId + '\',' + i + ')">×</button>' +
-         '</div>';
-  });
-  var maxed = imgs.length >= 7;
-  h += '<label class="shot-thumb-add' + (maxed?' maxed':'') + '" title="' + (maxed?'已達上限 7 張':'上傳圖片（最多7張）') + '">' +
-       '＋<input type="file" accept="image/*" multiple style="display:none" onchange="clapprImgUpload(event,\'' + shotId + '\')"' + (maxed?' disabled':'') + '></label>';
-  if (imgs.length) h += '<div class="shot-img-count">' + imgs.length + '/7</div>';
+  var maxed=imgs.length>=7;
+  h+='<label class="shot-thumb-add'+(maxed?' maxed':'')+'" title="'+(maxed?'已達上限7張':'上傳圖片')+'">'
+    +'＋<input type="file" accept="image/*" multiple style="display:none" onchange="clapprImgUpload(event,\''+shotId+'\')"'+(maxed?' disabled':'')+' ></label>';
+  if(imgs.length)h+='<div class="shot-img-count">'+imgs.length+'/7</div>';
   return h;
 }
 
-/* inject image rows into shot-cards page */
-function clapprRefreshShotCards() {
-  var cards = document.querySelectorAll('#shot-cards .shot-card');
-  cards.forEach(function(card) {
-    var shotId = card.id.replace('shot-', '');
-    if (!shotId) return;
-    var old = card.querySelector('.shot-img-row');
-    if (old) old.remove();
-    var div = document.createElement('div');
-    div.className = 'shot-img-row';
-    div.innerHTML = simgRowHtml(shotId);
-    var btn = card.querySelector('.shot-check');
-    if (btn) card.insertBefore(div, btn); else card.appendChild(div);
+function clapprRefreshShotCards(){
+  document.querySelectorAll('#shot-cards .shot-card').forEach(function(card){
+    var sid=card.id.replace('shot-','');if(!sid)return;
+    var old=card.querySelector('.shot-img-row');if(old)old.remove();
+    var div=document.createElement('div');div.className='shot-img-row';div.innerHTML=simgRowHtml(sid);
+    var btn=card.querySelector('.shot-check');
+    if(btn)card.insertBefore(div,btn);else card.appendChild(div);
   });
 }
 
-/* ─── 2. SDP (場景詳情) INLINE SHOT LIST WITH IMAGES ──── */
-var _sdpShotsEditing = false;
-
-function sdpShotsEdit() {
-  _sdpShotsEditing = true;
-  var editBtn = document.getElementById('sdp-shots-edit-btn');
-  var doneBtn = document.getElementById('sdp-shots-done-btn');
-  var status  = document.getElementById('sdp-shots-status');
-  if (editBtn) editBtn.style.display = 'none';
-  if (doneBtn) doneBtn.style.display = 'inline-flex';
-  if (status)  status.textContent = '編輯中';
+/* ─── SDP INLINE SHOTS ────────────────────────────────────── */
+var _sdpShotsEditing=false;
+function sdpShotsEdit(){
+  _sdpShotsEditing=true;
+  var eb=document.getElementById('sdp-shots-edit-btn'),db=document.getElementById('sdp-shots-done-btn'),st=document.getElementById('sdp-shots-status');
+  if(eb)eb.style.display='none';if(db)db.style.display='inline-flex';if(st)st.textContent='編輯中';
+  clapprRefreshSdpShots();
+}
+function sdpShotsDone(){
+  _sdpShotsEditing=false;
+  var eb=document.getElementById('sdp-shots-edit-btn'),db=document.getElementById('sdp-shots-done-btn'),st=document.getElementById('sdp-shots-status');
+  if(eb)eb.style.display='inline-flex';if(db)db.style.display='none';if(st)st.textContent='唯讀';
   clapprRefreshSdpShots();
 }
 
-function sdpShotsDone() {
-  _sdpShotsEditing = false;
-  var editBtn = document.getElementById('sdp-shots-edit-btn');
-  var doneBtn = document.getElementById('sdp-shots-done-btn');
-  var status  = document.getElementById('sdp-shots-status');
-  if (editBtn) editBtn.style.display = 'inline-flex';
-  if (doneBtn) doneBtn.style.display = 'none';
-  if (status)  status.textContent = '唯讀';
-  clapprRefreshSdpShots();
-}
-
-function clapprRefreshSdpShots() {
-  var container = document.getElementById('sdp-shot-list');
-  if (!container) return;
-  var sid = (typeof _currentSDP !== 'undefined') ? _currentSDP : null;
-  if (!sid) return;
-  var arr = (typeof shots !== 'undefined' && shots[sid]) ? shots[sid] : [];
-  if (!arr.length) {
-    container.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">此場景尚未建立鏡頭</div>';
-    return;
-  }
-  container.innerHTML = arr.map(function(sh, i) {
-    var imgRow = '<div class="shot-img-row">' + simgRowHtml(sh.id) + '</div>';
-    /* delete button only in edit mode */
-    var delBtn = _sdpShotsEditing
-      ? '<button onclick="clapprSdpDelShot(\'' + sid + '\',' + i + ')" style="margin-left:auto;background:transparent;border:1px solid rgba(231,76,60,.25);border-radius:5px;color:rgba(231,76,60,.5);font-size:10px;padding:2px 6px;cursor:pointer;flex-shrink:0" onmouseover="this.style.color=\'var(--red-light)\';this.style.borderColor=\'rgba(231,76,60,.7)\'" onmouseout="this.style.color=\'rgba(231,76,60,.5)\';this.style.borderColor=\'rgba(231,76,60,.25)\'">🗑</button>'
-      : '';
-    return '<div class="sdp-shot-item ' + (sh.done ? 'done-shot' : '') + '">' +
-      '<div class="sdp-shot-num">' + sh.id + '</div>' +
-      '<div class="sdp-shot-body" style="flex:1">' +
-        '<div class="sdp-shot-type">' + sh.type + '</div>' +
-        '<div class="sdp-shot-meta">' + sh.angle + ' · ' + sh.lens + (sh.note ? ' · ' + sh.note : '') + '</div>' +
-        imgRow +
-      '</div>' +
-      '<button class="sdp-shot-btn ' + (sh.done ? 'done-btn' : '') + '" onclick="toggleShotFromDetail(\'' + sid + '\',' + i + ')">' + (sh.done ? '✓ 完成' : '標記完成') + '</button>' +
-      delBtn +
+function clapprRefreshSdpShots(){
+  var container=document.getElementById('sdp-shot-list');if(!container)return;
+  var sid=(typeof _currentSDP!=='undefined')?_currentSDP:null;if(!sid)return;
+  var arr=(typeof shots!=='undefined'&&shots[sid])?shots[sid]:[];
+  if(!arr.length){container.innerHTML='<div style="font-size:12px;color:var(--text-muted)">此場景尚未建立鏡頭</div>';return;}
+  container.innerHTML=arr.map(function(sh,i){
+    var imgRow='<div class="shot-img-row">'+simgRowHtml(sh.id)+'</div>';
+    var delBtn=_sdpShotsEditing
+      ?'<button onclick="clapprSdpDelShot(\''+sid+'\','+i+')" style="margin-left:8px;background:transparent;border:1px solid rgba(231,76,60,.25);border-radius:5px;color:rgba(231,76,60,.5);font-size:10px;padding:2px 6px;cursor:pointer;flex-shrink:0">🗑</button>':'';
+    return '<div class="sdp-shot-item '+(sh.done?'done-shot':'')+'">'+
+      '<div class="sdp-shot-num">'+sh.id+'</div>'+
+      '<div style="flex:1">'+
+        '<div class="sdp-shot-type">'+sh.type+'</div>'+
+        '<div class="sdp-shot-meta">'+sh.angle+' · 📷 '+sh.lens+(sh.note?' · '+sh.note:'')+'</div>'+
+        imgRow+
+      '</div>'+
+      '<button class="sdp-shot-btn '+(sh.done?'done-btn':'')+'" onclick="toggleShotFromDetail(\''+sid+'\','+i+')">'+(sh.done?'✓ 完成':'標記完成')+'</button>'+
+      delBtn+
     '</div>';
   }).join('');
 }
 
-function clapprSdpDelShot(sid, index) {
-  if (typeof confirmDelete === 'function') {
-    var sh = (shots[sid] || [])[index];
-    if (!sh) return;
-    confirmDelete('確定要刪除鏡頭「' + sh.id + '」？', function() {
-      shots[sid].splice(index, 1);
-      clapprRefreshSdpShots();
-      if (typeof persistSave === 'function') persistSave();
-      if (typeof toast === 'function') toast('鏡頭已刪除', '🗑');
-    });
-  }
+function clapprSdpDelShot(sid,index){
+  if(typeof confirmDelete!=='function')return;
+  var sh=(shots[sid]||[])[index];if(!sh)return;
+  confirmDelete('確定要刪除鏡頭「'+sh.id+'」？',function(){
+    shots[sid].splice(index,1);
+    clapprRefreshSdpShots();
+    if(typeof persistSave==='function')persistSave();
+    toast&&toast('鏡頭已刪除','🗑');
+  });
 }
 
-/* ─── 3. HIGHLIGHT TOOL (textarea overlay) ─────────────── */
-/* Stores mark ranges per field; redraws a transparent overlay div */
-var _hlMarks = { dialogue: [], script: [] };
-var _hlFieldMap = {
+/* ─── CONTENTEDITABLE HIGHLIGHT EDITOR ──────────────────── */
+/*  Strategy:
+    - sdp-dialogue and sdp-script-text are now <div contenteditable>
+    - readonly = contenteditable=false
+    - When editing: contenteditable=true, user can type + highlight
+    - Highlight: execCommand('backColor') — built-in, works in all browsers
+    - Save: serialize innerHTML (keeps <span style> marks) + plain text
+    - Load: set innerHTML if HTML saved, else set textContent
+*/
+
+var _ceIds = {
   dialogue: 'sdp-dialogue',
   script:   'sdp-script-text'
 };
-/* KEY FIX: save selection BEFORE the textarea loses focus when clicking a colour button */
-var _hlSavedSel = { dialogue: null, script: null };
 
-function clapprHLSaveSel(field) {
-  var ta = document.getElementById(_hlFieldMap[field]);
-  if (!ta || ta.readOnly) return;
-  _hlSavedSel[field] = { s: ta.selectionStart, e: ta.selectionEnd };
+function ceSetReadonly(field, readonly){
+  var el=document.getElementById(_ceIds[field]);
+  if(!el)return;
+  el.contentEditable = readonly ? 'false' : 'true';
+  el.classList.toggle('sdp-readonly', readonly);
+  // show/hide hl-bar
+  var bar=document.getElementById('hl-bar-'+field);
+  if(bar)bar.classList.toggle('hl-bar-visible', !readonly);
 }
 
-function clapprHLSetupSelSave() {
-  Object.keys(_hlFieldMap).forEach(function(field) {
-    var ta = document.getElementById(_hlFieldMap[field]);
-    if (!ta || ta._clapprSelBound) return;
-    ta._clapprSelBound = true;
-    /* Save on every selection change and on keyup */
-    ta.addEventListener('mouseup',   function(){ clapprHLSaveSel(field); });
-    ta.addEventListener('keyup',     function(){ clapprHLSaveSel(field); });
-    ta.addEventListener('selectionchange', function(){ clapprHLSaveSel(field); });
-  });
+function ceGetText(field){
+  var el=document.getElementById(_ceIds[field]);
+  if(!el)return'';
+  // return innerHTML to preserve marks
+  return el.innerHTML;
+}
+function ceGetPlainText(field){
+  var el=document.getElementById(_ceIds[field]);
+  if(!el)return'';
+  return el.innerText||el.textContent||'';
 }
 
-function clapprHL(field, color) {
-  var ta = document.getElementById(_hlFieldMap[field]);
-  if (!ta) return;
-  if (ta.readOnly) {
-    if (typeof toast === 'function') toast('請先按「✎ 編輯」再標色', '✎');
-    return;
+function ceSetContent(field, htmlOrText){
+  var el=document.getElementById(_ceIds[field]);
+  if(!el)return;
+  if(!htmlOrText||!htmlOrText.trim()){el.innerHTML='';return;}
+  // If it contains HTML tags (saved with marks), set as innerHTML
+  if(/<[a-z]/i.test(htmlOrText)){
+    el.innerHTML=htmlOrText;
+  } else {
+    // plain text — preserve newlines
+    el.innerHTML=htmlOrText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
   }
-  /* Use saved selection (captured before blur) */
-  var saved = _hlSavedSel[field];
-  if (!saved || saved.s === saved.e) {
-    if (typeof toast === 'function') toast('請先選取文字，再點顏色', '💡');
-    return;
+}
+
+function clapprHL(field, color){
+  var el=document.getElementById(_ceIds[field]);
+  if(!el||el.contentEditable==='false'){toast&&toast('請先按「✎ 編輯」再標色','✎');return;}
+  // Make sure the div is focused and selection exists
+  var sel=window.getSelection();
+  if(!sel||!sel.rangeCount||sel.isCollapsed){
+    // try saved selection
+    if(_ceSavedRange[field]){
+      sel.removeAllRanges();sel.addRange(_ceSavedRange[field]);
+    } else {
+      toast&&toast('請先選取文字','💡');return;
+    }
   }
-  _hlMarks[field].push({ s: saved.s, e: saved.e, c: color });
-  /* Clear saved so double-click doesn't re-apply */
-  _hlSavedSel[field] = null;
-  clapprHLDraw(field);
-  ta.focus();
-}
-
-function clapprHLClear(field) {
-  _hlMarks[field] = [];
-  _hlSavedSel[field] = null;
-  clapprHLDraw(field);
-}
-
-function clapprHLDraw(field) {
-  var taId = _hlFieldMap[field];
-  var ta = document.getElementById(taId);
-  var ov = document.getElementById('hl-overlay-' + field);
-  if (!ta || !ov) return;
-
-  var text = ta.value;
-  var marks = _hlMarks[field].slice().sort(function(a,b){ return a.s-b.s; });
-  var merged = [];
-  marks.forEach(function(m) {
-    if (merged.length && m.s < merged[merged.length-1].e) {
-      var last = merged[merged.length-1];
-      last.e = Math.max(last.e, m.e);
-      last.c = m.c;
-    } else { merged.push({ s:m.s, e:m.e, c:m.c }); }
-  });
-
-  function esc(str) {
-    return str
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/ /g,'\u00a0').replace(/\t/g,'\u00a0\u00a0')
-      .replace(/\n/g,'<br>');
+  // use execCommand — most reliable cross-browser approach
+  var range=sel.getRangeAt(0);
+  if(range.collapsed){toast&&toast('請先選取文字','💡');return;}
+  // wrap selection in a span
+  var span=document.createElement('span');
+  span.style.background=color;
+  span.style.opacity='0.45';
+  span.style.borderRadius='2px';
+  span.style.padding='0 1px';
+  try{
+    range.surroundContents(span);
+  } catch(ex){
+    // selection crosses nodes — use extractContents
+    var frag=range.extractContents();
+    span.appendChild(frag);
+    range.insertNode(span);
   }
-
-  var html = '', pos = 0;
-  merged.forEach(function(m) {
-    if (m.s > pos) html += '<span>' + esc(text.slice(pos, m.s)) + '</span>';
-    html += '<span class="hl-mark" style="background:' + m.c + ';opacity:0.35;color:transparent;border-radius:2px;">' + esc(text.slice(m.s, m.e)) + '</span>';
-    pos = m.e;
-  });
-  if (pos < text.length) html += '<span>' + esc(text.slice(pos)) + '</span>';
-  ov.innerHTML = html;
-
-  /* Match textarea geometry exactly */
-  var cs = window.getComputedStyle(ta);
-  ov.style.fontSize      = cs.fontSize;
-  ov.style.lineHeight    = cs.lineHeight;
-  ov.style.fontFamily    = cs.fontFamily;
-  ov.style.padding       = cs.padding;
-  ov.style.letterSpacing = cs.letterSpacing;
-  ov.style.width         = ta.offsetWidth + 'px';
-  ov.style.height        = ta.offsetHeight + 'px';
-  ov.style.boxSizing     = 'border-box';
-  ov.style.overflowY     = 'hidden';
-  ov.scrollTop           = ta.scrollTop;
+  sel.removeAllRanges();
+  // sync raw textarea
+  ceSyncRaw(field);
 }
 
-function clapprHLSyncScroll(field) {
-  var ta = document.getElementById(_hlFieldMap[field]);
-  var ov = document.getElementById('hl-overlay-' + field);
-  if (ta && ov) ov.scrollTop = ta.scrollTop;
+function clapprHLClear(field){
+  var el=document.getElementById(_ceIds[field]);
+  if(!el||el.contentEditable==='false'){toast&&toast('請先按「✎ 編輯」再清除','✎');return;}
+  // remove all highlight spans
+  el.querySelectorAll('span[style*="background"]').forEach(function(sp){
+    var p=sp.parentNode;
+    while(sp.firstChild)p.insertBefore(sp.firstChild,sp);
+    p.removeChild(sp);
+  });
+  el.normalize();
+  ceSyncRaw(field);
 }
 
-function clapprHLSetup() {
-  clapprHLSetupSelSave();
-  Object.keys(_hlFieldMap).forEach(function(field) {
-    var ta = document.getElementById(_hlFieldMap[field]);
-    if (!ta || ta._clapprBound) return;
-    ta._clapprBound = true;
-    ta.addEventListener('input',  function(){ clapprHLDraw(field); });
-    ta.addEventListener('scroll', function(){ clapprHLSyncScroll(field); });
+function ceSyncRaw(field){
+  // keep hidden textarea in sync for any legacy save code that reads .value
+  var raw=document.getElementById(_ceIds[field]+'-raw');
+  if(raw){var el=document.getElementById(_ceIds[field]);raw.value=el?el.innerHTML:'';}
+}
+
+/* Save selection so clicking hl button doesn't lose it */
+var _ceSavedRange={dialogue:null,script:null};
+function ceSaveRange(field){
+  var sel=window.getSelection();
+  if(sel&&sel.rangeCount&&!sel.isCollapsed){
+    _ceSavedRange[field]=sel.getRangeAt(0).cloneRange();
+  }
+}
+
+function ceSetupEvents(){
+  Object.keys(_ceIds).forEach(function(field){
+    var el=document.getElementById(_ceIds[field]);
+    if(!el||el._ceBound)return;
+    el._ceBound=true;
+    el.addEventListener('mouseup',function(){ceSaveRange(field);});
+    el.addEventListener('keyup',function(){ceSaveRange(field);ceSyncRaw(field);});
+    el.addEventListener('input',function(){ceSyncRaw(field);});
   });
 }
 
-function clapprHLReset() {
-  _hlMarks = { dialogue: [], script: [] };
-  _hlSavedSel = { dialogue: null, script: null };
-  ['dialogue','script'].forEach(function(field) {
-    var ov = document.getElementById('hl-overlay-' + field);
-    if (ov) ov.innerHTML = '';
-  });
-  clapprHLSetup();
+/* ─── PATCH setSceneFieldReadOnly to drive CE editor ──────── */
+(function(){
+  var tries=0;
+  var t=setInterval(function(){
+    tries++;
+    if(typeof setSceneFieldReadOnly!=='function'){if(tries>200)clearInterval(t);return;}
+    clearInterval(t);
+    var orig=setSceneFieldReadOnly;
+    setSceneFieldReadOnly=function(kind,readOnly){
+      orig(kind,readOnly);
+      if(kind==='dialogue'||kind==='script')ceSetReadonly(kind,readOnly!==false);
+    };
+
+    /* Patch openDetail to load content into CE editors */
+    var origOD=openDetail;
+    openDetail=function(sid){
+      origOD(sid);
+      var s=(typeof scenes!=='undefined')?scenes.find(function(x){return x.id===sid;}):null;
+      if(s){
+        setTimeout(function(){
+          ceSetContent('dialogue',s.dialogue||'');
+          ceSetContent('script',s.sceneScript||'');
+          ceSetReadonly('dialogue',true);
+          ceSetReadonly('script',true);
+          // cast
+          _castEditing=false;
+          var btn=document.getElementById('sdp-cast-edit-btn'),addRow=document.getElementById('sdp-cast-add-row'),list=document.getElementById('sdp-cast-list');
+          if(btn)btn.textContent='✎ 編輯';
+          if(addRow)addRow.style.display='none';
+          if(list)list.classList.remove('editing');
+          clapprRenderCast(s);
+          // shots
+          _sdpShotsEditing=false;
+          var eb=document.getElementById('sdp-shots-edit-btn'),db=document.getElementById('sdp-shots-done-btn'),st=document.getElementById('sdp-shots-status');
+          if(eb)eb.style.display='inline-flex';if(db)db.style.display='none';if(st)st.textContent='唯讀';
+          clapprRefreshSdpShots();
+          ceSetupEvents();
+        },30);
+      }
+    };
+
+    /* Patch enableSceneFieldEdit to focus CE editor */
+    var origEnable=enableSceneFieldEdit;
+    enableSceneFieldEdit=function(kind){
+      origEnable(kind);
+      if(kind==='dialogue'||kind==='script'){
+        ceSetReadonly(kind,false);
+        var el=document.getElementById(_ceIds[kind]);
+        if(el){el.focus();/* move cursor to end */var r=document.createRange();r.selectNodeContents(el);r.collapse(false);var s=window.getSelection();s.removeAllRanges();s.addRange(r);}
+      }
+    };
+
+    /* Patch cancelSceneFieldEdit */
+    var origCancel=cancelSceneFieldEdit;
+    cancelSceneFieldEdit=function(kind){
+      if(kind==='dialogue'||kind==='script'){
+        var scene=(typeof _currentSDP!=='undefined'&&typeof scenes!=='undefined')?scenes.find(function(x){return x.id===_currentSDP;}):null;
+        if(scene){
+          if(kind==='dialogue')ceSetContent('dialogue',scene.dialogue||'');
+          if(kind==='script')ceSetContent('script',scene.sceneScript||'');
+        }
+        ceSetReadonly(kind,true);
+        if(typeof setSceneFieldReadOnly==='function');// already called inside orig
+        if(typeof toast==='function')toast('已取消編輯，沒有儲存變更','↩');
+        return; // skip orig since we handle manually
+      }
+      origCancel(kind);
+    };
+
+    /* Patch saveSceneDialogue to read from CE */
+    var origSaveDlg=saveSceneDialogue;
+    saveSceneDialogue=function(){
+      var s=(typeof _currentSDP!=='undefined'&&typeof scenes!=='undefined')?scenes.find(function(x){return x.id===_currentSDP;}):null;
+      if(s){
+        s.dialogue=ceGetText('dialogue');
+        if(typeof saveCurrentProjectState==='function')saveCurrentProjectState();
+        if(typeof syncSceneToDB==='function')syncSceneToDB(s);
+        if(typeof broadcastChange==='function')broadcastChange('更新台詞 '+_currentSDP);
+        ceSetReadonly('dialogue',true);
+        if(typeof toast==='function')toast('台詞已儲存','🎭');
+        // update status/buttons manually (orig would read textarea.value, skip it)
+        if(typeof setSceneFieldReadOnly==='function'){
+          /* call the original orig (before our patch) to reset buttons */
+          orig('dialogue',true);
+        }
+      }
+    };
+
+    /* Patch saveSceneScript to read from CE */
+    var origSaveSc=saveSceneScript;
+    saveSceneScript=function(){
+      var s=(typeof _currentSDP!=='undefined'&&typeof scenes!=='undefined')?scenes.find(function(x){return x.id===_currentSDP;}):null;
+      if(s){
+        s.sceneScript=ceGetText('script');
+        if(typeof saveCurrentProjectState==='function')saveCurrentProjectState();
+        if(typeof syncSceneToDB==='function')syncSceneToDB(s);
+        if(typeof broadcastChange==='function')broadcastChange('更新場景指示 '+_currentSDP);
+        ceSetReadonly('script',true);
+        // sync to script page
+        var sel=document.getElementById('script-scene-sel');
+        var ta=document.getElementById('script-text');
+        if(sel&&ta&&typeof _currentSDP!=='undefined'&&sel.value===_currentSDP)ta.value=ceGetPlainText('script');
+        if(typeof toast==='function')toast('劇本已儲存','📄');
+        orig('script',true);
+      }
+    };
+
+  },50);
+})();
+
+/* ─── PATCH renderShots ───────────────────────────────────── */
+(function(){
+  var tries=0;var t=setInterval(function(){
+    tries++;if(typeof renderShots!=='function'){if(tries>200)clearInterval(t);return;}
+    clearInterval(t);var orig=renderShots;
+    renderShots=function(){orig();setTimeout(clapprRefreshShotCards,0);};
+  },50);
+})();
+
+/* ─── PATCH toggleShotFromDetail ─────────────────────────── */
+(function(){
+  var tries=0;var t=setInterval(function(){
+    tries++;if(typeof toggleShotFromDetail!=='function'){if(tries>200)clearInterval(t);return;}
+    clearInterval(t);var orig=toggleShotFromDetail;
+    toggleShotFromDetail=function(sid,i){orig(sid,i);setTimeout(clapprRefreshSdpShots,0);};
+  },50);
+})();
+
+/* ─── CAST WITH CREW AUTOCOMPLETE ────────────────────────── */
+var _castEditing=false;
+
+function clapprCastToggle(){
+  _castEditing=!_castEditing;
+  var btn=document.getElementById('sdp-cast-edit-btn'),addRow=document.getElementById('sdp-cast-add-row'),list=document.getElementById('sdp-cast-list');
+  if(btn)btn.textContent=_castEditing?'✓ 完成':'✎ 編輯';
+  if(addRow)addRow.style.display=_castEditing?'block':'none';
+  if(list){if(_castEditing)list.classList.add('editing');else list.classList.remove('editing');}
+  if(_castEditing){var inp=document.getElementById('sdp-cast-inp');if(inp){inp.value='';inp.focus();}}
 }
 
 function clapprCastSuggest(val){
-  const box = document.getElementById('sdp-cast-suggest');
-  if(!box) return;
-  const q = val.trim().toLowerCase();
-  if(!q || !crew || !crew.length){ box.style.display='none'; return; }
-  // 從 crew 拿名字（name）和角色名（char），兩個都可以搜
-  const matches = crew.filter(c=>{
-    return (c.name||'').toLowerCase().includes(q) || (c.char||'').toLowerCase().includes(q) || (c.role||'').toLowerCase().includes(q);
+  var box=document.getElementById('sdp-cast-suggest');if(!box)return;
+  var q=val.trim().toLowerCase();
+  if(!q||typeof crew==='undefined'||!crew.length){box.style.display='none';return;}
+  var matches=crew.filter(function(c){
+    return (c.name||'').toLowerCase().includes(q)||(c.char||'').toLowerCase().includes(q)||(c.role||'').toLowerCase().includes(q);
   }).slice(0,6);
-  if(!matches.length){ box.style.display='none'; return; }
-  box.innerHTML = matches.map(c=>{
-    const display = c.char ? `${c.char} <span style="color:var(--text-muted);font-size:11px">— ${c.name}</span>` : c.name;
-    const val = c.char || c.name;
-    const safeVal = val.replace(/'/g,"\\'");
-    return `<div onclick="clapprCastPickSuggest('${safeVal}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)" onmouseover="this.style.background='rgba(212,168,67,.1)'" onmouseout="this.style.background=''">${display}</div>`;
+  if(!matches.length){box.style.display='none';return;}
+  box.innerHTML=matches.map(function(c){
+    var display=c.char?c.char+'<span style="color:var(--text-muted);font-size:11px"> — '+c.name+'</span>':c.name;
+    var v=(c.char||c.name).replace(/'/g,"\\'");
+    return '<div onclick="clapprCastPickSuggest(\''+v+'\')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)" onmouseover="this.style.background=\'rgba(201,168,76,.1)\'" onmouseout="this.style.background=\'\'">'+display+'</div>';
   }).join('');
   box.style.display='block';
 }
 function clapprCastPickSuggest(name){
-  const inp = document.getElementById('sdp-cast-inp');
-  const box = document.getElementById('sdp-cast-suggest');
-  if(inp) inp.value = name;
-  if(box) box.style.display='none';
+  var inp=document.getElementById('sdp-cast-inp'),box=document.getElementById('sdp-cast-suggest');
+  if(inp)inp.value=name;if(box)box.style.display='none';
   clapprCastAdd();
 }
-// 點其他地方關掉 suggest
-document.addEventListener('click', function(e){
-  if(!e.target.closest('#sdp-cast-add-row')){ const b=document.getElementById('sdp-cast-suggest'); if(b)b.style.display='none'; }
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#sdp-cast-add-row')){var b=document.getElementById('sdp-cast-suggest');if(b)b.style.display='none';}
 });
 
-/* ─── 4. EDITABLE CAST LIST ─────────────────────────────── */
-var _castEditing = false;
-
-function clapprCastToggle() {
-  _castEditing = !_castEditing;
-  var btn    = document.getElementById('sdp-cast-edit-btn');
-  var addRow = document.getElementById('sdp-cast-add-row');
-  var list   = document.getElementById('sdp-cast-list');
-  if (btn) btn.textContent = _castEditing ? '✓ 完成' : '✎ 編輯';
-  if (addRow) addRow.style.display = _castEditing ? 'block' : 'none';
-  if (list) { if (_castEditing) list.classList.add('editing'); else list.classList.remove('editing'); }
-  if (_castEditing) { var inp=document.getElementById('sdp-cast-inp'); if(inp){inp.value='';inp.focus();} }
-}
-
-function clapprCastAdd() {
-  if (typeof _currentSDP === 'undefined' || !_currentSDP) return;
-  var s = (typeof scenes !== 'undefined') ? scenes.find(function(x){return x.id===_currentSDP;}) : null;
-  if (!s) return;
-  var inp = document.getElementById('sdp-cast-inp');
-  var name = inp ? inp.value.trim() : '';
-  if (!name) { if(typeof toast==='function')toast('請輸入名稱','⚠'); return; }
-  if (!Array.isArray(s.cast)) s.cast = [];
-  if (s.cast.indexOf(name) !== -1) { if(typeof toast==='function')toast('已存在','⚠'); return; }
+function clapprCastAdd(){
+  if(typeof _currentSDP==='undefined'||!_currentSDP)return;
+  var s=(typeof scenes!=='undefined')?scenes.find(function(x){return x.id===_currentSDP;}):null;if(!s)return;
+  var inp=document.getElementById('sdp-cast-inp');
+  var name=inp?inp.value.trim():'';
+  if(!name){toast&&toast('請輸入名稱','⚠');return;}
+  if(!Array.isArray(s.cast))s.cast=[];
+  if(s.cast.indexOf(name)!==-1){toast&&toast('已存在','⚠');return;}
   s.cast.push(name);
-  if (typeof saveCurrentProjectState === 'function') saveCurrentProjectState();
-  if (typeof syncSceneToDB === 'function') syncSceneToDB(s);
-  if (inp) inp.value = '';
+  if(typeof saveCurrentProjectState==='function')saveCurrentProjectState();
+  if(typeof syncSceneToDB==='function')syncSceneToDB(s);
+  if(inp)inp.value='';
   clapprRenderCast(s);
-  if(typeof toast==='function') toast('已加入 ' + name, '🎭');
+  toast&&toast('已加入 '+name,'🎭');
 }
 
-function clapprCastDel(name) {
-  if (typeof _currentSDP === 'undefined' || !_currentSDP) return;
-  var s = (typeof scenes !== 'undefined') ? scenes.find(function(x){return x.id===_currentSDP;}) : null;
-  if (!s || !Array.isArray(s.cast)) return;
-  var i = s.cast.indexOf(name);
-  if (i === -1) return;
-  s.cast.splice(i, 1);
-  if (typeof saveCurrentProjectState === 'function') saveCurrentProjectState();
-  if (typeof syncSceneToDB === 'function') syncSceneToDB(s);
+function clapprCastDel(name){
+  if(typeof _currentSDP==='undefined'||!_currentSDP)return;
+  var s=(typeof scenes!=='undefined')?scenes.find(function(x){return x.id===_currentSDP;}):null;
+  if(!s||!Array.isArray(s.cast))return;
+  var i=s.cast.indexOf(name);if(i===-1)return;
+  s.cast.splice(i,1);
+  if(typeof saveCurrentProjectState==='function')saveCurrentProjectState();
+  if(typeof syncSceneToDB==='function')syncSceneToDB(s);
   clapprRenderCast(s);
-  if(typeof toast==='function') toast('已移除','🗑');
+  toast&&toast('已移除','🗑');
 }
 
-function clapprRenderCast(s) {
-  var el = document.getElementById('sdp-cast-list');
-  if (!el) return;
-  if (!s || !s.cast || !s.cast.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">無角色資訊</div>';
-    return;
-  }
-  var ac = (typeof avatarColors !== 'undefined') ? avatarColors : ['#C9A84C','#3498db','#2ecc71','#e74c3c','#9b59b6','#e67e22','#1abc9c'];
-  el.innerHTML = s.cast.map(function(c, i) {
-    var m = (typeof crew !== 'undefined') ? crew.find(function(cr){return cr.char===c;}) : null;
-    var safeC = c.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return '<div class="cast-item" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
-      '<div style="width:30px;height:30px;border-radius:50%;background:' + ac[i%7] + '22;color:' + ac[i%7] + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:1px solid ' + ac[i%7] + '44;flex-shrink:0">' + c.slice(0,1) + '</div>' +
-      '<div style="flex:1"><div class="cast-char" style="font-size:13px;font-weight:500;color:var(--text-primary)">' + c + '</div><div class="cast-actor" style="font-size:11px;color:var(--text-muted)">' + (m?m.name:'—') + '</div></div>' +
-      '<button class="cast-del" onclick="clapprCastDel(\'' + safeC + '\')">× 刪</button>' +
+function clapprRenderCast(s){
+  var el=document.getElementById('sdp-cast-list');if(!el)return;
+  if(!s||!s.cast||!s.cast.length){el.innerHTML='<div style="font-size:12px;color:var(--text-muted)">無角色資訊</div>';return;}
+  var ac=(typeof avatarColors!=='undefined')?avatarColors:['#C9A84C','#3498db','#2ecc71','#e74c3c','#9b59b6','#e67e22','#1abc9c'];
+  el.innerHTML=s.cast.map(function(c,i){
+    var m=(typeof crew!=='undefined')?crew.find(function(cr){return cr.char===c;}):null;
+    var safe=c.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="cast-item" style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
+      '<div style="width:32px;height:32px;border-radius:50%;background:'+ac[i%7]+'22;color:'+ac[i%7]+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border:1px solid '+ac[i%7]+'44;flex-shrink:0">'+c.slice(0,1)+'</div>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--text-primary)">'+c+'</div><div style="font-size:11px;color:var(--text-muted)">'+(m?m.name:'—')+'</div></div>'+
+      '<button class="cast-del" onclick="clapprCastDel(\''+safe+'\')">× 刪</button>'+
     '</div>';
   }).join('');
-  if (_castEditing) el.classList.add('editing'); else el.classList.remove('editing');
+  if(_castEditing)el.classList.add('editing');else el.classList.remove('editing');
 }
 
-/* ─── 5. PATCH openDetail ────────────────────────────────── */
-(function() {
-  var tries = 0;
-  var t = setInterval(function() {
-    tries++;
-    if (typeof openDetail !== 'function') { if(tries>200) clearInterval(t); return; }
+/* ─── SCRIPT SYNC ────────────────────────────────────────── */
+(function(){
+  var tries=0;var t=setInterval(function(){
+    tries++;if(typeof saveScript!=='function'){if(tries>200)clearInterval(t);return;}
     clearInterval(t);
-    var orig = openDetail;
-    openDetail = function(sid) {
-      orig(sid);
-      /* reset cast edit state */
-      _castEditing = false;
-      var btn=document.getElementById('sdp-cast-edit-btn'), addRow=document.getElementById('sdp-cast-add-row'), list=document.getElementById('sdp-cast-list');
-      if(btn) btn.textContent='✎ 編輯';
-      if(addRow) addRow.style.display='none';
-      if(list) list.classList.remove('editing');
-      /* render cast */
-      var s=(typeof scenes!=='undefined')?scenes.find(function(x){return x.id===sid;}):null;
-      if(s) clapprRenderCast(s);
-      /* reset shot edit state */
-      _sdpShotsEditing = false;
-      var eb=document.getElementById('sdp-shots-edit-btn'), db=document.getElementById('sdp-shots-done-btn'), st=document.getElementById('sdp-shots-status');
-      if(eb) eb.style.display='inline-flex';
-      if(db) db.style.display='none';
-      if(st) st.textContent='唯讀';
-      /* render shots with images */
-      clapprRefreshSdpShots();
-      /* highlight reset — use timeout so textarea is rendered first */
-      setTimeout(function() { clapprHLReset(); }, 30);
-    };
-  }, 50);
-})();
-
-/* ─── 6. PATCH toggleShotFromDetail ─────────────────────── */
-(function() {
-  var tries = 0;
-  var t = setInterval(function() {
-    tries++;
-    if (typeof toggleShotFromDetail !== 'function') { if(tries>200) clearInterval(t); return; }
-    clearInterval(t);
-    var orig = toggleShotFromDetail;
-    toggleShotFromDetail = function(sid, i) {
-      orig(sid, i);
-      setTimeout(clapprRefreshSdpShots, 0);
-    };
-  }, 50);
-})();
-
-/* ─── 7. PATCH renderShots — inject images into shot cards ─ */
-(function() {
-  var tries = 0;
-  var t = setInterval(function() {
-    tries++;
-    if (typeof renderShots !== 'function') { if(tries>200) clearInterval(t); return; }
-    clearInterval(t);
-    var orig = renderShots;
-    renderShots = function() {
+    var orig=saveScript;
+    saveScript=function(){
       orig();
-      setTimeout(clapprRefreshShotCards, 0);
+      var sel=document.getElementById('script-scene-sel'),sdpEl=document.getElementById('sdp-script-text'),taEl=document.getElementById('script-text');
+      if(sel&&sdpEl&&taEl&&typeof _currentSDP!=='undefined'&&_currentSDP===sel.value){
+        ceSetContent('script',taEl.value);
+        if(typeof scenes!=='undefined'){var s=scenes.find(function(x){return x.id===sel.value;});if(s)s.sceneScript=taEl.value;}
+      }
     };
-  }, 50);
-})();
-
-/* ─── 8. FIX 劇本共編 safeEdit — script-text 要可以編輯 ── */
-/* The problem: safeEditMode locks script-text as readOnly before the user
-   clicks the pencil. The pencil calls enableSafeEdit('script') which unlocks it.
-   But the placeholder text says "唯讀狀態 · 請先按上方 ✎ 編輯再修改…" which is
-   confusing. We just make sure the safe edit unlock works correctly. */
-(function() {
-  var tries = 0;
-  var t = setInterval(function() {
-    tries++;
-    if (typeof setSafeEditLocked !== 'function') { if(tries>200) clearInterval(t); return; }
-    clearInterval(t);
-
-    /* ─── 8a. Sync: when script-page saves, also update sdp-script-text ─── */
-    if (typeof saveScript === 'function') {
-      var origSaveScript = saveScript;
-      saveScript = function() {
-        origSaveScript();
-        /* sync to sdp if same scene is open */
-        var sel = document.getElementById('script-scene-sel');
-        var sdpEl = document.getElementById('sdp-script-text');
-        var taEl  = document.getElementById('script-text');
-        if (sel && sdpEl && taEl && typeof _currentSDP !== 'undefined' && _currentSDP === sel.value) {
-          sdpEl.value = taEl.value;
-          /* also update sceneScript in memory */
-          if (typeof scenes !== 'undefined') {
-            var s = scenes.find(function(x){return x.id===sel.value;});
-            if (s) s.sceneScript = taEl.value;
-          }
-        }
-      };
-    }
-
-    /* ─── 8b. Sync: when sdp saves script, also update script-page ─── */
-    if (typeof saveSceneScript === 'function') {
-      var origSaveSceneScript = saveSceneScript;
-      saveSceneScript = function() {
-        origSaveSceneScript();
-        /* already handled in original code — but let's make sure */
-        var sdpEl = document.getElementById('sdp-script-text');
-        var taEl  = document.getElementById('script-text');
-        var sel   = document.getElementById('script-scene-sel');
-        if (sdpEl && taEl && sel && typeof _currentSDP !== 'undefined' && _currentSDP === sel.value) {
-          taEl.value = sdpEl.value;
-        }
-      };
-    }
-  }, 100);
+  },100);
 })();
 
 
