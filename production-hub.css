@@ -1,19 +1,19 @@
 :root {
-  --gold: #C9A84C;
-  --gold-light: #E2C47A;
-  --gold-dim: #7A6130;
-  --gold-faint: rgba(201,168,76,0.08);
-  --gold-faint2: rgba(201,168,76,0.15);
-  --bg-base: #0D0D0D;
-  --bg-surface: #141414;
-  --bg-raised: #1A1A1A;
-  --bg-hover: #202020;
-  --bg-card: #161616;
-  --border: rgba(255,255,255,0.07);
-  --border-gold: rgba(201,168,76,0.3);
-  --text-primary: #F0EBE0;
-  --text-secondary: #8A8070;
-  --text-muted: #4A4540;
+  --gold: #D4A843;
+  --gold-light: #E8C06A;
+  --gold-dim: #8B6E2E;
+  --gold-faint: rgba(212,168,67,0.10);
+  --gold-faint2: rgba(212,168,67,0.18);
+  --bg-base: #0F0F11;
+  --bg-surface: #161618;
+  --bg-raised: #1E1E22;
+  --bg-hover: #252528;
+  --bg-card: #181820;
+  --border: rgba(255,255,255,0.09);
+  --border-gold: rgba(212,168,67,0.35);
+  --text-primary: #EEEAE0;
+  --text-secondary: #9A9488;
+  --text-muted: #5A5650;
   --red: #C0392B;
   --red-light: #E74C3C;
   --green: #27AE60;
@@ -411,9 +411,9 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
 .script-textarea {
   width: 100%; min-height: 380px; padding: 20px 24px;
   background: transparent; border: none; outline: none;
-  color: var(--text-primary); font-family: var(--font-mono);
-  font-size: 13px; line-height: 1.9; resize: vertical;
-  letter-spacing: .2px;
+  color: #E8E4DA; font-family: var(--font-body);
+  font-size: 15px; line-height: 1.85; resize: vertical;
+  letter-spacing: .1px; font-weight: 400;
 }
 .script-sidebar-panel { display: flex; flex-direction: column; gap: 12px; }
 .script-meta-card, .edit-history-card {
@@ -3016,3 +3016,8 @@ html, body            { font-size: 17px; font-weight: 500; }   /* 原 14px 細�
   100% { opacity:1; transform:translateY(0) scale(1); }
 }
 .proj-enter-anim{ animation:projEnter .48s cubic-bezier(0.2,0.8,0.2,1) both; }
+
+/* drag-and-drop scene reorder */
+tr.drag-over td { background: rgba(212,168,67,0.10) !important; }
+tr[draggable='true']:hover td:first-child { color: var(--gold); }
+

@@ -847,20 +847,20 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
         </div>
       </div>
 
-      <div class="activity-strip">
-        <div class="activity-head">
-          <strong>最近編輯</strong>
-          <span>多人共編時會顯示誰改了什麼，方便劇組同步。</span>
-        </div>
-        <div class="activity-list" id="activity-list"></div>
-      </div>
-
       <div class="table-wrap">
         <div class="table-header">
           <span class="table-title">今日場景快覽</span>
           <button class="btn btn-outline btn-sm" onclick="switchPage('scenes',document.querySelectorAll('.nav-item')[1])">查看全部 →</button>
         </div>
         <table class="scene-table" id="dash-scene-table"></table>
+      </div>
+
+      <div class="activity-strip">
+        <div class="activity-head">
+          <strong>最近編輯</strong>
+          <span>多人共編時會顯示誰改了什麼，方便劇組同步。</span>
+        </div>
+        <div class="activity-list" id="activity-list"></div>
       </div>
     </section>
 
@@ -950,7 +950,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
           <div class="page-subtitle">分鏡計畫與鏡頭標記</div>
         </div>
         <div class="page-actions">
-          <select id="shot-scene-sel" class="form-select" style="width:200px" onchange="renderShots()">
+          <select id="shot-scene-sel" class="form-select" style="width:240px;font-size:15px;font-weight:600;padding:8px 12px;border:1.5px solid var(--border-gold);color:var(--text-primary);background:var(--bg-raised)" onchange="renderShots()">
           </select>
           <button class="btn btn-outline" onclick="openShotModal()">＋ 新增鏡頭</button>
         </div>
@@ -2621,7 +2621,8 @@ function sceneRow(s, showDetail=false){
   const skipBtn = s.status === 'skip'
     ? `<button class="btn btn-green btn-sm" onclick="event.stopPropagation();resumeScene('${s.id}')">取消暫緩</button>`
     : `<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();skipScene('${s.id}')">暫緩</button>`;
-  return `<tr class="${s.status==='current'?'current-row':''}">
+  return `<tr class="${s.status==='current'?'current-row':''}" draggable="true" data-scene-id="${s.id}" ondragstart="sceneDragStart(event)" ondragover="sceneDragOver(event)" ondrop="sceneDrop(event)" ondragend="sceneDragEnd(event)">
+    <td style="width:28px;cursor:grab;color:var(--text-muted);font-size:16px;text-align:center;padding:0 4px 0 8px;user-select:none" title="拖曳排序">⠿</td>
     <td class="scene-num" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.id}</td>
     <td class="scene-name-cell" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.name}</td>
     <td onclick="openDetail('${s.id}')" style="cursor:pointer">${inTag} ${dnTag}</td>
@@ -2671,7 +2672,7 @@ function renderScenes(){
     t.innerHTML=`<tbody><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);font-size:13px">此分類目前沒有場景</td></tr></tbody>`;
     return;
   }
-  t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th><th></th></tr></thead><tbody>${filtered.map(s=>sceneRow(s)).join('')}</tbody>`;
+  t.innerHTML=`<thead><tr><th style="width:28px"></th><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th><th></th></tr></thead><tbody>${filtered.map(s=>sceneRow(s)).join('')}</tbody>`;
 }
 
 function renderFullScenes(){renderScenes();}
@@ -2834,6 +2835,11 @@ function saveScript(){
   if(p){
     ensureProjectData(p);
     p.script = scene.sceneScript; // 保留舊欄位相容
+  }
+  // ── 同步到場景進度的 sdp-script-text（如果開著同一場景）
+  if(_currentSDP === scene.id){
+    const sdpEl = document.getElementById('sdp-script-text');
+    if(sdpEl) sdpEl.value = scene.sceneScript;
   }
   const author=getEditor();
   const note=document.getElementById('script-note').value.trim()||`儲存 ${scene.id} 劇本`;
@@ -4424,6 +4430,26 @@ async function handleRemoteChange(payload){
   // 重新載入全部資料並 re-render
   await loadAllFromDB();
 
+  // 遠端更新後，刷新劇本共編 textarea
+  const scriptSel = document.getElementById('script-scene-sel');
+  if(scriptSel && scriptSel.value){
+    const scriptScene = scenes.find(x=>x.id===scriptSel.value);
+    if(scriptScene){
+      const scriptTa = document.getElementById('script-text');
+      if(scriptTa && document.activeElement !== scriptTa) scriptTa.value = scriptScene.sceneScript || '';
+    }
+  }
+  // 遠端更新後，刷新場景進度 sdp 的指示/台詞欄位
+  if(_currentSDP){
+    const sdpScene = scenes.find(x=>x.id===_currentSDP);
+    if(sdpScene){
+      const sdpScript = document.getElementById('sdp-script-text');
+      const sdpDialogue = document.getElementById('sdp-dialogue');
+      if(sdpScript && document.activeElement !== sdpScript) sdpScript.value = sdpScene.sceneScript || '';
+      if(sdpDialogue && document.activeElement !== sdpDialogue) sdpDialogue.value = sdpScene.dialogue || '';
+    }
+  }
+
   // 如果遠端有新公告，對所有人顯示 broadcast 彈窗
   if (isNewAnn && announcements.length > prevAnnCount) {
     const newest = announcements[0];
@@ -5385,6 +5411,12 @@ function saveSceneScript(){
     syncSceneToDB(s);
     broadcastChange('更新場景指示 ' + _currentSDP);
     setSceneFieldReadOnly('script', true);
+    // ── 同步到劇本共編的 script-text（如果開著同一場景）
+    const scriptSel = document.getElementById('script-scene-sel');
+    if(scriptSel && scriptSel.value === s.id){
+      const scriptTa = document.getElementById('script-text');
+      if(scriptTa) scriptTa.value = s.sceneScript;
+    }
     toast('劇本已儲存','📄');
   }
 }
@@ -5610,6 +5642,55 @@ function deleteAnnouncement(index) {
 }
 
 // ── Delete Scene ─────────────────────────
+// ══════════════════════════════════════════
+//  SCENE DRAG-AND-DROP REORDER
+// ══════════════════════════════════════════
+let _dragSrcId = null;
+
+function sceneDragStart(e){
+  _dragSrcId = e.currentTarget.dataset.sceneId;
+  e.currentTarget.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function sceneDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // highlight drop target
+  document.querySelectorAll('#full-scene-table tr[data-scene-id]').forEach(r => r.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+
+function sceneDrop(e){
+  e.preventDefault();
+  const targetId = e.currentTarget.dataset.sceneId;
+  if(!_dragSrcId || _dragSrcId === targetId) return;
+
+  const srcIdx = scenes.findIndex(s => s.id === _dragSrcId);
+  const tgtIdx = scenes.findIndex(s => s.id === targetId);
+  if(srcIdx === -1 || tgtIdx === -1) return;
+
+  // reorder
+  const [moved] = scenes.splice(srcIdx, 1);
+  scenes.splice(tgtIdx, 0, moved);
+
+  // push all scenes order to DB (update page field)
+  scenes.forEach((s, i) => { s.page = i + 1; });
+  saveCurrentProjectState();
+  pushAllToSupabase();
+  broadcastChange('調整場景順序');
+
+  renderScenes(); renderDashScenes(); renderScenesStatCards(); renderSceneDots();
+  buildShotSelect(); buildScriptSceneSelect(false); renderCallsheet();
+  toast('場景順序已更新', '↕');
+}
+
+function sceneDragEnd(e){
+  e.currentTarget.style.opacity = '';
+  document.querySelectorAll('#full-scene-table tr[data-scene-id]').forEach(r => r.classList.remove('drag-over'));
+  _dragSrcId = null;
+}
+
 function deleteScene(sid) {
   const s = scenes.find(x => x.id === sid);
   if (!s) return;
