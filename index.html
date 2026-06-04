@@ -6822,33 +6822,41 @@ function ceSetContent(field, htmlOrText){
   var el=document.getElementById(_ceIds[field]);
   if(!el)return;
   if(!htmlOrText||!htmlOrText.trim()){el.innerHTML='';return;}
-  // Only treat as HTML if it has highlight <span> marks (not just <br>)
+
+  // Always work in plain text — use ceStripToPlain to decode any HTML residue
+  var plain = ceStripToPlain(htmlOrText);
+
+  // If there are highlight spans saved, restore them carefully
   var hasHighlight = /<span[^>]+style[^>]*background/i.test(htmlOrText);
   if(hasHighlight){
-    // Strip any <div>/<p> wrappers that browsers inject, keep only spans + <br>
-    var cleaned = htmlOrText
+    // Re-parse: split on span tags, set each text node safely via DOM
+    el.innerHTML = '';
+    var parts = htmlOrText
       .replace(/<div>/gi,'\n').replace(/<\/div>/gi,'')
-      .replace(/<p>/gi,'').replace(/<\/p>/gi,'\n')
-      .replace(/<br\s*\/?>/gi,'\n');
-    // Re-render: escape plain text portions, re-insert <br> for newlines, keep spans
-    el.innerHTML = cleaned
-      .split(/<(span[^>]*>.*?<\/span)>/gi)
-      // crude but safe: escape non-tag pieces, pass span tags through
-      .map(function(part, i){
-        if(i%2===1) return '<'+part; // it's a tag fragment — restore opening <
-        return part.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-      }).join('');
+      .replace(/<p[^>]*>/gi,'').replace(/<\/p>/gi,'\n')
+      .split(/(<span[^>]*>[\s\S]*?<\/span>)/gi);
+    parts.forEach(function(part){
+      if(/^<span/i.test(part)){
+        var tmp=document.createElement('div'); tmp.innerHTML=part;
+        var sp=tmp.firstChild;
+        if(sp){ el.appendChild(sp); }
+      } else {
+        // plain text segment — split on \n, insert text nodes + <br>
+        var lines = part.replace(/<br\s*\/?>/gi,'\n').split('\n');
+        lines.forEach(function(line, i){
+          el.appendChild(document.createTextNode(line));
+          if(i < lines.length-1) el.appendChild(document.createElement('br'));
+        });
+      }
+    });
   } else {
-    // Pure plain text (or HTML with only <br>) — strip all tags, work with \n
-    var plain = htmlOrText
-      .replace(/<br\s*\/?>/gi,'\n')
-      .replace(/<div>/gi,'\n').replace(/<\/div>/gi,'')
-      .replace(/<p>/gi,'').replace(/<\/p>/gi,'\n')
-      .replace(/<[^>]+>/g,'')          // strip any remaining tags
-      .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ');
-    el.innerHTML = plain
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/\n/g,'<br>');
+    // Pure plain text: use DOM text nodes — zero escaping needed, zero double-encode
+    el.innerHTML = '';
+    var lines = plain.split('\n');
+    lines.forEach(function(line, i){
+      el.appendChild(document.createTextNode(line));
+      if(i < lines.length-1) el.appendChild(document.createElement('br'));
+    });
   }
 }
 
