@@ -1483,12 +1483,20 @@ INT./EXT. 地點 — 日/夜
               <input class="form-input" value="gdnharkyealkkzymrxls.supabase.co" readonly style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">
             </div>
             <div class="settings-field">
+              <label class="settings-label">DB Schema 狀態</label>
+              <div style="font-size:11px;color:var(--text-muted);padding:8px 10px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font-mono)">
+                若通告單跨裝置不同步，請在 Supabase SQL Editor 執行：<br>
+                <span style="color:var(--gold)">ALTER TABLE projects ADD COLUMN IF NOT EXISTS callsheet_json TEXT;</span>
+              </div>
+            </div>
+            <div class="settings-field">
               <label class="settings-label">目前專案 ID</label>
               <input class="form-input" id="sp-project-id" readonly style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
               <button class="btn btn-outline" style="width:100%" onclick="copyRealtimePlan()">📋 複製同步規格</button>
               <button class="btn btn-outline" style="width:100%" onclick="toast('匯出功能開發中','📁')">📁 匯出專案資料</button>
+              <button class="btn btn-gold btn-sm" style="width:100%" onclick="forceRefreshFromCloud()">🔄 強制從雲端重新整理</button>
               <button class="btn btn-danger btn-sm" style="width:100%;margin-top:4px" onclick="if(confirm('確定要清除本機快取？'))localStorage.removeItem('clappr_v1')&&toast('快取已清除','🗑')">清除本機快取</button>
             </div>
           </div>
@@ -3325,6 +3333,7 @@ function commitCallsheetDraft(showToast = true){
   _callsheetEditing = false;
   _callsheetDraft = null;
   persistSave();
+  syncCallsheetToDB();
   renderCallsheet();
   broadcastChange('更新通告單');
   if(showToast) toast('通告單已儲存，並自動鎖回唯讀', '💾');
@@ -3402,6 +3411,7 @@ function resetCallsheetFromScenes(){
   _callsheetEditing = false;
   _callsheetDraft = null;
   persistSave();
+  syncCallsheetToDB();
   renderCallsheet();
   toast('已依目前場景重新產生這一天的通告單', '↻');
 }
@@ -3427,6 +3437,7 @@ function createNewCallsheetDay(){
   p.activeCallsheetIndex = nextIndex;
   p.callsheet = next;
   persistSave();
+  syncCallsheetToDB();
   renderCallsheet();
   toast(`已新增 ${next.day}，可以開始編輯`, '＋');
 }
@@ -3454,6 +3465,7 @@ function deleteCallsheetDay(index){
   p.activeCallsheetIndex = newActive;
   p.callsheet = days[newActive];
   persistSave();
+  syncCallsheetToDB();
   renderCallsheet();
   toast('已刪除該天通告單', '🗑');
 }
@@ -4235,10 +4247,14 @@ async function initSupabase(){
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
     supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
     setSyncStatus('連線中…', false);
-    // 不再自動寫入任何預設/範例資料；只有使用者建立或編輯時才會寫進資料庫。
-    // 啟動時若還沒進入任何專案，就不要載入 clappr-default 的殘留資料。
-    if(getProjectId() && getProjectId() !== 'clappr-default'){
+    // 若已在某個專案裡（從 localStorage 恢復），立刻用雲端資料覆蓋本機快取
+    const pid = getProjectId();
+    if(pid && pid !== 'clappr-default'){
+      setSyncStatus('從雲端載入最新資料…', false);
+      await loadProjectMetaFromDB();
       await loadAllFromDB();
+      await syncCallsheetFromDB();
+      saveCurrentProjectState();
     }
     subscribeRealtime();
     setSyncStatus('即時同步中', true);
@@ -4387,12 +4403,19 @@ function subscribeRealtime(){
     .on('postgres_changes', { event: '*', schema: 'public', table: 'shots',         filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements', filter: `project_id=eq.${getProjectId()}` }, handleRemoteAnnouncement)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'crew',          filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects',      filter: `project_id=eq.${getProjectId()}` }, () => loadProjectMetaFromDB())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects',      filter: `project_id=eq.${getProjectId()}` }, handleRemoteProjectChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log',  filter: `project_id=eq.${getProjectId()}` }, handleActivityChange)
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') setSyncStatus('即時同步中', true);
       if (status === 'CHANNEL_ERROR') setSyncStatus('同步錯誤', false);
     });
+}
+
+// ── 專案表變更（含 callsheet）────────────
+async function handleRemoteProjectChange(payload){
+  await loadProjectMetaFromDB();
+  await syncCallsheetFromDB();
+  saveCurrentProjectState();
 }
 
 // ── 遠端變更處理 ─────────────────────────
@@ -4405,6 +4428,7 @@ async function handleRemoteChange(payload){
 
   // 重新載入全部資料並 re-render
   await loadAllFromDB();
+  saveCurrentProjectState();   // 把雲端最新資料寫回本機快取，防止下次啟動時讀到舊資料
 
   // 如果遠端有新公告，對所有人顯示 broadcast 彈窗
   if (isNewAnn && announcements.length > prevAnnCount) {
@@ -4601,6 +4625,50 @@ async function syncAllCrewToDB(){
 async function syncCrewToDB(member){
   if (!supabase) return;
   await syncAllCrewToDB();
+}
+
+// ── Callsheet 同步寫回 DB ─────────────────
+// callsheet 存在 projects 表的 callsheet_json 欄位（JSON blob）
+async function syncCallsheetToDB(){
+  if (!supabase) return;
+  const p = getCurrentProject();
+  if (!p) return;
+  const pid = p.id || getProjectId();
+  if (!pid || pid === 'clappr-default') return;
+  try {
+    const { error } = await supabase.from('projects').upsert({
+      project_id: pid,
+      name: p.name || '未命名專案',
+      callsheet_json: JSON.stringify({
+        callsheet: p.callsheet || {},
+        callsheetDays: p.callsheetDays || [],
+        activeCallsheetIndex: p.activeCallsheetIndex || 0
+      }),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'project_id' });
+    if(error) console.warn('callsheet sync error:', error.message);
+  } catch(e){ console.warn('syncCallsheetToDB error:', e); }
+}
+
+// ── 從 DB 載入 Callsheet ─────────────────
+async function syncCallsheetFromDB(){
+  if (!supabase) return;
+  const pid = getProjectId();
+  if (!pid || pid === 'clappr-default') return;
+  try {
+    const { data, error } = await supabase.from('projects')
+      .select('callsheet_json').eq('project_id', pid).limit(1);
+    if (error || !data || !data.length || !data[0].callsheet_json) return;
+    const parsed = JSON.parse(data[0].callsheet_json);
+    const p = getCurrentProject();
+    if (!p) return;
+    if (parsed.callsheetDays && Array.isArray(parsed.callsheetDays)) {
+      p.callsheetDays = parsed.callsheetDays;
+      p.callsheet = parsed.callsheet || parsed.callsheetDays[0] || {};
+      p.activeCallsheetIndex = parsed.activeCallsheetIndex || 0;
+      renderCallsheet();
+    }
+  } catch(e){ console.warn('syncCallsheetFromDB error:', e); }
 }
 
 // ── 同步狀態 UI ──────────────────────────
@@ -5099,6 +5167,7 @@ async function joinProjectByCode(code){
       setSyncStatus('載入同步資料…', false);
       await loadProjectMetaFromDB();
       await loadAllFromDB();
+      await syncCallsheetFromDB();    // 同步 callsheet
       saveCurrentProjectState();
       subscribeRealtime();
       setSyncStatus('即時同步中', true);
@@ -5144,6 +5213,7 @@ async function activateRealtimeForCurrentProject(){
     setSyncStatus('載入同步資料…', false);
     await loadProjectMetaFromDB();
     await loadAllFromDB();
+    await syncCallsheetFromDB();
     saveCurrentProjectState();
     subscribeRealtime();
     setSyncStatus('即時同步中', true);
@@ -5153,13 +5223,14 @@ async function activateRealtimeForCurrentProject(){
   }
 }
 
-function enterProject(id){
+async function enterProject(id){
   saveCurrentProjectState();
   projects.forEach(p=>p.active=p.id===id);
   currentProjectId=id;
   window._activeProjectId = id;
   const p=getCurrentProject();
-  loadProjectState(p);
+
+  // 先切換到專案畫面（先用本機快取顯示）
   document.body.classList.remove('home-mode');
   document.body.classList.add('project-mode');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -5167,12 +5238,25 @@ function enterProject(id){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const firstNav=document.querySelector('.nav-item');
   if(firstNav) firstNav.classList.add('active');
+  loadProjectState(p);
   persistSave();
   playEnterProjectAnim();
-  // 重新訂閱「這個專案」的即時頻道 + 上傳本機專案中繼資料，確保多裝置真正同步
+
   if(supabase){
+    // 等 Supabase 載完最新資料再更新畫面，防止本機舊快取覆蓋雲端資料
+    setSyncStatus('從雲端載入…', false);
+    try {
+      await loadProjectMetaFromDB();
+      await loadAllFromDB();
+      await syncCallsheetFromDB();    // 同步 callsheet
+      saveCurrentProjectState();      // 把最新雲端資料寫回本機快取
+      subscribeRealtime();
+      setSyncStatus('即時同步中', true);
+    } catch(e){
+      console.error('enterProject DB load error:', e);
+      setSyncStatus('離線模式（稍後自動同步）', false);
+    }
     syncProjectMetaToDB(p);
-    activateRealtimeForCurrentProject();
   }
   toast(`進入《${p.name}》`, '◈');
 }
@@ -5239,6 +5323,24 @@ function savePersonalSettings(){
     renderHomeProfileSummary();
   }
   toast('個人設定已儲存','👤');
+}
+
+async function forceRefreshFromCloud(){
+  if(!supabase){ toast('目前為離線模式，無法連線雲端', '⚠'); return; }
+  const pid = getProjectId();
+  if(!pid || pid === 'clappr-default'){ toast('請先進入一個專案', '⚠'); return; }
+  setSyncStatus('從雲端強制更新…', false);
+  try {
+    await loadProjectMetaFromDB();
+    await loadAllFromDB();
+    await syncCallsheetFromDB();
+    saveCurrentProjectState();
+    setSyncStatus('即時同步中', true);
+    toast('已從雲端載入最新資料 ✓', '🔄');
+  } catch(e){
+    console.error('forceRefresh error:', e);
+    toast('更新失敗，請檢查網路或 Supabase RLS 設定', '⚠');
+  }
 }
 
 function selectSettingsRole(btn,role){
