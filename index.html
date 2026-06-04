@@ -6758,12 +6758,13 @@ function ceSetContent(field, htmlOrText){
   var el=document.getElementById(_ceIds[field]);
   if(!el)return;
   if(!htmlOrText||!htmlOrText.trim()){el.innerHTML='';return;}
-  // If it contains HTML tags (saved with marks), set as innerHTML
-  if(/<[a-z]/i.test(htmlOrText)){
+  // Detect real saved HTML (actual tags, not escaped entities)
+  var looksLikeHTML = /<(br|span|div|p|b|i|strong|em)[^>]*>/i.test(htmlOrText);
+  if(looksLikeHTML){
     el.innerHTML=htmlOrText;
   } else {
-    // plain text — preserve newlines
-    el.innerHTML=htmlOrText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    // plain text — escape & < > FIRST, then convert newlines to <br>
+    el.innerHTML=htmlOrText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>\n');
   }
 }
 
