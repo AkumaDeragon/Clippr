@@ -4330,19 +4330,20 @@ async function loadAllFromDB(){
     return; // 有錯不要清掉本機資料
   }
 
-  // 不管有沒有資料都覆蓋（空陣列代表 DB 確認是空的，不是「還沒載入」）
-  if (sc.data) {
+  // scenes：只有 DB 有資料才覆蓋，避免 DB 是空的時候清掉本機
+  if (sc.data && sc.data.length > 0) {
     replaceArray(scenes, sc.data.map(r => ({
       id: r.scene_id, name: r.name, loc: r.loc,
       inout: r.inout, daynight: r.daynight,
-      cast: Array.isArray(r.cast) ? r.cast : (r.cast ? r.cast.split(',') : []),
-      status: r.status, notes: r.notes, dialogue: r.dialogue || '',
-      sceneScript: r.scene_script || r.sceneScript || '',
+      cast: Array.isArray(r.cast) ? r.cast : (r.cast ? r.cast.split(",") : []),
+      status: r.status, notes: r.notes, dialogue: r.dialogue || "",
+      sceneScript: r.scene_script || r.sceneScript || "",
       shootOrder: r.shoot_order || r.shootOrder, page: r.page
     })));
   }
 
-  if (sh.data) {
+  // shots：只有 DB 有資料才覆蓋
+  if (sh.data && sh.data.length > 0) {
     replaceObject(shots, {});
     sh.data.forEach(r => {
       if (!shots[r.scene_id]) shots[r.scene_id] = [];
@@ -4353,7 +4354,7 @@ async function loadAllFromDB(){
     });
   }
 
-  if (an.data) {
+  if (an.data && an.data.length > 0) {
     announcements.length = 0;
     an.data.forEach(r => announcements.push({
       from: r.from_name, type: r.type, msg: r.msg,
@@ -4361,7 +4362,7 @@ async function loadAllFromDB(){
     }));
   }
 
-  if (cr.data) {
+  if (cr.data && cr.data.length > 0) {
     crew.length = 0;
     cr.data.forEach(r => crew.push({
       name: r.name, char: r.char_name, role: r.role,
@@ -4369,25 +4370,25 @@ async function loadAllFromDB(){
     }));
   }
 
-  if (act.data) {
+  if (act.data && act.data.length > 0) {
     activityLog.length = 0;
     act.data.forEach(r => activityLog.push({
       author: r.author, action: r.action, time: r.created_at
     }));
   }
 
-  // 同步最新的 project 物件（讓 localStorage 快取也是最新的）
+  // 把 DB 最新資料存回 localStorage（只在有資料時更新對應欄位）
   const p = getCurrentProject();
   if(p){
     ensureProjectData(p);
-    p.scenes = clone(scenes);
-    p.shots = clone(shots);
+    if(scenes.length) p.scenes = clone(scenes);
+    if(Object.keys(shots).length) p.shots = clone(shots);
     p.announcements = clone(announcements);
-    p.crew = clone(crew);
+    if(crew.length) p.crew = clone(crew);
     persistSave();
   }
 
-  // 重新渲染所有區塊
+  // 重新渲染
   scenes.forEach(normalizeSceneTextFields);
   renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots();
   buildShotSelect(); buildScriptSceneSelect(true); renderCallsheet(); renderAnnouncements(); renderAnnStats();
@@ -4889,7 +4890,11 @@ function pushAllToSupabase(){
         }));
         const { error: se } = await supabase.from('scenes')
           .upsert(sceneRows, { onConflict: 'project_id,scene_id' });
-        if(se) console.warn('scenes push error:', se.message);
+        if(se){
+          console.error('scenes push error:', se);
+          toast('⚠ 場景同步失敗：' + se.message, '⚠');
+          return;
+        }
       }
       // shots
       const shotRows = [];
@@ -4902,7 +4907,10 @@ function pushAllToSupabase(){
       if(shotRows.length){
         const { error: she } = await supabase.from('shots')
           .upsert(shotRows, { onConflict: 'project_id,shot_id' });
-        if(she) console.warn('shots push error:', she.message);
+        if(she){
+          console.error('shots push error:', she);
+          toast('⚠ 分鏡同步失敗：' + she.message, '⚠');
+        }
       }
       // crew
       if(crew.length){
@@ -4914,8 +4922,11 @@ function pushAllToSupabase(){
         const { error: ce } = await supabase.from('crew').insert(crewRows);
         if(ce) console.warn('crew push error:', ce.message);
       }
-    } catch(e){ console.warn('pushAllToSupabase error:', e); }
-  }, 800); // 800ms debounce：連續改動只打一次
+    } catch(e){
+      console.error('pushAllToSupabase error:', e);
+      toast('⚠ 同步失敗，資料已保存在本機：' + (e.message||e), '⚠');
+    }
+  }, 800);
 }
 
 function replaceArray(target, data){ target.splice(0, target.length, ...(data||[])); }
