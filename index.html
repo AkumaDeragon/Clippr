@@ -520,41 +520,128 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 
 </style>
 <style>
+/* ── HIGHLIGHT OVERLAY SYSTEM ── */
+.hl-wrap { position: relative; width: 100%; }
+.hl-overlay {
+  position: absolute; inset: 0;
+  pointer-events: none; overflow: hidden;
+  border-radius: 8px;
+  font-family: 'DM Mono','Courier New',monospace;
+  white-space: pre-wrap; word-break: break-word;
+  color: transparent;
+  box-sizing: border-box;
+  z-index: 1;
+}
+.hl-wrap textarea { position: relative; z-index: 2; background: transparent !important; }
+.hl-mark { border-radius: 2px; }
+
 /* ── HIGHLIGHT BAR ── */
-.hl-bar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:7px;margin-bottom:8px;flex-wrap:wrap;}
-.hl-bar-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;margin-right:2px;}
-.hl-dot{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.18);cursor:pointer;transition:transform .12s,border-color .12s;flex-shrink:0;padding:0;}
-.hl-dot:hover{transform:scale(1.25);border-color:rgba(255,255,255,.5);}
-.hl-clear{background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:5px;color:var(--text-muted,#888);font-size:11px;padding:2px 8px;cursor:pointer;margin-left:auto;transition:all .15s;font-family:inherit;}
-.hl-clear:hover{border-color:rgba(231,76,60,.6);color:rgba(231,76,60,.9);}
-.sdp-dialogue-area{font-size:17px!important;line-height:1.9!important;min-height:340px!important;}
-.sdp-script-area{font-size:15px!important;line-height:1.8!important;}
+.hl-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px; margin-bottom: 8px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07); border-radius: 7px;
+  flex-wrap: wrap;
+}
+.hl-lbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-muted,#888); font-family: var(--font-mono,'DM Mono'),monospace; }
+.hl-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.2); cursor: pointer;
+  transition: transform .12s, box-shadow .12s; flex-shrink: 0; padding: 0;
+}
+.hl-dot:hover { transform: scale(1.3); box-shadow: 0 0 0 3px rgba(255,255,255,.15); }
+.hl-clear {
+  margin-left: auto; background: transparent;
+  border: 1px solid rgba(255,255,255,.15); border-radius: 5px;
+  color: var(--text-muted,#888); font-size: 11px; padding: 2px 9px;
+  cursor: pointer; transition: all .15s; font-family: inherit;
+}
+.hl-clear:hover { border-color: rgba(231,76,60,.6); color: rgba(231,76,60,.9); }
+
+/* ── BIGGER FONT for dialogue + script ── */
+.sdp-dialogue-area { font-size: 17px !important; line-height: 1.9 !important; min-height: 340px !important; }
+.sdp-script-area   { font-size: 15px !important; line-height: 1.85 !important; }
+
 /* ── SHOT IMAGE GALLERY ── */
-.shot-img-row{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 4px;}
-.shot-thumb{position:relative;width:50px;height:50px;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.1);cursor:pointer;flex-shrink:0;}
-.shot-thumb:hover{border-color:rgba(201,168,76,.5);}
-.shot-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
-.shot-thumb-del{position:absolute;top:1px;right:1px;width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#e74c3c;font-size:9px;line-height:15px;text-align:center;cursor:pointer;display:none;padding:0;}
-.shot-thumb:hover .shot-thumb-del{display:block;}
-.shot-thumb-add{width:50px;height:50px;border-radius:6px;border:1.5px dashed rgba(201,168,76,.4);background:rgba(201,168,76,.04);color:var(--gold,#C9A84C);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
-.shot-thumb-add:hover{border-color:rgba(201,168,76,.8);background:rgba(201,168,76,.1);}
-.shot-thumb-add.maxed{opacity:.3;cursor:not-allowed;pointer-events:none;}
-.shot-img-count{font-size:9px;letter-spacing:1px;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;}
+.shot-img-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.shot-thumb {
+  position: relative; width: 68px; height: 68px;
+  border-radius: 7px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12); cursor: pointer; flex-shrink: 0;
+  transition: border-color .15s;
+}
+.shot-thumb:hover { border-color: rgba(201,168,76,.6); }
+.shot-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shot-thumb-del {
+  position: absolute; top: 2px; right: 2px;
+  width: 17px; height: 17px; border-radius: 50%;
+  background: rgba(0,0,0,.75); border: none;
+  color: #e74c3c; font-size: 10px; line-height: 17px;
+  text-align: center; cursor: pointer; display: none; padding: 0;
+}
+.shot-thumb:hover .shot-thumb-del { display: block; }
+.shot-thumb-add {
+  width: 68px; height: 68px; border-radius: 7px;
+  border: 1.5px dashed rgba(201,168,76,.4);
+  background: rgba(201,168,76,.04); color: var(--gold,#C9A84C);
+  font-size: 20px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all .15s;
+}
+.shot-thumb-add:hover { border-color: rgba(201,168,76,.8); background: rgba(201,168,76,.1); }
+.shot-thumb-add.maxed { opacity: .3; cursor: not-allowed; pointer-events: none; }
+.shot-img-count { font-size: 9px; letter-spacing: 1px;
+  color: var(--text-muted,#888); font-family: var(--font-mono,'DM Mono'),monospace; }
+
 /* ── LIGHTBOX ── */
-.clappr-lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;animation:lb-fade .15s;}
-@keyframes lb-fade{from{opacity:0}to{opacity:1}}
-.clappr-lb img{max-width:90vw;max-height:88vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);}
-.clappr-lb-x{position:absolute;top:16px;right:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:50%;color:#fff;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.clappr-lb-x:hover{background:rgba(231,76,60,.5);}
-/* ── SDP INLINE SHOT CARD ── */
-.sdp-shot-inline{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg-raised,#111);border:1px solid rgba(255,255,255,.06);border-radius:8px;transition:border-color .15s;}
-.sdp-shot-inline:hover{border-color:rgba(201,168,76,.2);}
-.sdp-shot-inline.done-shot{border-color:rgba(39,174,96,.3);background:rgba(39,174,96,.03);}
-.sdp-shot-inline-meta{flex:1;min-width:0;}
+.clappr-lb {
+  position: fixed; inset: 0; background: rgba(0,0,0,.93);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+  animation: lb-fade .15s;
+}
+@keyframes lb-fade { from { opacity:0 } to { opacity:1 } }
+.clappr-lb img { max-width: 90vw; max-height: 88vh; border-radius: 10px; box-shadow: 0 8px 40px rgba(0,0,0,.8); }
+.clappr-lb-x {
+  position: absolute; top: 16px; right: 20px;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 50%; color: #fff; width: 34px; height: 34px;
+  font-size: 18px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+}
+.clappr-lb-x:hover { background: rgba(231,76,60,.5); }
+
 /* ── CAST DEL BTN ── */
-.cast-del{background:transparent;border:1px solid rgba(231,76,60,.2);border-radius:4px;color:rgba(231,76,60,.5);font-size:10px;padding:1px 5px;cursor:pointer;margin-left:auto;flex-shrink:0;transition:all .15s;display:none;}
-.cast-del:hover{border-color:rgba(231,76,60,.7);color:#e74c3c;}
-.cast-list.editing .cast-del{display:inline-flex;}
+.cast-del {
+  background: transparent; border: 1px solid rgba(231,76,60,.2);
+  border-radius: 4px; color: rgba(231,76,60,.5);
+  font-size: 10px; padding: 1px 6px; cursor: pointer;
+  margin-left: auto; flex-shrink: 0; transition: all .15s; display: none;
+}
+.cast-del:hover { border-color: rgba(231,76,60,.7); color: #e74c3c; }
+.cast-list.editing .cast-del { display: inline-flex; }
+
+/* ── 場景進度 nav highlight ── */
+.nav-scenes-special {
+  background: rgba(201,168,76,.06) !important;
+  border: 1px solid rgba(201,168,76,.14) !important;
+}
+.nav-scenes-special:hover {
+  background: rgba(201,168,76,.12) !important;
+}
+.nav-scenes-special.active {
+  background: rgba(201,168,76,.14) !important;
+  border-color: rgba(201,168,76,.5) !important;
+}
+/* mobile tab 場景 */
+.tab-scenes-special .tab-icon { color: rgba(201,168,76,.7) !important; }
+.tab-scenes-special .tab-label { color: rgba(201,168,76,.6) !important; }
+.tab-scenes-special.active .tab-icon { color: var(--gold,#C9A84C) !important; }
+.tab-scenes-special.active .tab-label { color: var(--gold,#C9A84C) !important; }
+/* mobile menu 場景 */
+.menu-item-scenes { background: rgba(201,168,76,.06) !important; }
+.menu-item-scenes .menu-ic { color: rgba(201,168,76,.7) !important; }
+.menu-item-scenes span:last-child { color: rgba(201,168,76,.85) !important; }
 </style>
 <body>
 <!-- ═══ PROFILE ONBOARDING OVERLAY ═══ -->
@@ -662,7 +749,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
       <div class="nav-item active" onclick="switchPage('dashboard',this)">
         <span class="nav-icon">◈</span> 拍攝總覽
       </div>
-      <div class="nav-item" onclick="switchPage('scenes',this)">
+      <div class="nav-item nav-scenes-special" onclick="switchPage('scenes',this)">
         <span class="nav-icon">☰</span> 場景進度
       </div>
       <div class="nav-item" onclick="switchPage('shots',this)">
@@ -1035,7 +1122,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             <button class="editor-btn" onclick="insertTag('CUT TO:')">CUT TO</button>
             <button class="editor-btn" onclick="insertTag('DISSOLVE TO:')">DISSOLVE</button>
           </div>
-          <textarea class="script-textarea" id="script-text" placeholder="唯讀狀態 · 請先按上方 ✎ 編輯再修改…"></textarea>
+          <textarea class="script-textarea" id="script-text" placeholder="選取場景後開始編輯劇本…"></textarea>
         </div>
         <div class="script-sidebar-panel">
           <div class="script-meta-card">
@@ -1255,10 +1342,10 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 
       <div class="sdp-layout-v2">
 
-        <!-- 左側 60%：台詞 + 劇本 + 鏡頭腳位 -->
+        <!-- 左側 60%：台詞 + 劇本 -->
         <div class="sdp-script-col">
 
-          <!-- 台詞區 -->
+          <!-- 台詞區（主要，佔較多空間） -->
           <div class="sdp-section sdp-dialogue-section">
             <div class="sdp-section-head">
               <div class="sdp-section-title">🎭 台詞</div>
@@ -1271,22 +1358,25 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <!-- 標色工具列 -->
             <div class="hl-bar" id="hl-bar-dialogue">
-              <span class="hl-bar-label">標色</span>
-              <button class="hl-dot" style="background:#FFD93D" title="黃" onclick="clapprHL('dialogue','#FFD93D')"></button>
-              <button class="hl-dot" style="background:#6BCB77" title="綠" onclick="clapprHL('dialogue','#6BCB77')"></button>
-              <button class="hl-dot" style="background:#4D96FF" title="藍" onclick="clapprHL('dialogue','#4D96FF')"></button>
-              <button class="hl-dot" style="background:#FF6B6B" title="紅" onclick="clapprHL('dialogue','#FF6B6B')"></button>
-              <button class="hl-dot" style="background:#C77DFF" title="紫" onclick="clapprHL('dialogue','#C77DFF')"></button>
-              <button class="hl-dot" style="background:#FF9A3C" title="橘" onclick="clapprHL('dialogue','#FF9A3C')"></button>
+              <span class="hl-lbl">標色</span>
+              <button class="hl-dot" style="background:#FFD93D" onclick="clapprHL('dialogue','#FFD93D')"></button>
+              <button class="hl-dot" style="background:#6BCB77" onclick="clapprHL('dialogue','#6BCB77')"></button>
+              <button class="hl-dot" style="background:#4D96FF" onclick="clapprHL('dialogue','#4D96FF')"></button>
+              <button class="hl-dot" style="background:#FF6B6B" onclick="clapprHL('dialogue','#FF6B6B')"></button>
+              <button class="hl-dot" style="background:#C77DFF" onclick="clapprHL('dialogue','#C77DFF')"></button>
+              <button class="hl-dot" style="background:#FF9A3C" onclick="clapprHL('dialogue','#FF9A3C')"></button>
               <button class="hl-clear" onclick="clapprHLClear('dialogue')">清除</button>
             </div>
-            <textarea class="sdp-dialogue-area sdp-readonly" id="sdp-dialogue" readonly placeholder="在這裡輸入台詞…
+            <div class="hl-wrap" id="hl-wrap-dialogue">
+              <div class="hl-overlay" id="hl-overlay-dialogue" aria-hidden="true"></div>
+              <textarea class="sdp-dialogue-area sdp-readonly" id="sdp-dialogue" readonly placeholder="在這裡輸入台詞…
 
 [角色名]
 台詞內容
 
 [角色名]
 台詞內容…"></textarea>
+            </div>
             <div class="sdp-safe-hint">避免誤按：目前預設不可修改，按上方「編輯」後才會開放輸入。</div>
           </div>
 
@@ -1303,30 +1393,24 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <!-- 標色工具列 -->
             <div class="hl-bar" id="hl-bar-script">
-              <span class="hl-bar-label">標色</span>
-              <button class="hl-dot" style="background:#FFD93D" title="黃" onclick="clapprHL('script','#FFD93D')"></button>
-              <button class="hl-dot" style="background:#6BCB77" title="綠" onclick="clapprHL('script','#6BCB77')"></button>
-              <button class="hl-dot" style="background:#4D96FF" title="藍" onclick="clapprHL('script','#4D96FF')"></button>
-              <button class="hl-dot" style="background:#FF6B6B" title="紅" onclick="clapprHL('script','#FF6B6B')"></button>
-              <button class="hl-dot" style="background:#C77DFF" title="紫" onclick="clapprHL('script','#C77DFF')"></button>
-              <button class="hl-dot" style="background:#FF9A3C" title="橘" onclick="clapprHL('script','#FF9A3C')"></button>
+              <span class="hl-lbl">標色</span>
+              <button class="hl-dot" style="background:#FFD93D" onclick="clapprHL('script','#FFD93D')"></button>
+              <button class="hl-dot" style="background:#6BCB77" onclick="clapprHL('script','#6BCB77')"></button>
+              <button class="hl-dot" style="background:#4D96FF" onclick="clapprHL('script','#4D96FF')"></button>
+              <button class="hl-dot" style="background:#FF6B6B" onclick="clapprHL('script','#FF6B6B')"></button>
+              <button class="hl-dot" style="background:#C77DFF" onclick="clapprHL('script','#C77DFF')"></button>
+              <button class="hl-dot" style="background:#FF9A3C" onclick="clapprHL('script','#FF9A3C')"></button>
               <button class="hl-clear" onclick="clapprHLClear('script')">清除</button>
             </div>
-            <textarea class="sdp-script-area sdp-readonly" id="sdp-script-text" readonly placeholder="場景動作說明、場面描述…
+            <div class="hl-wrap" id="hl-wrap-script">
+              <div class="hl-overlay" id="hl-overlay-script" aria-hidden="true"></div>
+              <textarea class="sdp-script-area sdp-readonly" id="sdp-script-text" readonly placeholder="場景動作說明、場面描述…
 
 INT./EXT. 地點 — 日/夜
 
 動作描述與場景指示…"></textarea>
-            <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。</div>
-          </div>
-
-          <!-- 鏡頭腳位（劇本下方） -->
-          <div class="sdp-section" id="sdp-shots-section">
-            <div class="sdp-section-head compact-head">
-              <div class="sdp-section-title">⊡ 鏡頭腳位</div>
-              <button class="btn btn-outline btn-sm" onclick="openShotModal()">＋ 新增鏡頭</button>
             </div>
-            <div id="sdp-shots-inline" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+            <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。</div>
           </div>
 
         </div>
@@ -1338,19 +1422,10 @@ INT./EXT. 地點 — 日/夜
             <div class="sdp-section-title">基本資訊</div>
             <div class="sdp-info-grid" id="sdp-info-grid"></div>
           </div>
-          <!-- 參與角色 (可編輯) -->
+          <!-- 參與角色 -->
           <div class="sdp-section">
-            <div class="sdp-section-head compact-head">
-              <div class="sdp-section-title">參與角色</div>
-              <button class="btn btn-outline btn-sm" id="sdp-cast-edit-btn" onclick="clapprCastToggle()">✎ 編輯</button>
-            </div>
+            <div class="sdp-section-title">參與角色</div>
             <div class="cast-list" id="sdp-cast-list"></div>
-            <div id="sdp-cast-add-row" style="display:none;margin-top:8px;display:none">
-              <input id="sdp-cast-inp" placeholder="角色名 / 成員名" maxlength="20"
-                style="width:100%;background:var(--bg-raised);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:var(--text-primary);font-size:13px;padding:7px 10px;outline:none;box-sizing:border-box;font-family:inherit;margin-bottom:6px"
-                onkeydown="if(event.key==='Enter')clapprCastAdd()">
-              <button class="btn btn-outline btn-sm" style="width:100%" onclick="clapprCastAdd()">＋ 加入角色</button>
-            </div>
           </div>
           <!-- 拍攝進度 -->
           <div class="sdp-section">
@@ -1364,7 +1439,14 @@ INT./EXT. 地點 — 日/夜
           </div>
           <!-- 鏡頭清單 -->
           <div class="sdp-section">
-            <div class="sdp-section-title">鏡頭清單</div>
+            <div class="sdp-section-head compact-head">
+              <div class="sdp-section-title">鏡頭清單</div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span id="sdp-shots-status" style="font-size:10px;color:var(--text-muted);letter-spacing:.5px">唯讀</span>
+                <button class="btn btn-outline btn-sm" id="sdp-shots-edit-btn" onclick="sdpShotsEdit()">✎ 編輯</button>
+                <button class="btn btn-gold btn-sm" id="sdp-shots-done-btn" style="display:none" onclick="sdpShotsDone()">完成</button>
+              </div>
+            </div>
             <div class="sdp-shot-list" id="sdp-shot-list"></div>
           </div>
           <!-- 導演備注 -->
@@ -2065,7 +2147,7 @@ AI 會根據描述建立完整的場景資料和通告單。"></textarea>
     <span class="tab-icon">◈</span>
     <span class="tab-label">總覽</span>
   </div>
-  <div class="tab-item" id="tab-scenes" onclick="mobileTab('scenes',this)">
+  <div class="tab-item tab-scenes-special" id="tab-scenes" onclick="mobileTab('scenes',this)">
     <span class="tab-icon">☰</span>
     <span class="tab-label">場景</span>
   </div>
@@ -2091,7 +2173,7 @@ AI 會根據描述建立完整的場景資料和通告單。"></textarea>
   <div class="menu-sheet-proj" id="menu-sheet-proj">—</div>
   <div class="menu-grid">
     <div class="menu-item" onclick="navMobile('dashboard')"><span class="menu-ic">◈</span><span>拍攝總覽</span></div>
-    <div class="menu-item" onclick="navMobile('scenes')"><span class="menu-ic">☰</span><span>場景進度</span></div>
+    <div class="menu-item menu-item-scenes" onclick="navMobile('scenes')"><span class="menu-ic">☰</span><span>場景進度</span></div>
     <div class="menu-item" onclick="navMobile('shots')"><span class="menu-ic">⊡</span><span>鏡頭腳位</span></div>
     <div class="menu-item" onclick="navMobile('script')"><span class="menu-ic">✎</span><span>劇本共編</span></div>
     <div class="menu-item" onclick="navMobile('announce')"><span class="menu-ic">◎</span><span>公告欄</span></div>
@@ -6116,10 +6198,10 @@ function maybeAutoJoinFromLink(){
 
 <script>
 /* ============================================================
-   CLAPPR EXTENSIONS  — separate script, safe from main block
+   CLAPPR EXTENSIONS v3 — completely separate script tag
    ============================================================ */
 
-/* ---------- localStorage helpers for shot images ----------- */
+/* ─── 1. SHOT IMAGE GALLERY ─────────────────────────────── */
 var SIMGKEY = 'clappr_shot_imgs_v2';
 
 function simgLoad() {
@@ -6132,13 +6214,6 @@ function simgSave(d) {
 }
 function simgGet(shotId) { return simgLoad()[shotId] || []; }
 
-function simgAdd(shotId, base64) {
-  var d = simgLoad();
-  if (!d[shotId]) d[shotId] = [];
-  if (d[shotId].length >= 7) return;
-  d[shotId].push(base64);
-  simgSave(d);
-}
 function simgDel(shotId, idx) {
   var d = simgLoad();
   if (!d[shotId]) return;
@@ -6147,13 +6222,12 @@ function simgDel(shotId, idx) {
   simgSave(d);
 }
 
-/* ---------- compress + upload handler ---------------------- */
 function clapprImgUpload(event, shotId) {
   var files = Array.from(event.target.files || []);
   if (!files.length) return;
   var existing = simgGet(shotId);
   var slots = 7 - existing.length;
-  if (slots <= 0) { toast && toast('已達上限 7 張', '⚠'); return; }
+  if (slots <= 0) { if (typeof toast === 'function') toast('已達上限 7 張', '⚠'); return; }
   files = files.slice(0, slots);
   var done = 0;
   files.forEach(function(file) {
@@ -6161,7 +6235,7 @@ function clapprImgUpload(event, shotId) {
     fr.onload = function(e) {
       var img = new Image();
       img.onload = function() {
-        var MAX = 900, w = img.width, h = img.height;
+        var MAX = 960, w = img.width, h = img.height;
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
           else { w = Math.round(w * MAX / h); h = MAX; }
@@ -6169,12 +6243,14 @@ function clapprImgUpload(event, shotId) {
         var cv = document.createElement('canvas');
         cv.width = w; cv.height = h;
         cv.getContext('2d').drawImage(img, 0, 0, w, h);
-        simgAdd(shotId, cv.toDataURL('image/jpeg', 0.80));
+        var d = simgLoad();
+        if (!d[shotId]) d[shotId] = [];
+        if (d[shotId].length < 7) { d[shotId].push(cv.toDataURL('image/jpeg', 0.82)); simgSave(d); }
         done++;
         if (done === files.length) {
-          clapprRenderShots();
-          clapprRenderSdpShots();
-          toast && toast('圖片已儲存', '🖼');
+          clapprRefreshShotCards();
+          clapprRefreshSdpShots();
+          if (typeof toast === 'function') toast('圖片已儲存', '🖼');
         }
       };
       img.src = e.target.result;
@@ -6184,125 +6260,150 @@ function clapprImgUpload(event, shotId) {
   event.target.value = '';
 }
 
-/* ---------- lightbox ---------------------------------------- */
+function simgDelAndRefresh(shotId, idx) {
+  simgDel(shotId, idx);
+  clapprRefreshShotCards();
+  clapprRefreshSdpShots();
+  if (typeof toast === 'function') toast('已刪除', '🗑');
+}
+
+/* lightbox */
 function clapprLightbox(shotId, idx) {
   var src = simgGet(shotId)[idx];
   if (!src) return;
-  var el = document.getElementById('clappr-lb');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'clappr-lb';
-    el.className = 'clappr-lb';
-    document.body.appendChild(el);
+  var lb = document.getElementById('clappr-lb');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'clappr-lb';
+    lb.className = 'clappr-lb';
+    lb.innerHTML = '<button class="clappr-lb-x" onclick="document.getElementById(\'clappr-lb\').style.display=\'none\'">×</button><img id="clappr-lb-img">';
+    lb.addEventListener('click', function(e){ if(e.target===lb) lb.style.display='none'; });
+    document.body.appendChild(lb);
   }
-  el.innerHTML = '<button class="clappr-lb-x" id="clappr-lb-x">×</button><img id="clappr-lb-img">';
   document.getElementById('clappr-lb-img').src = src;
-  el.style.display = 'flex';
-  document.getElementById('clappr-lb-x').onclick = function() { el.style.display = 'none'; };
-  el.onclick = function(e) { if (e.target === el) el.style.display = 'none'; };
+  lb.style.display = 'flex';
 }
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    var lb = document.getElementById('clappr-lb');
-    if (lb) lb.style.display = 'none';
-  }
+  if (e.key === 'Escape') { var lb=document.getElementById('clappr-lb'); if(lb) lb.style.display='none'; }
 });
 
-/* ---------- build image row HTML --------------------------- */
+/* build image row HTML for a given shotId */
 function simgRowHtml(shotId) {
   var imgs = simgGet(shotId);
-  var html = '';
+  var h = '';
   imgs.forEach(function(src, i) {
-    html += '<div class="shot-thumb" onclick="clapprLightbox(\'' + shotId + '\',' + i + ')">' +
-      '<img src="' + src + '" alt="">' +
-      '<button class="shot-thumb-del" onclick="event.stopPropagation();simgDelRefresh(\'' + shotId + '\',' + i + ')">×</button>' +
-      '</div>';
+    h += '<div class="shot-thumb" onclick="clapprLightbox(\'' + shotId + '\',' + i + ')">' +
+         '<img src="' + src + '" alt="">' +
+         '<button class="shot-thumb-del" onclick="event.stopPropagation();simgDelAndRefresh(\'' + shotId + '\',' + i + ')">×</button>' +
+         '</div>';
   });
   var maxed = imgs.length >= 7;
-  html += '<label class="shot-thumb-add' + (maxed ? ' maxed' : '') + '" title="' + (maxed ? '已達上限 7 張' : '上傳圖片（最多7張）') + '">' +
-    '＋<input type="file" accept="image/*" multiple style="display:none" onchange="clapprImgUpload(event,\'' + shotId + '\')"' + (maxed ? ' disabled' : '') + '></label>';
-  if (imgs.length) html += '<div class="shot-img-count">' + imgs.length + '/7</div>';
-  return html;
+  h += '<label class="shot-thumb-add' + (maxed?' maxed':'') + '" title="' + (maxed?'已達上限 7 張':'上傳圖片（最多7張）') + '">' +
+       '＋<input type="file" accept="image/*" multiple style="display:none" onchange="clapprImgUpload(event,\'' + shotId + '\')"' + (maxed?' disabled':'') + '></label>';
+  if (imgs.length) h += '<div class="shot-img-count">' + imgs.length + '/7</div>';
+  return h;
 }
 
-function simgDelRefresh(shotId, idx) {
-  simgDel(shotId, idx);
-  clapprRenderShots();
-  clapprRenderSdpShots();
-  toast && toast('已刪除', '🗑');
-}
-
-/* ---------- re-render shot cards (鏡頭腳位頁) --------------- */
-function clapprRenderShots() {
-  /* We hook into the existing renderShots by calling it, which re-builds
-     the grid.  But renderShots doesn't know about images, so we patch
-     the grid innerHTML afterwards. */
-  if (typeof renderShots === 'function') {
-    renderShots();
-  }
-  /* After renderShots rebuilds the DOM, inject image rows into each card */
+/* inject image rows into shot-cards page */
+function clapprRefreshShotCards() {
   var cards = document.querySelectorAll('#shot-cards .shot-card');
   cards.forEach(function(card) {
     var shotId = card.id.replace('shot-', '');
     if (!shotId) return;
-    var existing = card.querySelector('.shot-img-row');
-    if (existing) existing.parentNode.removeChild(existing);
-    var imgDiv = document.createElement('div');
-    imgDiv.className = 'shot-img-row';
-    imgDiv.innerHTML = simgRowHtml(shotId);
-    /* insert before the check button */
-    var checkBtn = card.querySelector('.shot-check');
-    if (checkBtn) card.insertBefore(imgDiv, checkBtn);
-    else card.appendChild(imgDiv);
+    var old = card.querySelector('.shot-img-row');
+    if (old) old.remove();
+    var div = document.createElement('div');
+    div.className = 'shot-img-row';
+    div.innerHTML = simgRowHtml(shotId);
+    var btn = card.querySelector('.shot-check');
+    if (btn) card.insertBefore(div, btn); else card.appendChild(div);
   });
 }
 
-/* ---------- render inline shot cards in scene detail -------- */
-function clapprRenderSdpShots() {
-  var container = document.getElementById('sdp-shots-inline');
+/* ─── 2. SDP (場景詳情) INLINE SHOT LIST WITH IMAGES ──── */
+var _sdpShotsEditing = false;
+
+function sdpShotsEdit() {
+  _sdpShotsEditing = true;
+  var editBtn = document.getElementById('sdp-shots-edit-btn');
+  var doneBtn = document.getElementById('sdp-shots-done-btn');
+  var status  = document.getElementById('sdp-shots-status');
+  if (editBtn) editBtn.style.display = 'none';
+  if (doneBtn) doneBtn.style.display = 'inline-flex';
+  if (status)  status.textContent = '編輯中';
+  clapprRefreshSdpShots();
+}
+
+function sdpShotsDone() {
+  _sdpShotsEditing = false;
+  var editBtn = document.getElementById('sdp-shots-edit-btn');
+  var doneBtn = document.getElementById('sdp-shots-done-btn');
+  var status  = document.getElementById('sdp-shots-status');
+  if (editBtn) editBtn.style.display = 'inline-flex';
+  if (doneBtn) doneBtn.style.display = 'none';
+  if (status)  status.textContent = '唯讀';
+  clapprRefreshSdpShots();
+}
+
+function clapprRefreshSdpShots() {
+  var container = document.getElementById('sdp-shot-list');
   if (!container) return;
   var sid = (typeof _currentSDP !== 'undefined') ? _currentSDP : null;
-  if (!sid) { container.innerHTML = ''; return; }
+  if (!sid) return;
   var arr = (typeof shots !== 'undefined' && shots[sid]) ? shots[sid] : [];
   if (!arr.length) {
-    container.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">尚無鏡頭，按右上「＋ 新增鏡頭」</div>';
+    container.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">此場景尚未建立鏡頭</div>';
     return;
   }
   container.innerHTML = arr.map(function(sh, i) {
-    var imgRow = simgRowHtml(sh.id);
-    return '<div class="sdp-shot-inline ' + (sh.done ? 'done-shot' : '') + '">' +
-      '<div class="sdp-shot-inline-meta">' +
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">' +
-          '<span style="font-family:var(--font-mono);font-size:11px;color:var(--gold)">' + sh.id + '</span>' +
-          '<span style="font-size:13px;font-weight:500;color:var(--text-primary)">' + sh.type + '</span>' +
-        '</div>' +
-        '<div style="font-size:11px;color:var(--text-muted)">' + sh.angle + ' · 📷 ' + sh.lens + (sh.note ? ' · ' + sh.note : '') + '</div>' +
-        '<div class="shot-img-row">' + imgRow + '</div>' +
+    var imgRow = '<div class="shot-img-row">' + simgRowHtml(sh.id) + '</div>';
+    /* delete button only in edit mode */
+    var delBtn = _sdpShotsEditing
+      ? '<button onclick="clapprSdpDelShot(\'' + sid + '\',' + i + ')" style="margin-left:auto;background:transparent;border:1px solid rgba(231,76,60,.25);border-radius:5px;color:rgba(231,76,60,.5);font-size:10px;padding:2px 6px;cursor:pointer;flex-shrink:0" onmouseover="this.style.color=\'var(--red-light)\';this.style.borderColor=\'rgba(231,76,60,.7)\'" onmouseout="this.style.color=\'rgba(231,76,60,.5)\';this.style.borderColor=\'rgba(231,76,60,.25)\'">🗑</button>'
+      : '';
+    return '<div class="sdp-shot-item ' + (sh.done ? 'done-shot' : '') + '">' +
+      '<div class="sdp-shot-num">' + sh.id + '</div>' +
+      '<div class="sdp-shot-body" style="flex:1">' +
+        '<div class="sdp-shot-type">' + sh.type + '</div>' +
+        '<div class="sdp-shot-meta">' + sh.angle + ' · ' + sh.lens + (sh.note ? ' · ' + sh.note : '') + '</div>' +
+        imgRow +
       '</div>' +
-      '<button class="sdp-shot-btn ' + (sh.done ? 'done-btn' : '') + '" onclick="toggleShotFromDetail(\'' + sid + '\',' + i + ')">' +
-        (sh.done ? '✓ 完成' : '標記完成') +
-      '</button>' +
+      '<button class="sdp-shot-btn ' + (sh.done ? 'done-btn' : '') + '" onclick="toggleShotFromDetail(\'' + sid + '\',' + i + ')">' + (sh.done ? '✓ 完成' : '標記完成') + '</button>' +
+      delBtn +
     '</div>';
   }).join('');
 }
 
-/* ---------- highlight tool (textarea-based, no contenteditable) */
-/* Uses textarea selection + wrapping via a stored "marks" array.
-   We overlay coloured spans rendered in a sibling <div> but keep
-   the real textarea as source of truth. Simple approach: we store
-   marks per field and redraw a read-only preview div. */
+function clapprSdpDelShot(sid, index) {
+  if (typeof confirmDelete === 'function') {
+    var sh = (shots[sid] || [])[index];
+    if (!sh) return;
+    confirmDelete('確定要刪除鏡頭「' + sh.id + '」？', function() {
+      shots[sid].splice(index, 1);
+      clapprRefreshSdpShots();
+      if (typeof persistSave === 'function') persistSave();
+      if (typeof toast === 'function') toast('鏡頭已刪除', '🗑');
+    });
+  }
+}
 
+/* ─── 3. HIGHLIGHT TOOL (textarea overlay) ─────────────── */
+/* Stores mark ranges per field; redraws a transparent overlay div */
 var _hlMarks = { dialogue: [], script: [] };
+var _hlFieldMap = {
+  dialogue: 'sdp-dialogue',
+  script:   'sdp-script-text'
+};
 
 function clapprHL(field, color) {
-  var ta = document.getElementById(field === 'dialogue' ? 'sdp-dialogue' : 'sdp-script-text');
-  if (!ta || ta.readOnly) { toast && toast('請先按「✎ 編輯」再標色', '✎'); return; }
-  var start = ta.selectionStart, end = ta.selectionEnd;
-  if (start === end) { toast && toast('請先選取文字再點顏色', '💡'); return; }
-  _hlMarks[field].push({ start: start, end: end, color: color });
+  var ta = document.getElementById(_hlFieldMap[field]);
+  if (!ta) return;
+  if (ta.readOnly) { if (typeof toast === 'function') toast('請先按「✎ 編輯」再標色', '✎'); return; }
+  var s = ta.selectionStart, e = ta.selectionEnd;
+  if (s === e) { if (typeof toast === 'function') toast('請先選取文字', '💡'); return; }
+  _hlMarks[field].push({ s: s, e: e, c: color });
   clapprHLDraw(field);
   ta.focus();
-  ta.setSelectionRange(end, end);
 }
 
 function clapprHLClear(field) {
@@ -6311,111 +6412,107 @@ function clapprHLClear(field) {
 }
 
 function clapprHLDraw(field) {
-  var overlayId = 'hl-overlay-' + field;
-  var taId = field === 'dialogue' ? 'sdp-dialogue' : 'sdp-script-text';
+  var taId = _hlFieldMap[field];
   var ta = document.getElementById(taId);
-  if (!ta) return;
-  var overlay = document.getElementById(overlayId);
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = overlayId;
-    overlay.style.cssText = 'pointer-events:none;position:absolute;inset:0;padding:16px 18px;font-family:\'DM Mono\',\'Courier New\',monospace;font-size:inherit;line-height:inherit;white-space:pre-wrap;word-break:break-word;color:transparent;overflow:hidden;border-radius:8px;box-sizing:border-box;';
-    var wrap = ta.parentNode;
-    if (wrap) {
-      wrap.style.position = 'relative';
-      wrap.insertBefore(overlay, ta);
-    }
-    ta.style.background = 'transparent';
-    ta.style.position = 'relative';
-  }
-  /* Build HTML with coloured spans */
+  var ov = document.getElementById('hl-overlay-' + field);
+  if (!ta || !ov) return;
+
   var text = ta.value;
-  var marks = _hlMarks[field].slice().sort(function(a, b) { return a.start - b.start; });
-  /* Merge overlapping marks */
+  var marks = _hlMarks[field].slice().sort(function(a,b){ return a.s-b.s; });
+  /* merge overlapping */
   var merged = [];
   marks.forEach(function(m) {
-    if (merged.length && m.start < merged[merged.length-1].end) {
-      merged[merged.length-1].end = Math.max(merged[merged.length-1].end, m.end);
-      merged[merged.length-1].color = m.color;
-    } else { merged.push({ start: m.start, end: m.end, color: m.color }); }
+    if (merged.length && m.s < merged[merged.length-1].e) {
+      var last = merged[merged.length-1];
+      last.e = Math.max(last.e, m.e);
+      last.c = m.c;
+    } else { merged.push({ s:m.s, e:m.e, c:m.c }); }
   });
+
+  function esc(str) {
+    return str
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/ /g,'&#32;').replace(/\t/g,'&#9;')
+      .replace(/\n/g,'<br>');
+  }
+
   var html = '', pos = 0;
-  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/ /g,'&nbsp;').replace(/\n/g,'<br>'); }
   merged.forEach(function(m) {
-    if (m.start > pos) html += esc(text.slice(pos, m.start));
-    html += '<span style="background:' + m.color + ';color:transparent;border-radius:3px;">' + esc(text.slice(m.start, m.end)) + '</span>';
-    pos = m.end;
+    if (m.s > pos) html += '<span>' + esc(text.slice(pos, m.s)) + '</span>';
+    html += '<span class="hl-mark" style="background:' + m.c + ';color:transparent;border-radius:2px;">' + esc(text.slice(m.s, m.e)) + '</span>';
+    pos = m.e;
   });
-  if (pos < text.length) html += esc(text.slice(pos));
-  overlay.innerHTML = html;
-  /* Match textarea font size */
+  if (pos < text.length) html += '<span>' + esc(text.slice(pos)) + '</span>';
+  ov.innerHTML = html;
+
+  /* sync font metrics */
   var cs = window.getComputedStyle(ta);
-  overlay.style.fontSize = cs.fontSize;
-  overlay.style.lineHeight = cs.lineHeight;
+  ov.style.fontSize   = cs.fontSize;
+  ov.style.lineHeight = cs.lineHeight;
+  ov.style.fontFamily = cs.fontFamily;
+  ov.style.padding    = cs.padding;
+  ov.style.letterSpacing = cs.letterSpacing;
 }
 
-/* Sync overlay on every input */
+function clapprHLSyncScroll(field) {
+  var ta = document.getElementById(_hlFieldMap[field]);
+  var ov = document.getElementById('hl-overlay-' + field);
+  if (ta && ov) ov.scrollTop = ta.scrollTop;
+}
+
 function clapprHLSetup() {
-  ['dialogue','script'].forEach(function(field) {
-    var taId = field === 'dialogue' ? 'sdp-dialogue' : 'sdp-script-text';
-    var ta = document.getElementById(taId);
-    if (!ta || ta._clapprHLBound) return;
-    ta._clapprHLBound = true;
-    ta.addEventListener('input', function() { clapprHLDraw(field); });
-    ta.addEventListener('scroll', function() {
-      var ov = document.getElementById('hl-overlay-' + field);
-      if (ov) ov.scrollTop = ta.scrollTop;
-    });
+  Object.keys(_hlFieldMap).forEach(function(field) {
+    var ta = document.getElementById(_hlFieldMap[field]);
+    if (!ta || ta._clapprBound) return;
+    ta._clapprBound = true;
+    ta.addEventListener('input', function(){ clapprHLDraw(field); });
+    ta.addEventListener('scroll', function(){ clapprHLSyncScroll(field); });
   });
 }
 
-/* When openDetail loads new scene, reset marks and redraw */
 function clapprHLReset() {
   _hlMarks = { dialogue: [], script: [] };
-  var ov1 = document.getElementById('hl-overlay-dialogue');
-  var ov2 = document.getElementById('hl-overlay-script');
-  if (ov1) ov1.innerHTML = '';
-  if (ov2) ov2.innerHTML = '';
-  setTimeout(clapprHLSetup, 50);
+  ['dialogue','script'].forEach(function(field) {
+    var ov = document.getElementById('hl-overlay-' + field);
+    if (ov) ov.innerHTML = '';
+  });
+  clapprHLSetup();
 }
 
-/* ---------- editable cast list ------------------------------ */
+/* ─── 4. EDITABLE CAST LIST ─────────────────────────────── */
 var _castEditing = false;
 
 function clapprCastToggle() {
   _castEditing = !_castEditing;
-  var btn = document.getElementById('sdp-cast-edit-btn');
+  var btn    = document.getElementById('sdp-cast-edit-btn');
   var addRow = document.getElementById('sdp-cast-add-row');
-  var list = document.getElementById('sdp-cast-list');
+  var list   = document.getElementById('sdp-cast-list');
   if (btn) btn.textContent = _castEditing ? '✓ 完成' : '✎ 編輯';
   if (addRow) addRow.style.display = _castEditing ? 'block' : 'none';
-  if (list) list.classList.toggle('editing', _castEditing);
-  if (_castEditing) {
-    var inp = document.getElementById('sdp-cast-inp');
-    if (inp) { inp.value = ''; inp.focus(); }
-  }
+  if (list) { if (_castEditing) list.classList.add('editing'); else list.classList.remove('editing'); }
+  if (_castEditing) { var inp=document.getElementById('sdp-cast-inp'); if(inp){inp.value='';inp.focus();} }
 }
 
 function clapprCastAdd() {
   if (typeof _currentSDP === 'undefined' || !_currentSDP) return;
-  var s = (typeof scenes !== 'undefined') ? scenes.find(function(x) { return x.id === _currentSDP; }) : null;
+  var s = (typeof scenes !== 'undefined') ? scenes.find(function(x){return x.id===_currentSDP;}) : null;
   if (!s) return;
   var inp = document.getElementById('sdp-cast-inp');
   var name = inp ? inp.value.trim() : '';
-  if (!name) { toast && toast('請輸入名稱', '⚠'); return; }
+  if (!name) { if(typeof toast==='function')toast('請輸入名稱','⚠'); return; }
   if (!Array.isArray(s.cast)) s.cast = [];
-  if (s.cast.indexOf(name) !== -1) { toast && toast('已存在', '⚠'); return; }
+  if (s.cast.indexOf(name) !== -1) { if(typeof toast==='function')toast('已存在','⚠'); return; }
   s.cast.push(name);
   if (typeof saveCurrentProjectState === 'function') saveCurrentProjectState();
   if (typeof syncSceneToDB === 'function') syncSceneToDB(s);
   if (inp) inp.value = '';
   clapprRenderCast(s);
-  toast && toast('已加入 ' + name, '🎭');
+  if(typeof toast==='function') toast('已加入 ' + name, '🎭');
 }
 
 function clapprCastDel(name) {
   if (typeof _currentSDP === 'undefined' || !_currentSDP) return;
-  var s = (typeof scenes !== 'undefined') ? scenes.find(function(x) { return x.id === _currentSDP; }) : null;
+  var s = (typeof scenes !== 'undefined') ? scenes.find(function(x){return x.id===_currentSDP;}) : null;
   if (!s || !Array.isArray(s.cast)) return;
   var i = s.cast.indexOf(name);
   if (i === -1) return;
@@ -6423,7 +6520,7 @@ function clapprCastDel(name) {
   if (typeof saveCurrentProjectState === 'function') saveCurrentProjectState();
   if (typeof syncSceneToDB === 'function') syncSceneToDB(s);
   clapprRenderCast(s);
-  toast && toast('已移除', '🗑');
+  if(typeof toast==='function') toast('已移除','🗑');
 }
 
 function clapprRenderCast(s) {
@@ -6433,132 +6530,131 @@ function clapprRenderCast(s) {
     el.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">無角色資訊</div>';
     return;
   }
-  var avatarColors = (typeof window.avatarColors !== 'undefined') ? window.avatarColors : ['#C9A84C','#3498db','#2ecc71','#e74c3c','#9b59b6','#e67e22','#1abc9c'];
+  var ac = (typeof avatarColors !== 'undefined') ? avatarColors : ['#C9A84C','#3498db','#2ecc71','#e74c3c','#9b59b6','#e67e22','#1abc9c'];
   el.innerHTML = s.cast.map(function(c, i) {
-    var m = (typeof crew !== 'undefined') ? crew.find(function(cr) { return cr.char === c; }) : null;
-    var safeC = c.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    var m = (typeof crew !== 'undefined') ? crew.find(function(cr){return cr.char===c;}) : null;
+    var safeC = c.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return '<div class="cast-item" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
-      '<div style="width:30px;height:30px;border-radius:50%;background:' + avatarColors[i%7] + '22;color:' + avatarColors[i%7] + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:1px solid ' + avatarColors[i%7] + '44;flex-shrink:0">' + c.slice(0,1) + '</div>' +
-      '<div style="flex:1"><div class="cast-char" style="font-size:13px;font-weight:500;color:var(--text-primary)">' + c + '</div><div class="cast-actor" style="font-size:11px;color:var(--text-muted)">' + (m ? m.name : '—') + '</div></div>' +
+      '<div style="width:30px;height:30px;border-radius:50%;background:' + ac[i%7] + '22;color:' + ac[i%7] + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:1px solid ' + ac[i%7] + '44;flex-shrink:0">' + c.slice(0,1) + '</div>' +
+      '<div style="flex:1"><div class="cast-char" style="font-size:13px;font-weight:500;color:var(--text-primary)">' + c + '</div><div class="cast-actor" style="font-size:11px;color:var(--text-muted)">' + (m?m.name:'—') + '</div></div>' +
       '<button class="cast-del" onclick="clapprCastDel(\'' + safeC + '\')">× 刪</button>' +
     '</div>';
   }).join('');
-  el.classList.toggle('editing', _castEditing);
+  if (_castEditing) el.classList.add('editing'); else el.classList.remove('editing');
 }
 
-/* ---------- hook into openDetail --------------------------- */
+/* ─── 5. PATCH openDetail ────────────────────────────────── */
 (function() {
-  function afterOpenDetail(sid) {
-    /* reset cast editing state */
-    _castEditing = false;
-    var btn = document.getElementById('sdp-cast-edit-btn');
-    var addRow = document.getElementById('sdp-cast-add-row');
-    var list = document.getElementById('sdp-cast-list');
-    if (btn) btn.textContent = '✎ 編輯';
-    if (addRow) addRow.style.display = 'none';
-    if (list) list.classList.remove('editing');
-    /* render cast */
-    var s = (typeof scenes !== 'undefined') ? scenes.find(function(x) { return x.id === sid; }) : null;
-    if (s) clapprRenderCast(s);
-    /* render inline shots */
-    clapprRenderSdpShots();
-    /* setup highlight overlays */
-    clapprHLReset();
-  }
-
-  /* poll until openDetail exists, then patch */
   var tries = 0;
   var t = setInterval(function() {
     tries++;
-    if (typeof openDetail === 'function') {
-      clearInterval(t);
-      var orig = openDetail;
-      openDetail = function(sid) {
-        orig(sid);
-        afterOpenDetail(sid);
-      };
-    }
-    if (tries > 100) clearInterval(t);
+    if (typeof openDetail !== 'function') { if(tries>200) clearInterval(t); return; }
+    clearInterval(t);
+    var orig = openDetail;
+    openDetail = function(sid) {
+      orig(sid);
+      /* reset cast edit state */
+      _castEditing = false;
+      var btn=document.getElementById('sdp-cast-edit-btn'), addRow=document.getElementById('sdp-cast-add-row'), list=document.getElementById('sdp-cast-list');
+      if(btn) btn.textContent='✎ 編輯';
+      if(addRow) addRow.style.display='none';
+      if(list) list.classList.remove('editing');
+      /* render cast */
+      var s=(typeof scenes!=='undefined')?scenes.find(function(x){return x.id===sid;}):null;
+      if(s) clapprRenderCast(s);
+      /* reset shot edit state */
+      _sdpShotsEditing = false;
+      var eb=document.getElementById('sdp-shots-edit-btn'), db=document.getElementById('sdp-shots-done-btn'), st=document.getElementById('sdp-shots-status');
+      if(eb) eb.style.display='inline-flex';
+      if(db) db.style.display='none';
+      if(st) st.textContent='唯讀';
+      /* render shots with images */
+      clapprRefreshSdpShots();
+      /* highlight reset */
+      clapprHLReset();
+    };
   }, 50);
 })();
 
-/* ---------- hook into toggleShotFromDetail ----------------- */
+/* ─── 6. PATCH toggleShotFromDetail ─────────────────────── */
 (function() {
   var tries = 0;
   var t = setInterval(function() {
     tries++;
-    if (typeof toggleShotFromDetail === 'function') {
-      clearInterval(t);
-      var orig = toggleShotFromDetail;
-      toggleShotFromDetail = function(sid, i) {
-        orig(sid, i);
-        setTimeout(clapprRenderSdpShots, 0);
-      };
-    }
-    if (tries > 100) clearInterval(t);
+    if (typeof toggleShotFromDetail !== 'function') { if(tries>200) clearInterval(t); return; }
+    clearInterval(t);
+    var orig = toggleShotFromDetail;
+    toggleShotFromDetail = function(sid, i) {
+      orig(sid, i);
+      setTimeout(clapprRefreshSdpShots, 0);
+    };
   }, 50);
 })();
 
-/* ---------- inject image rows into shot cards when page opens */
+/* ─── 7. PATCH renderShots — inject images into shot cards ─ */
 (function() {
   var tries = 0;
   var t = setInterval(function() {
     tries++;
-    if (typeof switchPage === 'function') {
-      clearInterval(t);
-      var orig = switchPage;
-      switchPage = function(id, el) {
-        orig(id, el);
-        if (id === 'shots') {
-          setTimeout(function() {
-            var cards = document.querySelectorAll('#shot-cards .shot-card');
-            cards.forEach(function(card) {
-              var shotId = card.id.replace('shot-', '');
-              if (!shotId) return;
-              if (card.querySelector('.shot-img-row')) return; /* already done */
-              var imgDiv = document.createElement('div');
-              imgDiv.className = 'shot-img-row';
-              imgDiv.innerHTML = simgRowHtml(shotId);
-              var checkBtn = card.querySelector('.shot-check');
-              if (checkBtn) card.insertBefore(imgDiv, checkBtn);
-              else card.appendChild(imgDiv);
-            });
-          }, 80);
+    if (typeof renderShots !== 'function') { if(tries>200) clearInterval(t); return; }
+    clearInterval(t);
+    var orig = renderShots;
+    renderShots = function() {
+      orig();
+      setTimeout(clapprRefreshShotCards, 0);
+    };
+  }, 50);
+})();
+
+/* ─── 8. FIX 劇本共編 safeEdit — script-text 要可以編輯 ── */
+/* The problem: safeEditMode locks script-text as readOnly before the user
+   clicks the pencil. The pencil calls enableSafeEdit('script') which unlocks it.
+   But the placeholder text says "唯讀狀態 · 請先按上方 ✎ 編輯再修改…" which is
+   confusing. We just make sure the safe edit unlock works correctly. */
+(function() {
+  var tries = 0;
+  var t = setInterval(function() {
+    tries++;
+    if (typeof setSafeEditLocked !== 'function') { if(tries>200) clearInterval(t); return; }
+    clearInterval(t);
+
+    /* ─── 8a. Sync: when script-page saves, also update sdp-script-text ─── */
+    if (typeof saveScript === 'function') {
+      var origSaveScript = saveScript;
+      saveScript = function() {
+        origSaveScript();
+        /* sync to sdp if same scene is open */
+        var sel = document.getElementById('script-scene-sel');
+        var sdpEl = document.getElementById('sdp-script-text');
+        var taEl  = document.getElementById('script-text');
+        if (sel && sdpEl && taEl && typeof _currentSDP !== 'undefined' && _currentSDP === sel.value) {
+          sdpEl.value = taEl.value;
+          /* also update sceneScript in memory */
+          if (typeof scenes !== 'undefined') {
+            var s = scenes.find(function(x){return x.id===sel.value;});
+            if (s) s.sceneScript = taEl.value;
+          }
         }
       };
     }
-    if (tries > 100) clearInterval(t);
-  }, 50);
-})();
 
-/* Also inject when renderShots is called (e.g. initial load) */
-(function() {
-  var tries = 0;
-  var t = setInterval(function() {
-    tries++;
-    if (typeof renderShots === 'function') {
-      clearInterval(t);
-      var orig = renderShots;
-      renderShots = function() {
-        orig();
-        setTimeout(function() {
-          var cards = document.querySelectorAll('#shot-cards .shot-card');
-          cards.forEach(function(card) {
-            var shotId = card.id.replace('shot-', '');
-            if (!shotId || card.querySelector('.shot-img-row')) return;
-            var imgDiv = document.createElement('div');
-            imgDiv.className = 'shot-img-row';
-            imgDiv.innerHTML = simgRowHtml(shotId);
-            var checkBtn = card.querySelector('.shot-check');
-            if (checkBtn) card.insertBefore(imgDiv, checkBtn);
-            else card.appendChild(imgDiv);
-          });
-        }, 0);
+    /* ─── 8b. Sync: when sdp saves script, also update script-page ─── */
+    if (typeof saveSceneScript === 'function') {
+      var origSaveSceneScript = saveSceneScript;
+      saveSceneScript = function() {
+        origSaveSceneScript();
+        /* already handled in original code — but let's make sure */
+        var sdpEl = document.getElementById('sdp-script-text');
+        var taEl  = document.getElementById('script-text');
+        var sel   = document.getElementById('script-scene-sel');
+        if (sdpEl && taEl && sel && typeof _currentSDP !== 'undefined' && _currentSDP === sel.value) {
+          taEl.value = sdpEl.value;
+        }
       };
     }
-    if (tries > 100) clearInterval(t);
-  }, 50);
+  }, 100);
 })();
+
 
 </script>
 </body>
