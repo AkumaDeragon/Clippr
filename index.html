@@ -5410,8 +5410,11 @@ function saveCurrentProjectState(){
   const scriptEl = document.getElementById('script-text');
   if(selectedScriptScene && scriptEl){
     normalizeSceneTextFields(selectedScriptScene);
-    selectedScriptScene.sceneScript = scriptEl.value || '';
-    p.script = selectedScriptScene.sceneScript;
+    // 只在劇本頁的 textarea 有值時才覆蓋，避免空白蓋掉 SDP 剛存的內容
+    if(scriptEl.value.trim()){
+      selectedScriptScene.sceneScript = scriptEl.value;
+      p.script = selectedScriptScene.sceneScript;
+    }
   }
   scenes.forEach(normalizeSceneTextFields);
   p.scenes=clone(scenes);
@@ -5419,7 +5422,8 @@ function saveCurrentProjectState(){
   p.announcements=clone(announcements);
   p.crew=clone(crew);
   p.equipment=clone(equipment);
-  p.script=document.getElementById('script-text')?.value||p.script||'';
+  const _scriptVal = document.getElementById('script-text')?.value;
+  if(_scriptVal) p.script = _scriptVal;
   persistSave();
   // 全量同步到 Supabase（非阻塞，後台執行）
   pushAllToSupabase();

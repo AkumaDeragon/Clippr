@@ -250,7 +250,7 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
 .btn-outline:hover { border-color: var(--gold-dim); color: var(--gold-light); background: var(--gold-faint); }
 .btn-danger { background: rgba(192,57,43,.15); color: var(--red-light); border-color: rgba(192,57,43,.3); }
 .btn-danger:hover { background: rgba(192,57,43,.25); }
-.btn-sm { padding: 5px 12px; font-size: 11px; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
 .btn-green { background: rgba(39,174,96,.15); color: var(--green-light); border-color: rgba(39,174,96,.3); }
 .btn-green:hover { background: rgba(39,174,96,.25); }
 
@@ -1524,7 +1524,7 @@ html, body { height: 100dvh; }
 }
 .page { padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); }
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.scene-actions-cell { display:flex; gap:6px; align-items:center; flex-wrap:wrap; min-width:150px; }
+.scene-actions-cell { display:flex; gap:4px; align-items:center; flex-wrap:nowrap; white-space:nowrap; }
 .home-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
 .home-profile-summary {
   margin-top: 14px; padding: 10px 12px; min-width: 220px;
@@ -1555,7 +1555,7 @@ html, body { height: 100dvh; }
   .scene-detail-page { padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px)); }
   .table-wrap { max-width: 100%; overflow-x: auto; }
   .scene-table { min-width: 760px; }
-  .scene-actions-cell { min-width: 190px; }
+  .scene-actions-cell { white-space:nowrap; }
   .home-actions { width: 100%; justify-content: flex-start; }
   .home-actions .btn { flex: 1 1 145px; justify-content: center; }
   .home-profile-summary { width: 100%; }
