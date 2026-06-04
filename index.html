@@ -518,6 +518,70 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 /* ── BG ELEVATED ── */
 .bg-elevated,.sdp-section{background:var(--bg-elevated,#1a1a1a);}
 
+/* ── SHOT IMAGE GALLERY ── */
+.shot-img-gallery{margin-top:10px;margin-bottom:10px;}
+.shot-img-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+.shot-img-thumb{position:relative;width:52px;height:52px;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);cursor:pointer;flex-shrink:0;transition:border-color .15s;}
+.shot-img-thumb:hover{border-color:rgba(201,168,76,.5);}
+.shot-img-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.shot-img-del{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.72);border:none;color:rgba(231,76,60,.85);font-size:10px;line-height:16px;text-align:center;cursor:pointer;display:none;padding:0;transition:all .15s;}
+.shot-img-thumb:hover .shot-img-del{display:block;}
+.shot-img-del:hover{background:rgba(231,76,60,.85);color:#fff;}
+.shot-img-upload-btn{width:52px;height:52px;border-radius:6px;border:1.5px dashed rgba(201,168,76,.35);background:rgba(201,168,76,.04);color:var(--gold,#C9A84C);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.shot-img-upload-btn:hover{border-color:rgba(201,168,76,.75);background:rgba(201,168,76,.1);}
+.shot-img-upload-btn.maxed{opacity:.3;cursor:not-allowed;pointer-events:none;}
+.shot-img-count{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;}
+.shot-lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9900;display:flex;align-items:center;justify-content:center;cursor:zoom-out;animation:lb-in .18s ease;}
+@keyframes lb-in{from{opacity:0}to{opacity:1}}
+.shot-lightbox-overlay img{max-width:90vw;max-height:88vh;border-radius:10px;box-shadow:0 8px 48px rgba(0,0,0,.7);cursor:default;}
+.shot-lb-close{position:absolute;top:18px;right:24px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:50%;color:#fff;font-size:20px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.shot-lb-close:hover{background:rgba(231,76,60,.55);}
+
+/* ── HIGHLIGHT TOOLBAR (contenteditable overlay) ── */
+.hl-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;margin-bottom:8px;}
+.hl-btn{border:none;border-radius:5px;width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.hl-btn:hover{transform:scale(1.15);}
+.hl-btn-clear{background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--text-muted,#888);font-size:11px;width:auto;padding:0 8px;border-radius:5px;height:28px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit;}
+.hl-btn-clear:hover{border-color:rgba(231,76,60,.7);color:rgba(231,76,60,.9);}
+.hl-sep{width:1px;height:20px;background:rgba(255,255,255,.1);margin:0 2px;}
+.hl-hint{font-size:10px;color:var(--text-muted,#888);}
+.hl-editor-wrap{position:relative;width:100%;}
+.hl-editor{width:100%;min-height:360px;max-height:540px;resize:vertical;background:var(--bg-raised,#111)!important;border:1px solid var(--gold,#C9A84C);border-radius:8px;color:var(--text-primary,#fff);font-size:17px;line-height:1.9;padding:16px 18px;font-family:'DM Mono','Courier New',monospace;outline:none;box-sizing:border-box;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
+.hl-editor:focus{box-shadow:0 0 0 2px rgba(201,168,76,.15);}
+.hl-editor[contenteditable=false]{cursor:default;opacity:.85;border-color:rgba(255,255,255,.08);}
+.hl-editor span.hl{border-radius:3px;padding:0 2px;}
+.hl-script-editor{min-height:200px!important;font-size:15px!important;border-color:rgba(255,255,255,.08)!important;line-height:1.8!important;}
+.hl-script-editor:focus{border-color:rgba(255,255,255,.2)!important;box-shadow:none!important;}
+.hl-editor-readonly-hint{font-size:11px;color:var(--text-muted,#888);margin-top:6px;}
+
+/* ── SDP CAST EDITABLE ── */
+.sdp-cast-edit-row{display:flex;align-items:center;gap:6px;margin-top:10px;}
+.sdp-cast-input{flex:1;background:var(--bg-raised,#111);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:var(--text-primary,#fff);font-size:12px;padding:6px 10px;outline:none;font-family:inherit;}
+.sdp-cast-input:focus{border-color:var(--gold,#C9A84C);}
+.sdp-cast-add-btn{background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:6px;color:var(--gold,#C9A84C);font-size:13px;padding:5px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.sdp-cast-add-btn:hover{background:rgba(201,168,76,.25);}
+.cast-del-btn{background:transparent;border:1px solid rgba(231,76,60,.2);border-radius:4px;color:rgba(231,76,60,.5);font-size:10px;padding:2px 5px;cursor:pointer;margin-left:auto;flex-shrink:0;transition:all .15s;}
+.cast-del-btn:hover{border-color:rgba(231,76,60,.7);color:var(--red-light,#e74c3c);}
+
+/* ── SDP SHOT CARDS BELOW SCRIPT ── */
+.sdp-shots-inline{display:flex;flex-direction:column;gap:8px;}
+.sdp-shot-card-full{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--bg-raised,#111);border:1px solid rgba(255,255,255,.06);border-radius:8px;transition:border-color .15s;}
+.sdp-shot-card-full:hover{border-color:rgba(201,168,76,.2);}
+.sdp-shot-card-full.done-shot{border-color:rgba(39,174,96,.3);background:rgba(39,174,96,.04);}
+.sdp-shot-card-meta{flex:1;}
+.sdp-shot-card-imgs-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.sdp-shot-mini-thumb{width:44px;height:44px;border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,.08);cursor:pointer;flex-shrink:0;}
+.sdp-shot-mini-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+
+
+/* ── HL-EDITOR PLACEHOLDER ── */
+.hl-editor:empty:before{
+  content:attr(data-placeholder);
+  color:rgba(255,255,255,0.22);
+  pointer-events:none;
+  white-space:pre-wrap;
+}
+
 </style>
 <body>
 <!-- ═══ PROFILE ONBOARDING OVERLAY ═══ -->
@@ -1232,14 +1296,24 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
                 <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-dialogue-save-btn" onclick="saveSceneDialogue()">💾 儲存</button>
               </div>
             </div>
-            <textarea class="sdp-dialogue-area sdp-readonly" id="sdp-dialogue" readonly placeholder="在這裡輸入台詞…
-
-[角色名]
-台詞內容
-
-[角色名]
-台詞內容…"></textarea>
-            <div class="sdp-safe-hint">避免誤按：目前預設不可修改，按上方「編輯」後才會開放輸入。</div>
+            <!-- 標色工具列 (台詞) -->
+            <div class="hl-toolbar" id="hl-toolbar-dialogue">
+              <span class="hl-hint">標色：</span>
+              <button class="hl-btn" style="background:#f6d365" title="黃色" onclick="hlApply('dialogue','#f6d365')">A</button>
+              <button class="hl-btn" style="background:#a8edea;color:#222" title="青色" onclick="hlApply('dialogue','#a8edea')">A</button>
+              <button class="hl-btn" style="background:#fbc2eb" title="粉紅" onclick="hlApply('dialogue','#fbc2eb')">A</button>
+              <button class="hl-btn" style="background:#b5ead7;color:#222" title="綠色" onclick="hlApply('dialogue','#b5ead7')">A</button>
+              <button class="hl-btn" style="background:#c7ceea" title="藍紫" onclick="hlApply('dialogue','#c7ceea')">A</button>
+              <button class="hl-btn" style="background:#ff9a9e" title="紅色" onclick="hlApply('dialogue','#ff9a9e')">A</button>
+              <div class="hl-sep"></div>
+              <button class="hl-btn-clear" onclick="hlClearAll('dialogue')">× 清除標色</button>
+            </div>
+            <!-- contenteditable 取代 textarea，以支援 inline 標色 -->
+            <div class="hl-editor sdp-readonly" id="sdp-dialogue" contenteditable="false"
+              data-placeholder="在這裡輸入台詞…&#10;&#10;[角色名]&#10;台詞內容&#10;&#10;[角色名]&#10;台詞內容…"></div>
+            <!-- 保留隱藏 textarea 給儲存邏輯用 -->
+            <textarea id="sdp-dialogue-hidden" style="display:none"></textarea>
+            <div class="sdp-safe-hint">避免誤按：目前預設不可修改，按上方「編輯」後才會開放輸入。選取文字後點顏色可標色。</div>
           </div>
 
           <!-- 場景指示/劇本 -->
@@ -1253,12 +1327,31 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
                 <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-script-save-btn" onclick="saveSceneScript()">💾 儲存</button>
               </div>
             </div>
-            <textarea class="sdp-script-area sdp-readonly" id="sdp-script-text" readonly placeholder="場景動作說明、場面描述…
+            <!-- 標色工具列 (指示) -->
+            <div class="hl-toolbar" id="hl-toolbar-script">
+              <span class="hl-hint">標色：</span>
+              <button class="hl-btn" style="background:#f6d365" title="黃色" onclick="hlApply('script','#f6d365')">A</button>
+              <button class="hl-btn" style="background:#a8edea;color:#222" title="青色" onclick="hlApply('script','#a8edea')">A</button>
+              <button class="hl-btn" style="background:#fbc2eb" title="粉紅" onclick="hlApply('script','#fbc2eb')">A</button>
+              <button class="hl-btn" style="background:#b5ead7;color:#222" title="綠色" onclick="hlApply('script','#b5ead7')">A</button>
+              <button class="hl-btn" style="background:#c7ceea" title="藍紫" onclick="hlApply('script','#c7ceea')">A</button>
+              <button class="hl-btn" style="background:#ff9a9e" title="紅色" onclick="hlApply('script','#ff9a9e')">A</button>
+              <div class="hl-sep"></div>
+              <button class="hl-btn-clear" onclick="hlClearAll('script')">× 清除標色</button>
+            </div>
+            <div class="hl-editor hl-script-editor sdp-readonly" id="sdp-script-text" contenteditable="false"
+              data-placeholder="場景動作說明、場面描述…&#10;&#10;INT./EXT. 地點 — 日/夜&#10;&#10;動作描述與場景指示…"></div>
+            <textarea id="sdp-script-text-hidden" style="display:none"></textarea>
+            <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。選取文字後點顏色可標色。</div>
+          </div>
 
-INT./EXT. 地點 — 日/夜
-
-動作描述與場景指示…"></textarea>
-            <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。</div>
+          <!-- 鏡頭腳位（場景詳情內）-->
+          <div class="sdp-section sdp-shots-below" id="sdp-shots-below-section">
+            <div class="sdp-section-head">
+              <div class="sdp-section-title">⊡ 鏡頭腳位</div>
+              <button class="btn btn-outline btn-sm" onclick="openShotModal()">＋ 新增鏡頭</button>
+            </div>
+            <div class="sdp-shots-inline" id="sdp-shots-inline"></div>
           </div>
 
         </div>
@@ -1272,8 +1365,16 @@ INT./EXT. 地點 — 日/夜
           </div>
           <!-- 參與角色 -->
           <div class="sdp-section">
-            <div class="sdp-section-title">參與角色</div>
+            <div class="sdp-section-head compact-head">
+              <div class="sdp-section-title">參與角色</div>
+              <button class="btn btn-outline btn-sm" onclick="sdpCastToggleEdit()">✎ 編輯</button>
+            </div>
             <div class="cast-list" id="sdp-cast-list"></div>
+            <div class="sdp-cast-edit-row" id="sdp-cast-edit-row" style="display:none">
+              <input class="sdp-cast-input" id="sdp-cast-new-input" placeholder="輸入角色名 / 演員名" maxlength="20"
+                onkeydown="if(event.key==='Enter')sdpCastAdd()">
+              <button class="sdp-cast-add-btn" onclick="sdpCastAdd()">＋ 加入</button>
+            </div>
           </div>
           <!-- 拍攝進度 -->
           <div class="sdp-section">
@@ -2745,22 +2846,7 @@ function renderShots(){
   const arr=shots[sid]||[];
   const grid=document.getElementById('shot-cards');
   if(!arr.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">⊡</div>尚無鏡頭計畫</div>';return;}
-  const _MAX_IMGS=7;
-  grid.innerHTML=arr.map((sh,i)=>{
-    const _imgs=shotImagesGet(sh.id);
-    const _thumbs=_imgs.map((src,ii)=>
-      '<div class="shot-img-thumb" onclick="event.stopPropagation();shotImgLightbox(\'' +sh.id+ '\',' +ii+ ')">'+
-        '<img src="' +src+ '" alt="">'+
-        '<button class="shot-img-del" onclick="event.stopPropagation();shotImgDelete(\'' +sh.id+ '\',' +ii+ ')">×</button>'+
-      '</div>'
-    ).join('');
-    const _canAdd=_imgs.length<_MAX_IMGS;
-    const _addBtn='<label class="shot-img-upload-btn' +(_canAdd?'':' maxed')+ '" title="' +(_canAdd?'上傳參考圖（最多7張）':'已達上限 7 張')+ '" onclick="event.stopPropagation()">'+
-      '<span>＋</span>'+
-      '<input type="file" accept="image/*" multiple style="display:none" onchange="shotImgUpload(event,\'' +sh.id+ '\')"' +(_canAdd?'':' disabled')+ '>'+
-    '</label>';
-    const _count=_imgs.length?'<div class="shot-img-count">' +_imgs.length+ '/' +_MAX_IMGS+ ' 張</div>':'';
-    return `
+  grid.innerHTML=arr.map((sh,i)=>`
     <div class="shot-card ${sh.done?'done-shot':''}" id="shot-${sh.id}">
       <div class="shot-header">
         <span class="shot-num">${sh.id}</span>
@@ -2770,14 +2856,10 @@ function renderShots(){
       <div class="shot-type-label">${sh.type}</div>
       <div class="shot-angle">${sh.angle}</div>
       <div class="shot-lens">📷 ${sh.lens}</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">${sh.note}</div>
-      <div class="shot-img-gallery">
-        <div class="shot-img-row">\${_thumbs}\${_addBtn}</div>
-        \${_count}
-      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">${sh.note}</div>
       <button class="shot-check" onclick="toggleShot('${sid}',${i})">${sh.done?'✓ 已拍攝完成':'標記完成'}</button>
-    </div>`;
-  }).join('');
+    </div>
+  `).join('');
 }
 
 function toggleShot(sid,i){
@@ -5440,17 +5522,19 @@ function saveSceneScript(){
   }
 }
 
-// ── Patch openDetail to load dialogue/script ──
+// ── Patch openDetail to load dialogue/script (hl-editor aware) ──
+// Note: the main openDetail patch is above (in new code block).
+// This legacy patch is kept for notes field only.
 const _origOpenDetail = openDetail;
 openDetail = function(sid){
   _origOpenDetail(sid);
   const s = scenes.find(x=>x.id===sid);
   if(!s) return;
   normalizeSceneTextFields(s);
-  const dEl = document.getElementById('sdp-dialogue');
-  const sEl = document.getElementById('sdp-script-text');
-  if(dEl) dEl.value = s.dialogue || '';
-  if(sEl) sEl.value = s.sceneScript || '';
+  // Dialogue + script now handled by hl-editor patch above (hlSetContent)
+  // Only set notes here
+  const notesEl = document.getElementById('sdp-notes');
+  if(notesEl) notesEl.value = s.notes || '';
   setAllSceneFieldsReadOnly();
 };
 
@@ -5467,19 +5551,22 @@ const _sceneFieldMap = {
 function setSceneFieldReadOnly(kind, readOnly=true){
   const cfg = _sceneFieldMap[kind];
   if(!cfg) return;
-  const el = document.getElementById(cfg.el);
+  // For hl-editor fields, delegate readonly to hlSetReadOnly (set via new code above)
+  if(kind==='dialogue'||kind==='script'){
+    if(typeof hlSetReadOnly==='function') hlSetReadOnly(kind,readOnly);
+  } else {
+    const el = document.getElementById(cfg.el);
+    if(el){
+      el.readOnly = readOnly;
+      el.classList.toggle('sdp-readonly', readOnly);
+    }
+  }
   const status = document.getElementById(cfg.status);
   const editBtn = document.getElementById(cfg.edit);
   const cancelBtn = document.getElementById(cfg.cancel);
   const saveBtn = document.getElementById(cfg.save);
-  if(el){
-    el.readOnly = readOnly;
-    el.classList.toggle('sdp-readonly', readOnly);
-  }
   if(status) status.textContent = readOnly ? '唯讀 · 按「編輯」才可修改' : '編輯中 · 按「儲存」後會自動鎖回';
   if(editBtn) editBtn.style.display = readOnly ? 'inline-flex' : 'none';
-  // 注意：取消 / 儲存按鈕本身有 .sdp-edit-only { display:none }，
-  // 所以進入編輯狀態時一定要指定 inline-flex，不能只設成空字串。
   if(cancelBtn) cancelBtn.style.display = readOnly ? 'none' : 'inline-flex';
   if(saveBtn) saveBtn.style.display = readOnly ? 'none' : 'inline-flex';
   _sceneFieldEditing[kind] = !readOnly;
@@ -6019,107 +6106,455 @@ setTimeout(initSafeEditMode, 0);
 
 // ══════════════════════════════════════════
 //  SHOT IMAGE GALLERY
-//  永久儲存在 localStorage（key: clappr_shot_imgs）
-//  格式：{ [shotId]: [base64, base64, ...] }
-//  最多 7 張，手動刪除才會消失
+//  Stored in localStorage key: clappr_shot_imgs
+//  Format: { [shotId]: [base64, ...] }   max 7 each
 // ══════════════════════════════════════════
 const SHOT_IMG_KEY = 'clappr_shot_imgs';
-
-function shotImagesLoad() {
-  try {
-    const raw = localStorage.getItem(SHOT_IMG_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch(e) { return {}; }
+function shotImagesLoad(){
+  try{return JSON.parse(localStorage.getItem(SHOT_IMG_KEY)||'{}');}catch(e){return {};}
 }
-
-function shotImagesSave(data) {
-  try { localStorage.setItem(SHOT_IMG_KEY, JSON.stringify(data)); } catch(e) {
-    console.warn('shot images save error', e);
-    toast('圖片儲存失敗，可能是儲存空間已滿', '⚠');
+function shotImagesSave(d){
+  try{localStorage.setItem(SHOT_IMG_KEY,JSON.stringify(d));}catch(e){
+    toast('圖片儲存失敗，可能空間已滿','⚠');
   }
 }
-
-function shotImagesGet(shotId) {
-  const data = shotImagesLoad();
-  return data[shotId] || [];
+function shotImagesGet(shotId){
+  return shotImagesLoad()[shotId]||[];
 }
-
-function shotImgUpload(event, shotId) {
-  const files = Array.from(event.target.files);
-  if (!files.length) return;
-  const data = shotImagesLoad();
-  const existing = data[shotId] || [];
-  const remaining = 7 - existing.length;
-  if (remaining <= 0) { toast('此鏡頭已達上限 7 張', '⚠'); return; }
-  const toLoad = files.slice(0, remaining);
-  if (files.length > remaining) toast(`只能再加 ${remaining} 張，已取最前面 ${remaining} 個`, '⚠');
-  let loaded = 0;
-  toLoad.forEach(file => {
-    // 壓縮後再存，避免 localStorage 爆掉
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const img = new Image();
-      img.onload = function() {
-        const canvas = document.createElement('canvas');
-        const MAX = 800;
-        let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else { w = Math.round(w * MAX / h); h = MAX; }
-        }
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const base64 = canvas.toDataURL('image/jpeg', 0.78);
-        const d2 = shotImagesLoad();
-        if (!d2[shotId]) d2[shotId] = [];
-        if (d2[shotId].length < 7) {
-          d2[shotId].push(base64);
-          shotImagesSave(d2);
-        }
+function shotImgUpload(event,shotId){
+  var files=Array.from(event.target.files);
+  if(!files.length)return;
+  var data=shotImagesLoad();
+  var existing=data[shotId]||[];
+  var remaining=7-existing.length;
+  if(remaining<=0){toast('此鏡頭已達上限 7 張','⚠');return;}
+  if(files.length>remaining){toast('只能再加 '+remaining+' 張','⚠');}
+  var toLoad=files.slice(0,remaining);
+  var loaded=0;
+  toLoad.forEach(function(file){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var canvas=document.createElement('canvas');
+        var MAX=800;
+        var w=img.width,h=img.height;
+        if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        var b64=canvas.toDataURL('image/jpeg',0.78);
+        var d2=shotImagesLoad();
+        if(!d2[shotId])d2[shotId]=[];
+        if(d2[shotId].length<7){d2[shotId].push(b64);shotImagesSave(d2);}
         loaded++;
-        if (loaded === toLoad.length) {
-          renderShots();
-          toast('圖片已上傳並永久儲存', '🖼');
-        }
+        if(loaded===toLoad.length){renderShots();if(_currentSDP)renderSdpShotsInline(_currentSDP);toast('圖片已儲存','🖼');}
       };
-      img.src = e.target.result;
+      img.src=e.target.result;
     };
     reader.readAsDataURL(file);
   });
-  // 清掉 input value，讓同一個檔案可再次選取
-  event.target.value = '';
+  event.target.value='';
 }
-
-function shotImgDelete(shotId, imgIdx) {
-  const data = shotImagesLoad();
-  if (!data[shotId]) return;
-  data[shotId].splice(imgIdx, 1);
-  if (data[shotId].length === 0) delete data[shotId];
+function shotImgDelete(shotId,imgIdx){
+  var data=shotImagesLoad();
+  if(!data[shotId])return;
+  data[shotId].splice(imgIdx,1);
+  if(!data[shotId].length)delete data[shotId];
   shotImagesSave(data);
   renderShots();
-  toast('圖片已刪除', '🗑');
+  if(_currentSDP)renderSdpShotsInline(_currentSDP);
+  toast('圖片已刪除','🗑');
+}
+function shotImgLightbox(shotId,imgIdx){
+  var imgs=shotImagesGet(shotId);
+  var src=imgs[imgIdx];
+  if(!src)return;
+  var ex=document.getElementById('shot-lightbox');
+  if(ex)ex.remove();
+  var ov=document.createElement('div');
+  ov.className='shot-lightbox-overlay';
+  ov.id='shot-lightbox';
+  ov.innerHTML='<button class="shot-lb-close" onclick="document.getElementById('shot-lightbox').remove()">×</button>'+
+    '<img src="'+src+'" onclick="event.stopPropagation()">';
+  ov.addEventListener('click',function(){ov.remove();});
+  document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){ov.remove();document.removeEventListener('keydown',esc);}});
+  document.body.appendChild(ov);
 }
 
-function shotImgLightbox(shotId, imgIdx) {
-  const imgs = shotImagesGet(shotId);
-  const src = imgs[imgIdx];
-  if (!src) return;
-  // 移除已存在的 lightbox
-  const existing = document.getElementById('shot-lightbox');
-  if (existing) existing.remove();
-  const overlay = document.createElement('div');
-  overlay.className = 'shot-lightbox-overlay';
-  overlay.id = 'shot-lightbox';
-  overlay.innerHTML =
-    '<button class="shot-lightbox-close" onclick="document.getElementById('shot-lightbox').remove()">×</button>' +
-    '<img src="' + src + '" alt="參考圖" onclick="event.stopPropagation()">';
-  overlay.addEventListener('click', function() { overlay.remove(); });
-  document.addEventListener('keydown', function esc(e) {
-    if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', esc); }
-  });
-  document.body.appendChild(overlay);
+// ══════════════════════════════════════════
+//  RENDER SHOTS (with image gallery)
+// ══════════════════════════════════════════
+(function(){
+  var _orig=renderShots;
+  renderShots=function(){
+    var _origInner=function(){
+      var sel=document.getElementById('shot-scene-sel');
+      if(!sel)return;
+      var sid=sel.value;
+      if(!sid&&scenes.length)sid=scenes[0].id;
+      if(!sid){
+        var g=document.getElementById('shot-cards');
+        if(g)g.innerHTML='<div class="empty-state"><div class="empty-icon">⊡</div>這個專案尚無場景，請先新增場景</div>';
+        updateShotProgress('');return;
+      }
+      var arr=shots[sid]||[];
+      var grid=document.getElementById('shot-cards');
+      if(!grid)return;
+      if(!arr.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">⊡</div>尚無鏡頭計畫</div>';return;}
+      var MAX_I=7;
+      grid.innerHTML=arr.map(function(sh,i){
+        var imgs=shotImagesGet(sh.id);
+        var thumbs=imgs.map(function(src,ii){
+          return '<div class="shot-img-thumb" onclick="event.stopPropagation();shotImgLightbox(''+sh.id+'','+ii+')">'+
+            '<img src="'+src+'" alt="">'+
+            '<button class="shot-img-del" onclick="event.stopPropagation();shotImgDelete(''+sh.id+'','+ii+')">×</button>'+
+          '</div>';
+        }).join('');
+        var canAdd=imgs.length<MAX_I;
+        var addBtn='<label class="shot-img-upload-btn'+(canAdd?'':' maxed')+'" title="'+(canAdd?'上傳參考圖（最多7張）':'已達上限 7 張')+'" onclick="event.stopPropagation()">'+
+          '<span>＋</span>'+
+          '<input type="file" accept="image/*" multiple style="display:none" onchange="shotImgUpload(event,''+sh.id+'')"'+(canAdd?'':' disabled')+'>'+
+        '</label>';
+        var cnt=imgs.length?'<div class="shot-img-count">'+imgs.length+'/'+MAX_I+' 張</div>':'';
+        return '<div class="shot-card '+(sh.done?'done-shot':'')+'" id="shot-'+sh.id+'">'+
+          '<div class="shot-header">'+
+            '<span class="shot-num">'+sh.id+'</span>'+
+            (sh.done?'<span style="color:var(--green-light);font-size:12px">✓</span>':'')+
+            '<button onclick="deleteShot(''+sid+'','+i+')" style="margin-left:auto;background:transparent;border:1px solid rgba(231,76,60,0.25);border-radius:5px;color:rgba(231,76,60,0.5);font-size:10px;padding:2px 6px;cursor:pointer;transition:all .2s" onmouseover="this.style.color='var(--red-light)';this.style.borderColor='rgba(231,76,60,0.7)'" onmouseout="this.style.color='rgba(231,76,60,0.5)';this.style.borderColor='rgba(231,76,60,0.25)'">🗑</button>'+
+          '</div>'+
+          '<div class="shot-type-label">'+sh.type+'</div>'+
+          '<div class="shot-angle">'+sh.angle+'</div>'+
+          '<div class="shot-lens">📷 '+sh.lens+'</div>'+
+          '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+sh.note+'</div>'+
+          '<div class="shot-img-gallery"><div class="shot-img-row">'+thumbs+addBtn+'</div>'+cnt+'</div>'+
+          '<button class="shot-check" onclick="toggleShot(''+sid+'','+i+')">'+(sh.done?'✓ 已拍攝完成':'標記完成')+'</button>'+
+        '</div>';
+      }).join('');
+    };
+    _origInner();
+    var sel=document.getElementById('shot-scene-sel');
+    if(sel)updateShotProgress(sel.value||(scenes[0]&&scenes[0].id));
+  };
+})();
+
+// ══════════════════════════════════════════
+//  RENDER SHOT CARDS INSIDE SCENE DETAIL
+// ══════════════════════════════════════════
+function renderSdpShotsInline(sid){
+  var container=document.getElementById('sdp-shots-inline');
+  if(!container)return;
+  var arr=shots[sid]||[];
+  if(!arr.length){
+    container.innerHTML='<div style="font-size:12px;color:var(--text-muted)">此場景尚未建立鏡頭 — 按右上方「＋ 新增鏡頭」</div>';
+    return;
+  }
+  container.innerHTML=arr.map(function(sh,i){
+    var imgs=shotImagesGet(sh.id);
+    var thumbs=imgs.map(function(src,ii){
+      return '<div class="sdp-shot-mini-thumb" onclick="shotImgLightbox(''+sh.id+'','+ii+')">'+
+        '<img src="'+src+'" alt="">'+
+      '</div>';
+    }).join('');
+    var canAdd=imgs.length<7;
+    var addBtn='<label class="shot-img-upload-btn'+(canAdd?'':' maxed')+'" style="width:44px;height:44px" title="'+(canAdd?'上傳':'已達上限')+'" >'+
+      '<span>＋</span>'+
+      '<input type="file" accept="image/*" multiple style="display:none" onchange="shotImgUpload(event,''+sh.id+'')">'+
+    '</label>';
+    return '<div class="sdp-shot-card-full '+(sh.done?'done-shot':'')+' ">'+
+      '<div class="sdp-shot-meta" style="min-width:0;flex:1">'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
+          '<span style="font-family:var(--font-mono);font-size:11px;color:var(--gold)">'+sh.id+'</span>'+
+          '<span style="font-size:13px;font-weight:500;color:var(--text-primary)">'+sh.type+'</span>'+
+          (sh.done?'<span style="color:var(--green-light);font-size:11px;margin-left:auto">✓ 完成</span>':'')+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--text-muted)">'+sh.angle+' · '+sh.lens+(sh.note?' · '+sh.note:'')+'</div>'+
+        '<div class="sdp-shot-card-imgs-row">'+thumbs+addBtn+'</div>'+
+      '</div>'+
+      '<button class="sdp-shot-btn '+(sh.done?'done-btn':'')+'" onclick="toggleShotFromDetail(''+sid+'','+i+')">'+(sh.done?'✓ 完成':'標記完成')+'</button>'+
+    '</div>';
+  }).join('');
 }
+
+// ══════════════════════════════════════════
+//  HIGHLIGHT TOOL (contenteditable-based)
+//  Works with sdp-dialogue and sdp-script-text
+// ══════════════════════════════════════════
+var _hlFields={
+  dialogue:{el:'sdp-dialogue',hidden:'sdp-dialogue-hidden'},
+  script:{el:'sdp-script-text',hidden:'sdp-script-text-hidden'}
+};
+
+function hlApply(kind,color){
+  var el=document.getElementById(_hlFields[kind].el);
+  if(!el||el.getAttribute('contenteditable')==='false')return;
+  var sel=window.getSelection();
+  if(!sel||!sel.rangeCount)return;
+  var range=sel.getRangeAt(0);
+  if(range.collapsed)return;
+  // Remove nested highlights in range first, then wrap
+  var frag=range.extractContents();
+  var span=document.createElement('span');
+  span.className='hl';
+  span.style.background=color;
+  // Unwrap any nested hl spans
+  frag.querySelectorAll('span.hl').forEach(function(s){
+    var parent=s.parentNode;
+    while(s.firstChild)parent.insertBefore(s.firstChild,s);
+    parent.removeChild(s);
+  });
+  span.appendChild(frag);
+  range.insertNode(span);
+  sel.removeAllRanges();
+  hlSync(kind);
+}
+
+function hlClearAll(kind){
+  var el=document.getElementById(_hlFields[kind].el);
+  if(!el||el.getAttribute('contenteditable')==='false')return;
+  el.querySelectorAll('span.hl').forEach(function(s){
+    var p=s.parentNode;
+    while(s.firstChild)p.insertBefore(s.firstChild,s);
+    p.removeChild(s);
+  });
+  // Normalize text nodes
+  el.normalize();
+  hlSync(kind);
+}
+
+function hlSync(kind){
+  // Sync innerHTML to hidden textarea for save routines
+  var el=document.getElementById(_hlFields[kind].el);
+  var hidden=document.getElementById(_hlFields[kind].hidden);
+  if(el&&hidden)hidden.value=el.innerHTML;
+}
+
+function hlGetText(kind){
+  var el=document.getElementById(_hlFields[kind].el);
+  if(!el)return'';
+  return el.innerHTML;
+}
+
+function hlSetContent(kind,htmlContent){
+  var el=document.getElementById(_hlFields[kind].el);
+  if(!el)return;
+  if(htmlContent&&htmlContent.trim()){
+    el.innerHTML=htmlContent;
+  } else {
+    el.innerHTML='';
+  }
+}
+
+function hlSetReadOnly(kind,readOnly){
+  var el=document.getElementById(_hlFields[kind].el);
+  if(!el)return;
+  el.setAttribute('contenteditable',readOnly?'false':'true');
+  el.classList.toggle('sdp-readonly',readOnly);
+}
+
+// Show placeholder when empty
+function hlSetupPlaceholders(){
+  Object.keys(_hlFields).forEach(function(kind){
+    var el=document.getElementById(_hlFields[kind].el);
+    if(!el)return;
+    function update(){
+      if(el.textContent.trim()||el.querySelector('span.hl')){
+        el.style.setProperty('--hl-placeholder','none');
+      } else {
+        el.style.setProperty('--hl-placeholder','block');
+      }
+    }
+    el.addEventListener('input',function(){update();hlSync(kind);});
+    update();
+  });
+}
+
+// ══════════════════════════════════════════
+//  CAST EDIT IN SCENE DETAIL
+// ══════════════════════════════════════════
+var _sdpCastEditing=false;
+function sdpCastToggleEdit(){
+  _sdpCastEditing=!_sdpCastEditing;
+  var row=document.getElementById('sdp-cast-edit-row');
+  if(row)row.style.display=_sdpCastEditing?'flex':'none';
+  // Toggle delete buttons on cast items
+  document.querySelectorAll('#sdp-cast-list .cast-del-btn').forEach(function(b){
+    b.style.display=_sdpCastEditing?'flex':'none';
+  });
+  if(_sdpCastEditing){
+    var inp=document.getElementById('sdp-cast-new-input');
+    if(inp){inp.value='';inp.focus();}
+  }
+}
+
+function sdpCastAdd(){
+  if(!_currentSDP)return;
+  var s=scenes.find(function(x){return x.id===_currentSDP;});
+  if(!s)return;
+  var inp=document.getElementById('sdp-cast-new-input');
+  var name=(inp?inp.value.trim():'');
+  if(!name){toast('請輸入角色名','⚠');return;}
+  if(!Array.isArray(s.cast))s.cast=[];
+  if(s.cast.indexOf(name)!==-1){toast('該角色已存在','⚠');return;}
+  s.cast.push(name);
+  saveCurrentProjectState();
+  syncSceneToDB(s);
+  if(inp)inp.value='';
+  renderSdpCast(s);
+  toast('角色已新增','🎭');
+}
+
+function sdpCastRemove(charName){
+  if(!_currentSDP)return;
+  var s=scenes.find(function(x){return x.id===_currentSDP;});
+  if(!s||!Array.isArray(s.cast))return;
+  var idx=s.cast.indexOf(charName);
+  if(idx===-1)return;
+  s.cast.splice(idx,1);
+  saveCurrentProjectState();
+  syncSceneToDB(s);
+  renderSdpCast(s);
+  toast('角色已移除','🗑');
+}
+
+function renderSdpCast(s){
+  var castEl=document.getElementById('sdp-cast-list');
+  if(!castEl)return;
+  if(!s||!s.cast||!s.cast.length){
+    castEl.innerHTML='<div style="font-size:12px;color:var(--text-muted)">無角色資訊</div>';
+    return;
+  }
+  castEl.innerHTML=s.cast.map(function(c,i){
+    var m=crew.find(function(cr){return cr.char===c;});
+    var delBtn='<button class="cast-del-btn" style="display:'+(_sdpCastEditing?'flex':'none')+'" onclick="sdpCastRemove(''+c.replace(/'/g,"\'")+'')">× 刪</button>';
+    return '<div class="cast-item">'+
+      '<div style="width:32px;height:32px;border-radius:50%;background:'+avatarColors[i%7]+'22;color:'+avatarColors[i%7]+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;border:1px solid '+avatarColors[i%7]+'33;flex-shrink:0">'+c.slice(0,1)+'</div>'+
+      '<div style="flex:1"><div class="cast-char">'+c+'</div><div class="cast-actor">'+(m?m.name:'—')+'</div></div>'+
+      delBtn+
+    '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  PATCH openDetail — wire up all new features
+// ══════════════════════════════════════════
+(function(){
+  var _origOD=openDetail;
+  openDetail=function(sid){
+    _origOD(sid);
+    var s=scenes.find(function(x){return x.id===sid;});
+    if(!s)return;
+    // Load highlight content
+    hlSetContent('dialogue', s.dialogue||'');
+    hlSetContent('script', s.sceneScript||s.sceneScript||'');
+    hlSetReadOnly('dialogue',true);
+    hlSetReadOnly('script',true);
+    // Cast
+    _sdpCastEditing=false;
+    var editRow=document.getElementById('sdp-cast-edit-row');
+    if(editRow)editRow.style.display='none';
+    renderSdpCast(s);
+    // Shot cards below script
+    renderSdpShotsInline(sid);
+    // Placeholders
+    hlSetupPlaceholders();
+  };
+})();
+
+// ══════════════════════════════════════════
+//  PATCH enableSceneFieldEdit / cancel / save — wire hl-editors
+// ══════════════════════════════════════════
+(function(){
+  var _origEnable=enableSceneFieldEdit;
+  enableSceneFieldEdit=function(kind){
+    _origEnable(kind);
+    if(kind==='dialogue'||kind==='script'){
+      hlSetReadOnly(kind,false);
+      var el=document.getElementById(_hlFields[kind]?_hlFields[kind].el:kind==='dialogue'?'sdp-dialogue':'sdp-script-text');
+      if(el){el.focus();var r=document.createRange();r.selectNodeContents(el);r.collapse(false);var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}
+    }
+  };
+
+  var _origCancel=cancelSceneFieldEdit;
+  cancelSceneFieldEdit=function(kind){
+    if(kind==='dialogue'||kind==='script'){
+      // Restore from scene data
+      var s=_currentSDP?scenes.find(function(x){return x.id===_currentSDP;}):null;
+      if(s){
+        if(kind==='dialogue')hlSetContent('dialogue',s.dialogue||'');
+        if(kind==='script')hlSetContent('script',s.sceneScript||'');
+      }
+      hlSetReadOnly(kind,true);
+    }
+    _origCancel(kind);
+  };
+})();
+
+// ══════════════════════════════════════════
+//  PATCH saveSceneDialogue / saveSceneScript — read from hl-editors
+// ══════════════════════════════════════════
+(function(){
+  var _origSaveDlg=saveSceneDialogue;
+  saveSceneDialogue=function(){
+    var s=_currentSDP?scenes.find(function(x){return x.id===_currentSDP;}):null;
+    if(s){
+      hlSync('dialogue');
+      s.dialogue=hlGetText('dialogue');
+    }
+    hlSetReadOnly('dialogue',true);
+    saveCurrentProjectState();
+    if(s)syncSceneToDB(s);
+    broadcastChange&&broadcastChange('更新台詞 '+(_currentSDP||''));
+    // Update edit status via _sceneFieldMap
+    var cfg=_sceneFieldMap&&_sceneFieldMap['dialogue'];
+    if(cfg){
+      var st=document.getElementById(cfg.status);
+      if(st)st.textContent='唯讀 · 按「編輯」才可修改';
+      var eb=document.getElementById(cfg.edit);if(eb)eb.style.display='inline-flex';
+      var cb=document.getElementById(cfg.cancel);if(cb)cb.style.display='none';
+      var sb=document.getElementById(cfg.save);if(sb)sb.style.display='none';
+    }
+    _sceneFieldEditing&&(_sceneFieldEditing['dialogue']=false);
+    toast('台詞已儲存','🎭');
+  };
+
+  var _origSaveSc=saveSceneScript;
+  saveSceneScript=function(){
+    var s=_currentSDP?scenes.find(function(x){return x.id===_currentSDP;}):null;
+    if(s){
+      hlSync('script');
+      s.sceneScript=hlGetText('script');
+    }
+    hlSetReadOnly('script',true);
+    saveCurrentProjectState();
+    if(s)syncSceneToDB(s);
+    broadcastChange&&broadcastChange('更新場景指示 '+(_currentSDP||''));
+    var cfg=_sceneFieldMap&&_sceneFieldMap['script'];
+    if(cfg){
+      var st=document.getElementById(cfg.status);
+      if(st)st.textContent='唯讀 · 按「編輯」才可修改';
+      var eb=document.getElementById(cfg.edit);if(eb)eb.style.display='inline-flex';
+      var cb=document.getElementById(cfg.cancel);if(cb)cb.style.display='none';
+      var sb=document.getElementById(cfg.save);if(sb)sb.style.display='none';
+    }
+    _sceneFieldEditing&&(_sceneFieldEditing['script']=false);
+    // sync to script page
+    var scriptSel=document.getElementById('script-scene-sel');
+    if(scriptSel&&s&&scriptSel.value===s.id){
+      var scriptTa=document.getElementById('script-text');
+      if(scriptTa)scriptTa.value=s.sceneScript;
+    }
+    toast('劇本已儲存','📄');
+  };
+})();
+
+// Patch toggleShotFromDetail to also re-render inline shots
+(function(){
+  var _origTSD=toggleShotFromDetail;
+  toggleShotFromDetail=function(sid,i){
+    _origTSD(sid,i);
+    renderSdpShotsInline(sid);
+  };
+})();
 
 // ══════════════════════════════════════════
 //  START
