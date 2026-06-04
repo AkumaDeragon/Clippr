@@ -459,10 +459,8 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .sdp-layout{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;}
 @media(max-width:900px){.sdp-layout{grid-template-columns:1fr;}}
 .sdp-main,.sdp-sidebar{display:flex;flex-direction:column;gap:16px;}
-.sdp-section{background:var(--bg-elevated,#1a1a1a);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px 22px;}
-.sdp-section.sdp-dialogue-section,.sdp-section.sdp-script-section{border-color:rgba(201,168,76,0.18);}
-.sdp-section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;margin-bottom:14px;}
-.sdp-section-title.big{font-size:16px!important;letter-spacing:0!important;text-transform:none!important;color:var(--text-primary,#F0EBE0)!important;font-family:var(--font-body,'Outfit'),sans-serif!important;font-weight:600!important;margin-bottom:12px!important;}
+.sdp-section{background:var(--bg-elevated,#1a1a1a);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:var(--radius-lg,12px);padding:18px 20px;}
+.sdp-section-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;margin-bottom:14px;}
 .sdp-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .sdp-info-item{background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.06));border-radius:8px;padding:10px 12px;}
 .sdp-info-item .info-key{font-size:10px;color:var(--text-muted,#888);margin-bottom:4px;font-family:var(--font-mono,'DM Mono'),monospace;}
@@ -660,6 +658,208 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .menu-item-scenes .menu-ic { color: rgba(201,168,76,.7) !important; }
 .menu-item-scenes span:last-child { color: rgba(201,168,76,.85) !important; }
 </style>
+<style>
+/* ─── SCENE TABLE: 防止右側走位 ─── */
+#page-scenes .scene-table { table-layout: auto; }
+#page-scenes .scene-actions-cell {
+  white-space: nowrap;
+  padding-right: 12px !important;
+}
+#page-scenes .scene-actions-cell .btn {
+  padding: 4px 9px !important;
+  font-size: 11px !important;
+  white-space: nowrap;
+}
+/* 縮緊不重要欄位，讓動作欄有空間 */
+#page-scenes .scene-table td:nth-child(5),
+#page-scenes .scene-table td:nth-child(6) {
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── SDP SECTION TITLES ─── */
+.sdp-section-title {
+  font-size: 13px !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  color: var(--text-muted, #999) !important;
+  font-family: var(--font-mono, 'DM Mono'), monospace !important;
+  font-weight: 500 !important;
+  margin-bottom: 14px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
+  display: block !important;
+}
+/* 左欄主標題更突出 */
+.sdp-dialogue-section .sdp-section-title,
+.sdp-script-section   .sdp-section-title {
+  font-size: 14px !important;
+  color: var(--gold-light, #d4a843) !important;
+  letter-spacing: 2px !important;
+}
+
+/* ─── DIALOGUE 高度縮短 ─── */
+.sdp-dialogue-area {
+  min-height: 200px !important;
+  max-height: 380px !important;
+  font-size: 16px !important;
+  line-height: 1.85 !important;
+}
+.sdp-script-area {
+  min-height: 160px !important;
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+}
+
+/* ─── NOTES AREA in left col ─── */
+.notes-area {
+  font-size: 14px !important;
+  line-height: 1.75 !important;
+}
+</style>
+
+<style>
+/* ── HIGHLIGHT OVERLAY SYSTEM ── */
+.hl-wrap { position: relative; width: 100%; }
+.hl-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 8px;
+  font-family: 'DM Mono','Courier New',monospace;
+  white-space: pre-wrap; word-break: break-word;
+  color: transparent;
+  box-sizing: border-box;
+  z-index: 1;
+  /* will be sized by JS to match textarea exactly */
+}
+.hl-wrap textarea {
+  position: relative;
+  z-index: 2;
+  background: transparent !important;
+  background-color: transparent !important;
+  /* keep caret visible */
+  caret-color: var(--text-primary, #F0EBE0);
+}
+/* sdp-readonly overlays — make bg opaque so text is readable when locked */
+.hl-wrap textarea.sdp-readonly {
+  background: var(--bg-raised, #111) !important;
+}
+.hl-mark { border-radius: 2px; }
+
+/* ── HIGHLIGHT BAR ── */
+.hl-bar {
+  display: none; align-items: center; gap: 7px;
+  padding: 7px 10px; margin-bottom: 8px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07); border-radius: 7px;
+  flex-wrap: wrap;
+}
+.hl-bar.hl-bar-visible { display: flex; }
+.hl-lbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-muted,#888); font-family: var(--font-mono,'DM Mono'),monospace; }
+.hl-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.2); cursor: pointer;
+  transition: transform .12s, box-shadow .12s; flex-shrink: 0; padding: 0;
+}
+.hl-dot:hover { transform: scale(1.3); box-shadow: 0 0 0 3px rgba(255,255,255,.15); }
+.hl-clear {
+  margin-left: auto; background: transparent;
+  border: 1px solid rgba(255,255,255,.15); border-radius: 5px;
+  color: var(--text-muted,#888); font-size: 11px; padding: 2px 9px;
+  cursor: pointer; transition: all .15s; font-family: inherit;
+}
+.hl-clear:hover { border-color: rgba(231,76,60,.6); color: rgba(231,76,60,.9); }
+
+/* ── BIGGER FONT for dialogue + script ── */
+.sdp-dialogue-area { font-size: 17px !important; line-height: 1.9 !important; min-height: 340px !important; }
+.sdp-script-area   { font-size: 15px !important; line-height: 1.85 !important; }
+
+/* ── SHOT IMAGE GALLERY ── */
+.shot-img-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 6px; }
+.shot-thumb {
+  position: relative; width: 272px; height: 153px;
+  border-radius: 7px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12); cursor: pointer; flex-shrink: 0;
+  transition: border-color .15s;
+}
+.shot-thumb:hover { border-color: rgba(201,168,76,.6); }
+.shot-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shot-thumb-del {
+  position: absolute; top: 2px; right: 2px;
+  width: 17px; height: 17px; border-radius: 50%;
+  background: rgba(0,0,0,.75); border: none;
+  color: #e74c3c; font-size: 10px; line-height: 17px;
+  text-align: center; cursor: pointer; display: none; padding: 0;
+}
+.shot-thumb:hover .shot-thumb-del { display: block; }
+.shot-thumb-add {
+  width: 272px; height: 153px; border-radius: 7px;
+  border: 1.5px dashed rgba(201,168,76,.4);
+  background: rgba(201,168,76,.04); color: var(--gold,#C9A84C);
+  font-size: 20px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all .15s;
+}
+.shot-thumb-add:hover { border-color: rgba(201,168,76,.8); background: rgba(201,168,76,.1); }
+.shot-thumb-add.maxed { opacity: .3; cursor: not-allowed; pointer-events: none; }
+.shot-img-count { font-size: 9px; letter-spacing: 1px;
+  color: var(--text-muted,#888); font-family: var(--font-mono,'DM Mono'),monospace; }
+
+/* ── LIGHTBOX ── */
+.clappr-lb {
+  position: fixed; inset: 0; background: rgba(0,0,0,.93);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+  animation: lb-fade .15s;
+}
+@keyframes lb-fade { from { opacity:0 } to { opacity:1 } }
+.clappr-lb img { max-width: 90vw; max-height: 88vh; border-radius: 10px; box-shadow: 0 8px 40px rgba(0,0,0,.8); }
+.clappr-lb-x {
+  position: absolute; top: 16px; right: 20px;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 50%; color: #fff; width: 34px; height: 34px;
+  font-size: 18px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+}
+.clappr-lb-x:hover { background: rgba(231,76,60,.5); }
+
+/* ── CAST DEL BTN ── */
+.cast-del {
+  background: transparent; border: 1px solid rgba(231,76,60,.2);
+  border-radius: 4px; color: rgba(231,76,60,.5);
+  font-size: 10px; padding: 1px 6px; cursor: pointer;
+  margin-left: auto; flex-shrink: 0; transition: all .15s; display: none;
+}
+.cast-del:hover { border-color: rgba(231,76,60,.7); color: #e74c3c; }
+.cast-list.editing .cast-del { display: inline-flex; }
+
+/* ── 場景進度 nav highlight ── */
+.nav-scenes-special {
+  background: rgba(201,168,76,.06) !important;
+  border: 1px solid rgba(201,168,76,.14) !important;
+}
+.nav-scenes-special:hover {
+  background: rgba(201,168,76,.12) !important;
+}
+.nav-scenes-special.active {
+  background: rgba(201,168,76,.14) !important;
+  border-color: rgba(201,168,76,.5) !important;
+}
+/* mobile tab 場景 */
+.tab-scenes-special .tab-icon { color: rgba(201,168,76,.7) !important; }
+.tab-scenes-special .tab-label { color: rgba(201,168,76,.6) !important; }
+.tab-scenes-special.active .tab-icon { color: var(--gold,#C9A84C) !important; }
+.tab-scenes-special.active .tab-label { color: var(--gold,#C9A84C) !important; }
+/* mobile menu 場景 */
+.menu-item-scenes { background: rgba(201,168,76,.06) !important; }
+.menu-item-scenes .menu-ic { color: rgba(201,168,76,.7) !important; }
+.menu-item-scenes span:last-child { color: rgba(201,168,76,.85) !important; }
+</style>
+
 <style>
 /* ── CONTENTEDITABLE EDITOR ── */
 .sdp-ce-editor {
@@ -1498,7 +1698,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
           <!-- 台詞區（主要，佔較多空間） -->
           <div class="sdp-section sdp-dialogue-section">
             <div class="sdp-section-head">
-              <div class="sdp-section-title big">🎭 台詞</div>
+              <div class="sdp-section-title">🎭 台詞</div>
               <div class="sdp-edit-actions">
                 <span id="sdp-dialogue-status" class="sdp-edit-status">唯讀 · 按「編輯」才可修改</span>
                 <button class="btn btn-outline btn-sm" id="sdp-dialogue-edit-btn" onclick="enableSceneFieldEdit('dialogue')">✎ 編輯</button>
@@ -1517,20 +1717,23 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
               <button class="hl-dot" style="background:#FF9A3C" onclick="clapprHL('dialogue','#FF9A3C')"></button>
               <button class="hl-clear" onclick="clapprHLClear('dialogue')">清除</button>
             </div>
-            <!-- contenteditable editor (supports inline highlight) -->
-            <div class="sdp-ce-editor sdp-readonly" id="sdp-dialogue"
-              contenteditable="false"
-              data-placeholder="在這裡輸入台詞…&#10;&#10;[角色名]&#10;台詞內容&#10;&#10;[角色名]&#10;台詞內容…"
-            ></div>
-            <!-- hidden textarea keeps the raw text for save routines -->
-            <textarea id="sdp-dialogue-raw" style="display:none"></textarea>
+            <div class="hl-wrap" id="hl-wrap-dialogue">
+              <div class="hl-overlay" id="hl-overlay-dialogue" aria-hidden="true"></div>
+              <textarea class="sdp-dialogue-area sdp-readonly" id="sdp-dialogue" readonly placeholder="在這裡輸入台詞…
+
+[角色名]
+台詞內容
+
+[角色名]
+台詞內容…"></textarea>
+            </div>
             <div class="sdp-safe-hint">避免誤按：目前預設不可修改，按上方「編輯」後才會開放輸入。</div>
           </div>
 
           <!-- 場景指示/劇本 -->
           <div class="sdp-section sdp-script-section">
             <div class="sdp-section-head">
-              <div class="sdp-section-title big">📄 場景指示 / 劇本</div>
+              <div class="sdp-section-title">📄 場景指示 / 劇本</div>
               <div class="sdp-edit-actions">
                 <span id="sdp-script-status" class="sdp-edit-status">唯讀 · 按「編輯」才可修改</span>
                 <button class="btn btn-outline btn-sm" id="sdp-script-edit-btn" onclick="enableSceneFieldEdit('script')">✎ 編輯</button>
@@ -1549,27 +1752,45 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
               <button class="hl-dot" style="background:#FF9A3C" onclick="clapprHL('script','#FF9A3C')"></button>
               <button class="hl-clear" onclick="clapprHLClear('script')">清除</button>
             </div>
-            <div class="sdp-ce-editor sdp-ce-script sdp-readonly" id="sdp-script-text"
-              contenteditable="false"
-              data-placeholder="場景動作說明、場面描述…&#10;&#10;INT./EXT. 地點 — 日/夜&#10;&#10;動作描述與場景指示…"
-            ></div>
-            <textarea id="sdp-script-text-raw" style="display:none"></textarea>
+            <div class="hl-wrap" id="hl-wrap-script">
+              <div class="hl-overlay" id="hl-overlay-script" aria-hidden="true"></div>
+              <textarea class="sdp-script-area sdp-readonly" id="sdp-script-text" readonly placeholder="場景動作說明、場面描述…
+
+INT./EXT. 地點 — 日/夜
+
+動作描述與場景指示…"></textarea>
+            </div>
             <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。</div>
+          </div>
+
+          <!-- 導演備注 -->
+          <div class="sdp-section">
+            <div class="sdp-section-head compact-head">
+              <div class="sdp-section-title">導演備注</div>
+              <div class="sdp-edit-actions">
+                <span id="sdp-notes-status" class="sdp-edit-status">唯讀</span>
+                <button class="btn btn-outline btn-sm" id="sdp-notes-edit-btn" onclick="enableSceneFieldEdit('notes')">✎ 編輯</button>
+                <button class="btn btn-outline btn-sm sdp-edit-only" id="sdp-notes-cancel-btn" onclick="cancelSceneFieldEdit('notes')">取消</button>
+                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-notes-save-btn" onclick="saveSceneNotes()">💾 儲存</button>
+              </div>
+            </div>
+            <textarea class="notes-area sdp-readonly" id="sdp-notes" readonly placeholder="導演指示或備注…" style="min-height:100px;resize:vertical"></textarea>
+            <div class="sdp-safe-hint">備注也必須先按「編輯」才可以輸入。</div>
           </div>
 
         </div>
 
-        <!-- 右側 40%：資訊 + 鏡頭 + 備注 -->
+        <!-- 右側 40%：資訊 + 鏡頭 -->
         <div class="sdp-sidebar">
           <!-- 基本資訊 -->
           <div class="sdp-section">
-            <div class="sdp-section-title big">基本資訊</div>
+            <div class="sdp-section-title">基本資訊</div>
             <div class="sdp-info-grid" id="sdp-info-grid"></div>
           </div>
           <!-- 參與角色 -->
           <div class="sdp-section">
             <div class="sdp-section-head compact-head">
-              <div class="sdp-section-title big">參與角色</div>
+              <div class="sdp-section-title">參與角色</div>
               <button class="btn btn-outline btn-sm" id="sdp-cast-edit-btn" onclick="clapprCastToggle()">✎ 編輯</button>
             </div>
             <div class="cast-list" id="sdp-cast-list"></div>
@@ -1588,7 +1809,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
           </div>
           <!-- 拍攝進度 -->
           <div class="sdp-section">
-            <div class="sdp-section-title big">拍攝進度</div>
+            <div class="sdp-section-title">拍攝進度</div>
             <div class="sdp-progress-wrap">
               <div class="sdp-progress-track">
                 <div class="sdp-progress-fill" id="sdp-progress-fill" style="width:0%"></div>
@@ -1599,7 +1820,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
           <!-- 鏡頭清單 -->
           <div class="sdp-section">
             <div class="sdp-section-head compact-head">
-              <div class="sdp-section-title big">鏡頭清單</div>
+              <div class="sdp-section-title">鏡頭清單</div>
               <div style="display:flex;align-items:center;gap:6px">
                 <span id="sdp-shots-status" style="font-size:10px;color:var(--text-muted);letter-spacing:.5px">唯讀</span>
                 <button class="btn btn-outline btn-sm" id="sdp-shots-edit-btn" onclick="sdpShotsEdit()">✎ 編輯</button>
@@ -1607,20 +1828,6 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
               </div>
             </div>
             <div class="sdp-shot-list" id="sdp-shot-list"></div>
-          </div>
-          <!-- 導演備注 -->
-          <div class="sdp-section">
-            <div class="sdp-section-head compact-head">
-              <div class="sdp-section-title big">導演備注</div>
-              <div class="sdp-edit-actions">
-                <span id="sdp-notes-status" class="sdp-edit-status">唯讀</span>
-                <button class="btn btn-outline btn-sm" id="sdp-notes-edit-btn" onclick="enableSceneFieldEdit('notes')">✎ 編輯</button>
-                <button class="btn btn-outline btn-sm sdp-edit-only" id="sdp-notes-cancel-btn" onclick="cancelSceneFieldEdit('notes')">取消</button>
-                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-notes-save-btn" onclick="saveSceneNotes()">💾 儲存</button>
-              </div>
-            </div>
-            <textarea class="notes-area sdp-readonly" id="sdp-notes" readonly placeholder="導演指示或備注…" style="min-height:100px;resize:vertical"></textarea>
-            <div class="sdp-safe-hint">備注也必須先按「編輯」才可以輸入。</div>
           </div>
         </div>
 
@@ -2941,8 +3148,8 @@ function sceneRow(s, showDetail=false){
     : `<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();skipScene('${s.id}')">暫緩</button>`;
   return `<tr class="${s.status==='current'?'current-row':''}" draggable="true" data-scene-id="${s.id}" ondragstart="sceneDragStart(event)" ondragover="sceneDragOver(event)" ondrop="sceneDrop(event)" ondragend="sceneDragEnd(event)">
     <td style="width:44px;padding:0 2px 0 6px;white-space:nowrap">
-      <button onclick="event.stopPropagation();sceneMoveUp('${s.id}')" title="上移" style="background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:6px 8px;line-height:1;display:block;width:100%;min-height:36px;touch-action:manipulation">▲</button>
-      <button onclick="event.stopPropagation();sceneMoveDown('${s.id}')" title="下移" style="background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:6px 8px;line-height:1;display:block;width:100%;min-height:36px;touch-action:manipulation">▼</button>
+      <button onclick="event.stopPropagation();sceneMoveUp('${s.id}')" title="上移" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;display:block;width:100%">▲</button>
+      <button onclick="event.stopPropagation();sceneMoveDown('${s.id}')" title="下移" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;display:block;width:100%">▼</button>
     </td>
     <td class="scene-num" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.id}</td>
     <td class="scene-name-cell" onclick="openDetail('${s.id}')" style="cursor:pointer">${s.name}</td>
@@ -6379,7 +6586,9 @@ function maybeAutoJoinFromLink(){
 
 </script>
 
+
 <script>
+
 /* ============================================================
    CLAPPR EXTENSIONS v4
    ─ contenteditable highlight editor
@@ -6852,6 +7061,7 @@ function clapprRenderCast(s){
     };
   },100);
 })();
+
 
 
 </script>
