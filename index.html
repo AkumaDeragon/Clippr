@@ -5962,7 +5962,8 @@ function saveSceneDialogue(){
   const s=scenes.find(x=>x.id===_currentSDP);
   if(s){
     const el = document.getElementById('sdp-dialogue');
-    s.dialogue = el ? (el.tagName === 'TEXTAREA' ? el.value : el.innerHTML) : '';
+    const rawD = el ? (el.tagName === 'TEXTAREA' ? el.value : (el.querySelector('span[style*="background"]') ? el.innerHTML : ceStripToPlain(el.innerHTML))) : '';
+    s.dialogue = rawD;
     saveCurrentProjectState();
     syncSceneToDB(s);
     broadcastChange('更新台詞 ' + _currentSDP);
@@ -5976,7 +5977,8 @@ function saveSceneScript(){
   const s=scenes.find(x=>x.id===_currentSDP);
   if(s){
     const el = document.getElementById('sdp-script-text');
-    s.sceneScript = el ? (el.tagName === 'TEXTAREA' ? el.value : el.innerHTML) : '';
+    const rawS = el ? (el.tagName === 'TEXTAREA' ? el.value : (el.querySelector('span[style*="background"]') ? el.innerHTML : ceStripToPlain(el.innerHTML))) : '';
+    s.sceneScript = rawS;
     saveCurrentProjectState();
     syncSceneToDB(s);
     broadcastChange('更新場景指示 ' + _currentSDP);
@@ -6776,6 +6778,18 @@ var _ceIds = {
   dialogue: 'sdp-dialogue',
   script:   'sdp-script-text'
 };
+/* Strip HTML tags from saved text, convert <br> to \n — keeps storage clean */
+function ceStripToPlain(html){
+  if(!html) return '';
+  return html
+    .replace(/<br\s*\/?>/gi,'\n')
+    .replace(/<div>/gi,'\n').replace(/<\/div>/gi,'')
+    .replace(/<p>/gi,'').replace(/<\/p>/gi,'\n')
+    .replace(/<[^>]+>/g,'')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ')
+    .replace(/\r\n/g,'\n').replace(/\r/g,'\n')
+    .replace(/\n{3,}/g,'\n\n').trim();
+}
 
 function ceSetReadonly(field, readonly){
   var el=document.getElementById(_ceIds[field]);
@@ -6790,8 +6804,13 @@ function ceSetReadonly(field, readonly){
 function ceGetText(field){
   var el=document.getElementById(_ceIds[field]);
   if(!el)return'';
-  // return innerHTML to preserve marks
-  return el.innerHTML;
+  // If there are highlight spans, preserve innerHTML (contains spans + <br>)
+  if(el.querySelector('span[style*="background"]')){
+    return el.innerHTML;
+  }
+  // Otherwise return plain text with real newlines
+  // innerText respects <br> as \n naturally
+  return (el.innerText||el.textContent||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
 }
 function ceGetPlainText(field){
   var el=document.getElementById(_ceIds[field]);
@@ -6803,13 +6822,33 @@ function ceSetContent(field, htmlOrText){
   var el=document.getElementById(_ceIds[field]);
   if(!el)return;
   if(!htmlOrText||!htmlOrText.trim()){el.innerHTML='';return;}
-  // Detect real saved HTML (actual tags, not escaped entities)
-  var looksLikeHTML = /<(br|span|div|p|b|i|strong|em)[^>]*>/i.test(htmlOrText);
-  if(looksLikeHTML){
-    el.innerHTML=htmlOrText;
+  // Only treat as HTML if it has highlight <span> marks (not just <br>)
+  var hasHighlight = /<span[^>]+style[^>]*background/i.test(htmlOrText);
+  if(hasHighlight){
+    // Strip any <div>/<p> wrappers that browsers inject, keep only spans + <br>
+    var cleaned = htmlOrText
+      .replace(/<div>/gi,'\n').replace(/<\/div>/gi,'')
+      .replace(/<p>/gi,'').replace(/<\/p>/gi,'\n')
+      .replace(/<br\s*\/?>/gi,'\n');
+    // Re-render: escape plain text portions, re-insert <br> for newlines, keep spans
+    el.innerHTML = cleaned
+      .split(/<(span[^>]*>.*?<\/span)>/gi)
+      // crude but safe: escape non-tag pieces, pass span tags through
+      .map(function(part, i){
+        if(i%2===1) return '<'+part; // it's a tag fragment — restore opening <
+        return part.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      }).join('');
   } else {
-    // plain text — escape & < > FIRST, then convert newlines to <br>
-    el.innerHTML=htmlOrText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>\n');
+    // Pure plain text (or HTML with only <br>) — strip all tags, work with \n
+    var plain = htmlOrText
+      .replace(/<br\s*\/?>/gi,'\n')
+      .replace(/<div>/gi,'\n').replace(/<\/div>/gi,'')
+      .replace(/<p>/gi,'').replace(/<\/p>/gi,'\n')
+      .replace(/<[^>]+>/g,'')          // strip any remaining tags
+      .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ');
+    el.innerHTML = plain
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\n/g,'<br>');
   }
 }
 
@@ -6864,7 +6903,14 @@ function clapprHLClear(field){
 function ceSyncRaw(field){
   // keep hidden textarea in sync for any legacy save code that reads .value
   var raw=document.getElementById(_ceIds[field]+'-raw');
-  if(raw){var el=document.getElementById(_ceIds[field]);raw.value=el?el.innerHTML:'';}
+  if(raw){
+    var el=document.getElementById(_ceIds[field]);
+    if(!el){raw.value='';return;}
+    // store plain text (or HTML with spans if highlighted)
+    raw.value = el.querySelector('span[style*="background"]')
+      ? el.innerHTML
+      : ceStripToPlain(el.innerHTML);
+  }
 }
 
 /* Save selection so clicking hl button doesn't lose it */
@@ -6961,7 +7007,7 @@ function ceSetupEvents(){
     saveSceneDialogue=function(){
       var s=(typeof _currentSDP!=='undefined'&&typeof scenes!=='undefined')?scenes.find(function(x){return x.id===_currentSDP;}):null;
       if(s){
-        s.dialogue=ceGetText('dialogue');
+        s.dialogue=ceGetText('dialogue'); // ceGetText already returns plain text or HTML-with-spans
         if(typeof saveCurrentProjectState==='function')saveCurrentProjectState();
         if(typeof syncSceneToDB==='function')syncSceneToDB(s);
         if(typeof broadcastChange==='function')broadcastChange('更新台詞 '+_currentSDP);
@@ -6980,7 +7026,7 @@ function ceSetupEvents(){
     saveSceneScript=function(){
       var s=(typeof _currentSDP!=='undefined'&&typeof scenes!=='undefined')?scenes.find(function(x){return x.id===_currentSDP;}):null;
       if(s){
-        s.sceneScript=ceGetText('script');
+        s.sceneScript=ceGetText('script'); // ceGetText already returns plain text or HTML-with-spans
         if(typeof saveCurrentProjectState==='function')saveCurrentProjectState();
         if(typeof syncSceneToDB==='function')syncSceneToDB(s);
         if(typeof broadcastChange==='function')broadcastChange('更新場景指示 '+_currentSDP);
