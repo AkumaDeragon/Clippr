@@ -523,16 +523,30 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 /* ── HIGHLIGHT OVERLAY SYSTEM ── */
 .hl-wrap { position: relative; width: 100%; }
 .hl-overlay {
-  position: absolute; inset: 0;
-  pointer-events: none; overflow: hidden;
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  overflow: hidden;
   border-radius: 8px;
   font-family: 'DM Mono','Courier New',monospace;
   white-space: pre-wrap; word-break: break-word;
   color: transparent;
   box-sizing: border-box;
   z-index: 1;
+  /* will be sized by JS to match textarea exactly */
 }
-.hl-wrap textarea { position: relative; z-index: 2; background: transparent !important; }
+.hl-wrap textarea {
+  position: relative;
+  z-index: 2;
+  background: transparent !important;
+  background-color: transparent !important;
+  /* keep caret visible */
+  caret-color: var(--text-primary, #F0EBE0);
+}
+/* sdp-readonly overlays — make bg opaque so text is readable when locked */
+.hl-wrap textarea.sdp-readonly {
+  background: var(--bg-raised, #111) !important;
+}
 .hl-mark { border-radius: 2px; }
 
 /* ── HIGHLIGHT BAR ── */
@@ -6394,20 +6408,50 @@ var _hlFieldMap = {
   dialogue: 'sdp-dialogue',
   script:   'sdp-script-text'
 };
+/* KEY FIX: save selection BEFORE the textarea loses focus when clicking a colour button */
+var _hlSavedSel = { dialogue: null, script: null };
+
+function clapprHLSaveSel(field) {
+  var ta = document.getElementById(_hlFieldMap[field]);
+  if (!ta || ta.readOnly) return;
+  _hlSavedSel[field] = { s: ta.selectionStart, e: ta.selectionEnd };
+}
+
+function clapprHLSetupSelSave() {
+  Object.keys(_hlFieldMap).forEach(function(field) {
+    var ta = document.getElementById(_hlFieldMap[field]);
+    if (!ta || ta._clapprSelBound) return;
+    ta._clapprSelBound = true;
+    /* Save on every selection change and on keyup */
+    ta.addEventListener('mouseup',   function(){ clapprHLSaveSel(field); });
+    ta.addEventListener('keyup',     function(){ clapprHLSaveSel(field); });
+    ta.addEventListener('selectionchange', function(){ clapprHLSaveSel(field); });
+  });
+}
 
 function clapprHL(field, color) {
   var ta = document.getElementById(_hlFieldMap[field]);
   if (!ta) return;
-  if (ta.readOnly) { if (typeof toast === 'function') toast('請先按「✎ 編輯」再標色', '✎'); return; }
-  var s = ta.selectionStart, e = ta.selectionEnd;
-  if (s === e) { if (typeof toast === 'function') toast('請先選取文字', '💡'); return; }
-  _hlMarks[field].push({ s: s, e: e, c: color });
+  if (ta.readOnly) {
+    if (typeof toast === 'function') toast('請先按「✎ 編輯」再標色', '✎');
+    return;
+  }
+  /* Use saved selection (captured before blur) */
+  var saved = _hlSavedSel[field];
+  if (!saved || saved.s === saved.e) {
+    if (typeof toast === 'function') toast('請先選取文字，再點顏色', '💡');
+    return;
+  }
+  _hlMarks[field].push({ s: saved.s, e: saved.e, c: color });
+  /* Clear saved so double-click doesn't re-apply */
+  _hlSavedSel[field] = null;
   clapprHLDraw(field);
   ta.focus();
 }
 
 function clapprHLClear(field) {
   _hlMarks[field] = [];
+  _hlSavedSel[field] = null;
   clapprHLDraw(field);
 }
 
@@ -6419,7 +6463,6 @@ function clapprHLDraw(field) {
 
   var text = ta.value;
   var marks = _hlMarks[field].slice().sort(function(a,b){ return a.s-b.s; });
-  /* merge overlapping */
   var merged = [];
   marks.forEach(function(m) {
     if (merged.length && m.s < merged[merged.length-1].e) {
@@ -6432,26 +6475,31 @@ function clapprHLDraw(field) {
   function esc(str) {
     return str
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/ /g,'&#32;').replace(/\t/g,'&#9;')
+      .replace(/ /g,'\u00a0').replace(/\t/g,'\u00a0\u00a0')
       .replace(/\n/g,'<br>');
   }
 
   var html = '', pos = 0;
   merged.forEach(function(m) {
     if (m.s > pos) html += '<span>' + esc(text.slice(pos, m.s)) + '</span>';
-    html += '<span class="hl-mark" style="background:' + m.c + ';color:transparent;border-radius:2px;">' + esc(text.slice(m.s, m.e)) + '</span>';
+    html += '<span class="hl-mark" style="background:' + m.c + ';color:' + m.c + ';border-radius:2px;">' + esc(text.slice(m.s, m.e)) + '</span>';
     pos = m.e;
   });
   if (pos < text.length) html += '<span>' + esc(text.slice(pos)) + '</span>';
   ov.innerHTML = html;
 
-  /* sync font metrics */
+  /* Match textarea geometry exactly */
   var cs = window.getComputedStyle(ta);
-  ov.style.fontSize   = cs.fontSize;
-  ov.style.lineHeight = cs.lineHeight;
-  ov.style.fontFamily = cs.fontFamily;
-  ov.style.padding    = cs.padding;
+  ov.style.fontSize      = cs.fontSize;
+  ov.style.lineHeight    = cs.lineHeight;
+  ov.style.fontFamily    = cs.fontFamily;
+  ov.style.padding       = cs.padding;
   ov.style.letterSpacing = cs.letterSpacing;
+  ov.style.width         = ta.offsetWidth + 'px';
+  ov.style.height        = ta.offsetHeight + 'px';
+  ov.style.boxSizing     = 'border-box';
+  ov.style.overflowY     = 'hidden';
+  ov.scrollTop           = ta.scrollTop;
 }
 
 function clapprHLSyncScroll(field) {
@@ -6461,17 +6509,19 @@ function clapprHLSyncScroll(field) {
 }
 
 function clapprHLSetup() {
+  clapprHLSetupSelSave();
   Object.keys(_hlFieldMap).forEach(function(field) {
     var ta = document.getElementById(_hlFieldMap[field]);
     if (!ta || ta._clapprBound) return;
     ta._clapprBound = true;
-    ta.addEventListener('input', function(){ clapprHLDraw(field); });
+    ta.addEventListener('input',  function(){ clapprHLDraw(field); });
     ta.addEventListener('scroll', function(){ clapprHLSyncScroll(field); });
   });
 }
 
 function clapprHLReset() {
   _hlMarks = { dialogue: [], script: [] };
+  _hlSavedSel = { dialogue: null, script: null };
   ['dialogue','script'].forEach(function(field) {
     var ov = document.getElementById('hl-overlay-' + field);
     if (ov) ov.innerHTML = '';
@@ -6570,8 +6620,8 @@ function clapprRenderCast(s) {
       if(st) st.textContent='唯讀';
       /* render shots with images */
       clapprRefreshSdpShots();
-      /* highlight reset */
-      clapprHLReset();
+      /* highlight reset — use timeout so textarea is rendered first */
+      setTimeout(function() { clapprHLReset(); }, 30);
     };
   }, 50);
 })();
