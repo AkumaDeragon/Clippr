@@ -13,10 +13,13 @@
   -webkit-appearance:none; appearance:none;
   background:transparent; border:0; margin:0; padding:1px 6px;
   cursor:pointer; line-height:1.4;
+  position:relative; z-index:1;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:rgba(201,168,76,0.25);
   transition:filter .15s, transform .05s;
 }
 .sk-chip:hover{ filter:brightness(1.2); }
-.sk-chip:active{ transform:translateY(1px); }
+.sk-chip:active{ transform:translateY(1px); filter:brightness(1.35); }
 /* 方括號快捷 〔...〕 → 角色名 / 場景標記 */
 .sk-bracket {
   font-weight: 700;
@@ -1850,12 +1853,12 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             <!-- 快捷標記說明（純 CSS，無顏色 bug） -->
             <div class="sk-legend" id="sk-legend-dialogue" style="display:none">
               <span class="sk-legend-lbl">點一下插入</span>
-              <button type="button" class="sk-chip sk-bracket"  onmousedown="event.preventDefault()" onclick="skInsert('dialogue','〔','〕')">〔角色〕</button>
-              <button type="button" class="sk-chip sk-title"    onmousedown="event.preventDefault()" onclick="skInsert('dialogue','【','】')">【場景】</button>
-              <button type="button" class="sk-chip sk-reminder" onmousedown="event.preventDefault()" onclick="skInsert('dialogue','-提醒-')">-提醒-</button>
-              <button type="button" class="sk-chip sk-notice"   onmousedown="event.preventDefault()" onclick="skInsert('dialogue','-注意-')">-注意-</button>
-              <button type="button" class="sk-chip sk-urgent"   onmousedown="event.preventDefault()" onclick="skInsert('dialogue','-重要-')">-重要-</button>
-              <button type="button" class="sk-chip sk-director" onmousedown="event.preventDefault()" onclick="skInsert('dialogue','-導演-')">-導演-</button>
+              <button type="button" class="sk-chip sk-bracket"  onclick="skInsert('dialogue','〔','〕')">〔角色〕</button>
+              <button type="button" class="sk-chip sk-title"    onclick="skInsert('dialogue','【','】')">【場景】</button>
+              <button type="button" class="sk-chip sk-reminder" onclick="skInsert('dialogue','-提醒-')">-提醒-</button>
+              <button type="button" class="sk-chip sk-notice"   onclick="skInsert('dialogue','-注意-')">-注意-</button>
+              <button type="button" class="sk-chip sk-urgent"   onclick="skInsert('dialogue','-重要-')">-重要-</button>
+              <button type="button" class="sk-chip sk-director" onclick="skInsert('dialogue','-導演-')">-導演-</button>
             </div>
             <div class="hl-wrap" id="hl-wrap-dialogue">
               <div class="hl-overlay" id="hl-overlay-dialogue" aria-hidden="true"></div>
@@ -1878,12 +1881,12 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             <!-- 快捷標記說明（純 CSS，無顏色 bug） -->
             <div class="sk-legend" id="sk-legend-script" style="display:none">
               <span class="sk-legend-lbl">點一下插入</span>
-              <button type="button" class="sk-chip sk-bracket"  onmousedown="event.preventDefault()" onclick="skInsert('script','〔','〕')">〔角色〕</button>
-              <button type="button" class="sk-chip sk-title"    onmousedown="event.preventDefault()" onclick="skInsert('script','【','】')">【場景】</button>
-              <button type="button" class="sk-chip sk-reminder" onmousedown="event.preventDefault()" onclick="skInsert('script','-提醒-')">-提醒-</button>
-              <button type="button" class="sk-chip sk-notice"   onmousedown="event.preventDefault()" onclick="skInsert('script','-注意-')">-注意-</button>
-              <button type="button" class="sk-chip sk-urgent"   onmousedown="event.preventDefault()" onclick="skInsert('script','-重要-')">-重要-</button>
-              <button type="button" class="sk-chip sk-director" onmousedown="event.preventDefault()" onclick="skInsert('script','-導演-')">-導演-</button>
+              <button type="button" class="sk-chip sk-bracket"  onclick="skInsert('script','〔','〕')">〔角色〕</button>
+              <button type="button" class="sk-chip sk-title"    onclick="skInsert('script','【','】')">【場景】</button>
+              <button type="button" class="sk-chip sk-reminder" onclick="skInsert('script','-提醒-')">-提醒-</button>
+              <button type="button" class="sk-chip sk-notice"   onclick="skInsert('script','-注意-')">-注意-</button>
+              <button type="button" class="sk-chip sk-urgent"   onclick="skInsert('script','-重要-')">-重要-</button>
+              <button type="button" class="sk-chip sk-director" onclick="skInsert('script','-導演-')">-導演-</button>
             </div>
             <div class="hl-wrap" id="hl-wrap-script">
               <div class="hl-overlay" id="hl-overlay-script" aria-hidden="true"></div>
@@ -7193,12 +7196,15 @@ function ceSyncRaw(field){
   if(raw){var el=document.getElementById(_ceIds[field]);raw.value=el?el.innerHTML:'';}
 }
 
-/* Save selection so clicking hl button doesn't lose it */
+/* Save caret / selection so tapping a 快捷標記 button inserts at the right spot */
 var _ceSavedRange={dialogue:null,script:null};
 function ceSaveRange(field){
   var sel=window.getSelection();
-  if(sel&&sel.rangeCount&&!sel.isCollapsed){
-    _ceSavedRange[field]=sel.getRangeAt(0).cloneRange();
+  if(!sel||!sel.rangeCount) return;
+  var el=document.getElementById(_ceIds[field]);
+  var r=sel.getRangeAt(0);
+  if(el && el.contains(r.commonAncestorContainer)){
+    _ceSavedRange[field]=r.cloneRange();   // 連游標（沒選字）也記住
   }
 }
 

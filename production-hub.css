@@ -1636,7 +1636,9 @@ html, body { height: 100dvh; }
   #page-scenes .table-header{align-items:flex-start; gap:12px; flex-direction:column;}
   #page-scenes .table-title{font-size:18px;}
   #page-scenes .scene-filter-tab{font-size:13px; padding:8px 14px;}
-  #page-scenes .table-header > div{width:100%; overflow-x:auto; padding-bottom:4px;}
+  #page-scenes .table-header > div{width:100%; overflow-x:auto; padding-bottom:4px; touch-action:pan-y;}
+  /* 寬表格（今日場景快覽等）不要吃掉直向捲動，讓整頁可以往下滑 */
+  .table-wrap{ touch-action:pan-y; -webkit-overflow-scrolling:touch; }
   .sdp-section-head{align-items:flex-start; gap:8px; flex-direction:column;}
   .sdp-edit-actions{justify-content:flex-start; width:100%;}
   .sdp-edit-actions .btn{flex:1 1 auto; justify-content:center;}
