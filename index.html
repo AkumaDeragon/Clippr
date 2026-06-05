@@ -8,6 +8,15 @@
 <link rel="stylesheet" href="production-hub.css">
 <style>
 /* ── SCRIPT KEYWORD FORMATTING (純 CSS class，無 inline color / <br> bug) ── */
+/* 可點按的快捷標記按鈕：清掉瀏覽器原生外觀，其餘外觀交給下面 sk-* 規則 */
+.sk-chip{
+  -webkit-appearance:none; appearance:none;
+  background:transparent; border:0; margin:0; padding:1px 6px;
+  cursor:pointer; line-height:1.4;
+  transition:filter .15s, transform .05s;
+}
+.sk-chip:hover{ filter:brightness(1.2); }
+.sk-chip:active{ transform:translateY(1px); }
 /* 方括號快捷 〔...〕 → 角色名 / 場景標記 */
 .sk-bracket {
   font-weight: 700;
@@ -1840,13 +1849,13 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <!-- 快捷標記說明（純 CSS，無顏色 bug） -->
             <div class="sk-legend" id="sk-legend-dialogue" style="display:none">
-              <span class="sk-legend-lbl">快捷標記</span>
-              <span class="sk-bracket">〔角色〕</span>
-              <span class="sk-title">【場景】</span>
-              <span class="sk-reminder">-提醒-</span>
-              <span class="sk-notice">-注意-</span>
-              <span class="sk-urgent">-重要-</span>
-              <span class="sk-director">-導演-</span>
+              <span class="sk-legend-lbl">點一下插入</span>
+              <button type="button" class="sk-chip sk-bracket"  onmousedown="event.preventDefault()" onclick="skInsert('dialogue','〔','〕')">〔角色〕</button>
+              <button type="button" class="sk-chip sk-title"    onmousedown="event.preventDefault()" onclick="skInsert('dialogue','【','】')">【場景】</button>
+              <button type="button" class="sk-chip sk-reminder" onmousedown="event.preventDefault()" onclick="skInsert('dialogue','-提醒-')">-提醒-</button>
+              <button type="button" class="sk-chip sk-notice"   onmousedown="event.preventDefault()" onclick="skInsert('dialogue','-注意-')">-注意-</button>
+              <button type="button" class="sk-chip sk-urgent"   onmousedown="event.preventDefault()" onclick="skInsert('dialogue','-重要-')">-重要-</button>
+              <button type="button" class="sk-chip sk-director" onmousedown="event.preventDefault()" onclick="skInsert('dialogue','-導演-')">-導演-</button>
             </div>
             <div class="hl-wrap" id="hl-wrap-dialogue">
               <div class="hl-overlay" id="hl-overlay-dialogue" aria-hidden="true"></div>
@@ -1868,13 +1877,13 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <!-- 快捷標記說明（純 CSS，無顏色 bug） -->
             <div class="sk-legend" id="sk-legend-script" style="display:none">
-              <span class="sk-legend-lbl">快捷標記</span>
-              <span class="sk-bracket">〔角色〕</span>
-              <span class="sk-title">【場景】</span>
-              <span class="sk-reminder">-提醒-</span>
-              <span class="sk-notice">-注意-</span>
-              <span class="sk-urgent">-重要-</span>
-              <span class="sk-director">-導演-</span>
+              <span class="sk-legend-lbl">點一下插入</span>
+              <button type="button" class="sk-chip sk-bracket"  onmousedown="event.preventDefault()" onclick="skInsert('script','〔','〕')">〔角色〕</button>
+              <button type="button" class="sk-chip sk-title"    onmousedown="event.preventDefault()" onclick="skInsert('script','【','】')">【場景】</button>
+              <button type="button" class="sk-chip sk-reminder" onmousedown="event.preventDefault()" onclick="skInsert('script','-提醒-')">-提醒-</button>
+              <button type="button" class="sk-chip sk-notice"   onmousedown="event.preventDefault()" onclick="skInsert('script','-注意-')">-注意-</button>
+              <button type="button" class="sk-chip sk-urgent"   onmousedown="event.preventDefault()" onclick="skInsert('script','-重要-')">-重要-</button>
+              <button type="button" class="sk-chip sk-director" onmousedown="event.preventDefault()" onclick="skInsert('script','-導演-')">-導演-</button>
             </div>
             <div class="hl-wrap" id="hl-wrap-script">
               <div class="hl-overlay" id="hl-overlay-script" aria-hidden="true"></div>
@@ -7134,6 +7143,48 @@ function clapprHLClear(field){
   });
   el.normalize();
   ceSyncRaw(field);
+}
+
+// 點快捷標記按鈕 → 把標記插進台詞／劇本游標處（手機 / 桌機都可按）。
+// before/after：成對符號（〔〕【】）會夾住選取的字，沒選字就把游標移到中間。
+function skInsert(field, before, after){
+  after = after || '';
+  var el = document.getElementById(_ceIds[field]);
+  if(!el) return;
+  // 若還在唯讀，先自動切到編輯，確保一定按得動
+  if(el.getAttribute('contenteditable')==='false'){
+    if(typeof enableSceneFieldEdit==='function'){ try{ enableSceneFieldEdit(field); }catch(e){} }
+  }
+  el.focus();
+  var sel = window.getSelection();
+  // 確認游標在這個編輯框內；否則還原先前選取，再不然就放到結尾
+  var inField = sel && sel.rangeCount && el.contains(sel.getRangeAt(0).commonAncestorContainer);
+  if(!inField){
+    if(_ceSavedRange[field] && el.contains(_ceSavedRange[field].commonAncestorContainer)){
+      sel.removeAllRanges(); sel.addRange(_ceSavedRange[field]);
+    } else {
+      var r=document.createRange(); r.selectNodeContents(el); r.collapse(false);
+      sel.removeAllRanges(); sel.addRange(r);
+    }
+  }
+  var selected = sel.toString();
+  var text = before + selected + after;
+  var inserted=false;
+  try{ inserted = document.execCommand('insertText', false, text); }catch(e){}
+  if(!inserted){
+    try{
+      var rng=sel.getRangeAt(0); rng.deleteContents();
+      var node=document.createTextNode(text); rng.insertNode(node);
+      rng.setStartAfter(node); rng.collapse(true);
+      sel.removeAllRanges(); sel.addRange(rng);
+    }catch(e2){ el.appendChild(document.createTextNode(text)); }
+  }
+  // 成對符號且原本沒選字 → 游標移回中間，方便直接打字
+  if(after && !selected){
+    try{ for(var i=0;i<after.length;i++){ sel.modify('move','backward','character'); } }catch(e3){}
+  }
+  if(typeof ceSyncRaw==='function') ceSyncRaw(field);
+  if(typeof ceSaveRange==='function') ceSaveRange(field);
 }
 
 function ceSyncRaw(field){
