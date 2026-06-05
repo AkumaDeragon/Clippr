@@ -7,69 +7,93 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="production-hub.css">
 <style>
-/* ── SCRIPT KEYWORD FORMATTING (純 CSS，無 color bug) ── */
+/* ── SCRIPT KEYWORD FORMATTING (純 CSS class，無 inline color / <br> bug) ── */
 /* 方括號快捷 〔...〕 → 角色名 / 場景標記 */
 .sk-bracket {
   font-weight: 700;
   font-family: var(--font-mono,'DM Mono'),monospace;
   font-size: 0.95em;
   letter-spacing: 0.3px;
+  color: var(--gold-light,#E8C06A);   /* 比一般文字亮一點 */
 }
 /* 全形書名號 【...】 → 標題 / 地點 */
 .sk-title {
-  font-weight: 700;
+  font-weight: 800;
   font-style: italic;
   font-size: 1.0em;
+  color: var(--text-primary,#EEEAE0); /* 用預設亮色、加粗 */
 }
 /* -提醒- */
 .sk-reminder {
   display: inline-block;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.88em;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   padding: 1px 6px;
   border-radius: 4px;
-  border: 1px solid rgba(212,168,67,0.45);
-  background: rgba(212,168,67,0.12);
+  border: 1px solid rgba(212,168,67,0.55);
+  background: rgba(212,168,67,0.14);
+  color: var(--gold-light,#E8C06A);
   font-family: var(--font-mono,'DM Mono'),monospace;
 }
 /* -注意- */
 .sk-notice {
   display: inline-block;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.88em;
   letter-spacing: 1.5px;
   padding: 1px 6px;
   border-radius: 4px;
-  border: 1px solid rgba(52,152,219,0.45);
-  background: rgba(52,152,219,0.12);
+  border: 1px solid rgba(52,152,219,0.55);
+  background: rgba(52,152,219,0.14);
+  color: var(--blue-light,#5DADE2);
   font-family: var(--font-mono,'DM Mono'),monospace;
 }
 /* -重要- / -緊急- */
 .sk-urgent {
   display: inline-block;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.88em;
   letter-spacing: 1.5px;
   padding: 1px 6px;
   border-radius: 4px;
-  border: 1px solid rgba(231,76,60,0.45);
-  background: rgba(231,76,60,0.12);
+  border: 1px solid rgba(231,76,60,0.55);
+  background: rgba(231,76,60,0.14);
+  color: var(--red-light,#EC7063);
   font-family: var(--font-mono,'DM Mono'),monospace;
 }
 /* -導演- / -指示- */
 .sk-director {
   display: inline-block;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.88em;
   letter-spacing: 1.5px;
   padding: 1px 6px;
   border-radius: 4px;
-  border: 1px solid rgba(230,126,34,0.45);
-  background: rgba(230,126,34,0.12);
+  border: 1px solid rgba(230,126,34,0.55);
+  background: rgba(230,126,34,0.14);
+  color: var(--amber-light,#E67E22);
   font-family: var(--font-mono,'DM Mono'),monospace;
 }
+
+/* 快捷標記說明列（取代舊的標色工具列） */
+.sk-legend{
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  margin:6px 0 10px; padding:6px 10px;
+  border:1px solid rgba(255,255,255,0.08); border-radius:8px;
+  background:rgba(255,255,255,0.03);
+}
+.sk-legend-lbl{
+  font-size:10px; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--text-secondary,#9A9488);
+  font-family:var(--font-mono,'DM Mono'),monospace;
+  margin-right:2px;
+}
+
+/* 舊的標色工具列 / 螢光筆覆蓋層全部停用，避免任何顏色殘留 */
+.hl-bar,.hl-dot,.hl-lbl,.hl-clear,.hl-overlay{ display:none !important; }
+
 
 /* ── AI IMPORT ── */
 .ai-import-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;}
@@ -1814,16 +1838,15 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
                 <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-dialogue-save-btn" onclick="saveSceneDialogue()">💾 儲存</button>
               </div>
             </div>
-            <!-- 標色工具列 -->
-            <div class="hl-bar" id="hl-bar-dialogue">
-              <span class="hl-lbl">標色</span>
-              <button class="hl-dot" style="background:#FFD93D" onclick="clapprHL('dialogue','#FFD93D')"></button>
-              <button class="hl-dot" style="background:#6BCB77" onclick="clapprHL('dialogue','#6BCB77')"></button>
-              <button class="hl-dot" style="background:#4D96FF" onclick="clapprHL('dialogue','#4D96FF')"></button>
-              <button class="hl-dot" style="background:#FF6B6B" onclick="clapprHL('dialogue','#FF6B6B')"></button>
-              <button class="hl-dot" style="background:#C77DFF" onclick="clapprHL('dialogue','#C77DFF')"></button>
-              <button class="hl-dot" style="background:#FF9A3C" onclick="clapprHL('dialogue','#FF9A3C')"></button>
-              <button class="hl-clear" onclick="clapprHLClear('dialogue')">清除</button>
+            <!-- 快捷標記說明（純 CSS，無顏色 bug） -->
+            <div class="sk-legend" id="sk-legend-dialogue" style="display:none">
+              <span class="sk-legend-lbl">快捷標記</span>
+              <span class="sk-bracket">〔角色〕</span>
+              <span class="sk-title">【場景】</span>
+              <span class="sk-reminder">-提醒-</span>
+              <span class="sk-notice">-注意-</span>
+              <span class="sk-urgent">-重要-</span>
+              <span class="sk-director">-導演-</span>
             </div>
             <div class="hl-wrap" id="hl-wrap-dialogue">
               <div class="hl-overlay" id="hl-overlay-dialogue" aria-hidden="true"></div>
@@ -1843,16 +1866,15 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
                 <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-script-save-btn" onclick="saveSceneScript()">💾 儲存</button>
               </div>
             </div>
-            <!-- 標色工具列 -->
-            <div class="hl-bar" id="hl-bar-script">
-              <span class="hl-lbl">標色</span>
-              <button class="hl-dot" style="background:#FFD93D" onclick="clapprHL('script','#FFD93D')"></button>
-              <button class="hl-dot" style="background:#6BCB77" onclick="clapprHL('script','#6BCB77')"></button>
-              <button class="hl-dot" style="background:#4D96FF" onclick="clapprHL('script','#4D96FF')"></button>
-              <button class="hl-dot" style="background:#FF6B6B" onclick="clapprHL('script','#FF6B6B')"></button>
-              <button class="hl-dot" style="background:#C77DFF" onclick="clapprHL('script','#C77DFF')"></button>
-              <button class="hl-dot" style="background:#FF9A3C" onclick="clapprHL('script','#FF9A3C')"></button>
-              <button class="hl-clear" onclick="clapprHLClear('script')">清除</button>
+            <!-- 快捷標記說明（純 CSS，無顏色 bug） -->
+            <div class="sk-legend" id="sk-legend-script" style="display:none">
+              <span class="sk-legend-lbl">快捷標記</span>
+              <span class="sk-bracket">〔角色〕</span>
+              <span class="sk-title">【場景】</span>
+              <span class="sk-reminder">-提醒-</span>
+              <span class="sk-notice">-注意-</span>
+              <span class="sk-urgent">-重要-</span>
+              <span class="sk-director">-導演-</span>
             </div>
             <div class="hl-wrap" id="hl-wrap-script">
               <div class="hl-overlay" id="hl-overlay-script" aria-hidden="true"></div>
@@ -2695,6 +2717,51 @@ AI 會根據描述建立完整的場景資料和通告單。"></textarea>
 
 <script>
 // ══════════════════════════════════════════
+//  TEXT FORMATTING HELPERS （全域共用 · 純 CSS 關鍵字 · 無 color/<br> bug）
+// ══════════════════════════════════════════
+// 把任何內容（真正的 HTML、被跳脫的假標籤、雙重跳脫、舊的 <font color>/<color>）
+// 一律還原成乾淨純文字，換行用 \n 保留。display 時絕不會再吐出 <br>/<color> 文字。
+function clapprToPlainText(input){
+  var s = (input==null) ? '' : String(input);
+  // 反覆解碼 HTML 實體，處理被跳脫一次或多次的舊資料（&amp;lt;br&amp;gt; 之類）
+  for(var i=0;i<4;i++){
+    if(!/&(amp|lt|gt|quot|#0*3[89]|#0*6[02]|#x?0*\w+);/i.test(s)) break;
+    var ta=document.createElement('textarea');
+    ta.innerHTML=s;
+    var dec=ta.value;
+    if(dec===s) break;
+    s=dec;
+  }
+  // 現在把任何真正的標籤吃掉：<br>/<p>/<div> 轉換行，其餘標籤直接拿掉只留文字
+  var d=document.createElement('div');
+  d.innerHTML=s;
+  d.querySelectorAll('br').forEach(function(b){ b.replaceWith('\n'); });
+  d.querySelectorAll('p,div').forEach(function(b){ b.insertAdjacentText('afterend','\n'); });
+  var out = d.textContent || d.innerText || '';
+  return out.replace(/\u00a0/g,' ').replace(/\n{3,}/g,'\n\n');
+}
+
+// 把純文字裡的快捷標記轉成 CSS class span（〔〕【】 -提醒- -注意- -重要- -導演- 等）
+// 只加 class，不加任何 inline color，所以手機 / 桌機都不會有顏色 bug。
+function clapprApplyKeywords(escaped){
+  return String(escaped||'')
+    .replace(/〔([^〕]*?)〕/g,'<span class="sk-bracket">〔$1〕</span>')
+    .replace(/【([^】]*?)】/g,'<span class="sk-title">【$1】</span>')
+    .replace(/-(提醒|REMINDER|Reminder)-/g,'<span class="sk-reminder">-$1-</span>')
+    .replace(/-(注意|NOTICE|Notice)-/g,'<span class="sk-notice">-$1-</span>')
+    .replace(/-(重要|緊急|URGENT|Urgent|IMPORTANT|Important)-/g,'<span class="sk-urgent">-$1-</span>')
+    .replace(/-(導演|指示|DIRECTOR|Director)-/g,'<span class="sk-director">-$1-</span>');
+}
+
+// 單行預覽用：清乾淨 + 跳脫 + 套關鍵字樣式（換行收成空白）
+function clapprFmtInline(raw){
+  var s = clapprToPlainText(raw)
+    .replace(/\s*\n+\s*/g,' ')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return clapprApplyKeywords(s);
+}
+
+// ══════════════════════════════════════════
 //  DATA
 // ══════════════════════════════════════════
 const avatarColors = ['#C9A84C','#27AE60','#2980B9','#8E44AD','#C0392B','#16A085','#D35400'];
@@ -2877,7 +2944,7 @@ function showBroadcast(ann) {
   const tagEl = document.getElementById('broadcast-type-tag');
   const avatarEl = document.getElementById('broadcast-avatar');
   if (!overlay) return;
-  msgEl.textContent = ann.msg;
+  msgEl.textContent = clapprToPlainText(ann.msg);
   fromEl.textContent = ann.from;
   roleEl.textContent = ann.date + ' ' + ann.time;
   tagEl.textContent = typeTagLabels[ann.type] || '📢 即時通告';
@@ -3624,16 +3691,12 @@ function renderAnnouncements(){
   const board=document.getElementById('ann-board');
   if(!announcements.length){board.innerHTML='<div class="empty-state"><div class="empty-icon">◎</div>尚無公告</div>';return;}
 
-  // 公告訊息格式化：純文字跳脫 + CSS 關鍵字樣式（不插入 <color>/<font> 等 bug tag）
+  // 公告訊息格式化：先還原成乾淨純文字 → 跳脫 → 換行 → CSS 關鍵字樣式（絕無 <color>/<font>/<br> bug tag）
   function fmtMsg(raw){
-    var s=String(raw||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\r\n?|\n/g,'<br>');
-    return s
-      .replace(/〔([^〕]*?)〕/g,'<span class="sk-bracket">〔$1〕</span>')
-      .replace(/【([^】]*?)】/g,'<span class="sk-title">【$1】</span>')
-      .replace(/-(提醒|REMINDER|Reminder)-/g,'<span class="sk-reminder">-$1-</span>')
-      .replace(/-(注意|NOTICE|Notice)-/g,'<span class="sk-notice">-$1-</span>')
-      .replace(/-(重要|緊急|URGENT|Urgent|IMPORTANT|Important)-/g,'<span class="sk-urgent">-$1-</span>')
-      .replace(/-(導演|指示|DIRECTOR|Director)-/g,'<span class="sk-director">-$1-</span>');
+    var s = clapprToPlainText(raw)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\r\n?|\n/g,'<br>');
+    return clapprApplyKeywords(s);
   }
   function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   const typeTagClass={general:'ann-tag-general',director:'ann-tag-director',notice:'ann-tag-notice',urgent:'ann-tag-urgent'};
@@ -4247,7 +4310,7 @@ function renderTicker(){
   const items=[
     `目前場景：${scenes.find(s=>s.status==='current')?.name||'—'}`,
     `已完成 ${scenes.filter(s=>s.status==='done').length} / ${scenes.length} 場景`,
-    `最新公告：${announcements[0]?.msg.slice(0,30)||'—'}`,
+    `最新公告：${announcements[0]?clapprToPlainText(announcements[0].msg).replace(/\n/g,' ').slice(0,30):'—'}`,
     `天氣：晴 28°C 風速 12km/h`,
     `今日黃金時刻：17:42`,
     `拍攝規格：4K / 25fps`,
@@ -5758,7 +5821,7 @@ function renderHomeAnnouncements(){
     (p.announcements||[]).slice(0,3).forEach(a=>items.push({...a,project:p.name,typeCode:p.type}));
   });
   list.innerHTML=items.length?items.slice(0,8).map(a=>`<button class="home-ann-item" onclick="showAnnouncementPopup('${a.project}', '${encodeURIComponent(a.from)}', '${encodeURIComponent(a.msg)}')">
-    <span>${a.project}</span><strong>${a.from}</strong><small>${a.msg}</small>
+    <span>${a.project}</span><strong>${a.from}</strong><small>${clapprFmtInline(a.msg)}</small>
   </button>`).join(''):'<div class="empty-state small">目前沒有公告</div>';
 }
 
@@ -5766,7 +5829,7 @@ function showAnnouncementPopup(project, from, msg){
   alert(`《${project}》公告
 
 ${decodeURIComponent(from)}：
-${decodeURIComponent(msg)}
+${clapprToPlainText(decodeURIComponent(msg))}
 
 已標記為已讀`);
 }
@@ -6205,8 +6268,9 @@ function setSceneFieldReadOnly(kind, readOnly=true){
   if(cancelBtn) cancelBtn.style.display = readOnly ? 'none' : 'inline-flex';
   if(saveBtn) saveBtn.style.display = readOnly ? 'none' : 'inline-flex';
   _sceneFieldEditing[kind] = !readOnly;
-  const hlBarId = kind === 'dialogue' ? 'hl-bar-dialogue' : kind === 'script' ? 'hl-bar-script' : null;
-  if(hlBarId){ const hb=document.getElementById(hlBarId); if(hb) hb.classList.toggle('hl-bar-visible', !readOnly); }
+  // 編輯時顯示快捷標記說明列（取代舊的標色工具列）
+  const legendId = kind === 'dialogue' ? 'sk-legend-dialogue' : kind === 'script' ? 'sk-legend-script' : null;
+  if(legendId){ const lg=document.getElementById(legendId); if(lg) lg.style.display = readOnly ? 'none' : 'flex'; }
 }
 function setAllSceneFieldsReadOnly(){
   Object.keys(_sceneFieldMap).forEach(k=>setSceneFieldReadOnly(k, true));
@@ -7014,9 +7078,9 @@ function ceSetReadonly(field, readonly){
   if(!el)return;
   el.contentEditable = readonly ? 'false' : 'true';
   el.classList.toggle('sdp-readonly', readonly);
-  // show/hide hl-bar
-  var bar=document.getElementById('hl-bar-'+field);
-  if(bar)bar.classList.toggle('hl-bar-visible', !readonly);
+  // 編輯時顯示快捷標記說明列
+  var lg=document.getElementById('sk-legend-'+field);
+  if(lg) lg.style.display = readonly ? 'none' : 'flex';
 }
 
 function ceGetText(field){
@@ -7037,27 +7101,9 @@ function ceSetContent(field, htmlOrText){
   var val = (htmlOrText==null) ? '' : String(htmlOrText);
   if(!val.trim()){el.innerHTML='';return;}
 
-  // ── 1. 如果是舊的 HTML（有真正的標籤），先把純文字抽出來，避免 <color>、<font> 等 bug tag 被 render
-  function stripToPlainText(s){
-    // 先把 &lt;br&gt; 等跳脫的假標籤解碼，然後把 <br>/<div>/<p> 換成換行，最後 strip 所有其他 tag
-    var d=document.createElement('div');
-    d.innerHTML=s;
-    // 把 br/p/div 轉換成 \n 讓結構保留
-    d.querySelectorAll('br').forEach(function(b){b.replaceWith('\n');});
-    d.querySelectorAll('p,div').forEach(function(b){b.insertAdjacentText('afterend','\n');});
-    return d.textContent||d.innerText||'';
-  }
-
-  function hasRealTag(s){return /<(br|div|p|span|b|i|u|font|strong|em|h[1-6]|ul|ol|li)\b|<\/(div|p|span|b|i|u|font|strong|em|h[1-6]|ul|ol|li)>/i.test(s);}
-
-  // 如果含有 HTML tag，先還原成純文字
-  if(hasRealTag(val)) val = stripToPlainText(val);
-
-  // 如果還有 HTML 實體（&lt; 等被跳脫過的內容），解碼一次
-  if(/&(amp|lt|gt|nbsp|#0*38|#0*60|#0*62);/i.test(val)){
-    var dec=document.createElement('textarea');
-    dec.innerHTML=val; val=dec.value;
-  }
+  // ── 1. 一律先還原成乾淨純文字：解碼實體 + 移除所有舊標籤（<font>/<color>/<br>/<span style=color> 等）
+  //      不論舊資料是真正的 HTML、被跳脫過的假標籤，還是雙重跳脫，都會被清乾淨，絕不會出現 <br>/<color> 文字 bug
+  val = clapprToPlainText(val);
 
   // ── 2. 純文字路徑：跳脫 HTML 特殊字元，換行轉 <br>，然後套用 CSS 關鍵字格式
   var escaped = val
@@ -7067,84 +7113,27 @@ function ceSetContent(field, htmlOrText){
     .replace(/\r\n?|\n/g,'<br>');
 
   // ── 3. CSS-only 關鍵字格式（無 inline color，不會出現 <br>/<color> 文字 bug）
-  escaped = escaped
-    // 〔...〕 → 角色名 / 場景標記
-    .replace(/〔([^〕]*?)〕/g,'<span class="sk-bracket">〔$1〕</span>')
-    // 【...】 → 標題 / 地點
-    .replace(/【([^】]*?)】/g,'<span class="sk-title">【$1】</span>')
-    // -提醒- / -reminder-
-    .replace(/-(提醒|REMINDER|Reminder)-/g,'<span class="sk-reminder">-$1-</span>')
-    // -注意- / -notice-
-    .replace(/-(注意|NOTICE|Notice)-/g,'<span class="sk-notice">-$1-</span>')
-    // -重要- / -緊急- / -urgent- / -important-
-    .replace(/-(重要|緊急|URGENT|Urgent|IMPORTANT|Important)-/g,'<span class="sk-urgent">-$1-</span>')
-    // -導演- / -指示- / -director-
-    .replace(/-(導演|指示|DIRECTOR|Director)-/g,'<span class="sk-director">-$1-</span>');
+  escaped = clapprApplyKeywords(escaped);
 
   el.innerHTML = escaped;
 }
 
+// 標色功能已移除（會產生 <color>/<font> bug，且手機不穩定）。保留為安全 no-op，避免任何殘留呼叫報錯。
 function clapprHL(field, color){
-  var el=document.getElementById(_ceIds[field]);
-  if(!el||el.getAttribute('contenteditable')==='false'){toast&&toast('請先按「✎ 編輯」再標色','✎');return;}
-  el.focus();
-  var sel=window.getSelection();
-  if(!sel||!sel.rangeCount||sel.isCollapsed){
-    if(_ceSavedRange[field]){ sel.removeAllRanges(); sel.addRange(_ceSavedRange[field]); }
-    else { toast&&toast('請先選取要標色的文字','💡'); return; }
-  }
-  var range=sel.getRangeAt(0);
-  if(range.collapsed){ toast&&toast('請先選取要標色的文字','💡'); return; }
-  // 安全防呆：選取範圍必須在這個編輯框內，避免動到頁面其他地方
-  if(!el.contains(range.commonAncestorContainer)){ toast&&toast('請在台詞／劇本框內選取文字','💡'); return; }
-
-  // 先用瀏覽器內建指令（最穩、不會吃掉內容）
-  var done=false;
-  try{ done=document.execCommand('hiliteColor', false, color); }catch(e){}
-  if(!done){ try{ done=document.execCommand('backColor', false, color); }catch(e){} }
-
-  // 內建指令失敗才用手動包 span，並在失敗時把內容放回去，絕不遺失文字
-  if(!done){
-    var span=document.createElement('span');
-    span.className='hl-mark';
-    span.style.backgroundColor=color;
-    try{
-      range.surroundContents(span);
-      done=true;
-    }catch(ex){
-      try{
-        var frag=range.extractContents();
-        span.appendChild(frag);
-        range.insertNode(span);
-        done=true;
-      }catch(e2){
-        // 還原：把已抽出的內容放回原處
-        if(span && span.childNodes.length && !span.parentNode){
-          while(span.firstChild) range.insertNode(span.firstChild);
-        }
-        toast&&toast('這段選取無法標色，請選短一點再試一次','⚠');
-      }
-    }
-  }
-  // 統一把螢光筆文字維持深色、好閱讀
-  el.querySelectorAll('span[style*="background"],font[color]').forEach(function(m){ m.style.color='#1a1a1a'; });
-  sel.removeAllRanges();
-  _ceSavedRange[field]=null;
-  ceSyncRaw(field);
+  toast&&toast('標色功能已停用，改用 〔〕【】 -提醒- 等快捷標記','💡');
 }
 
+// 仍可用來把舊資料殘留的顏色 / 螢光筆標記一次清乾淨（轉回純文字樣式）。
 function clapprHLClear(field){
   var el=document.getElementById(_ceIds[field]);
-  if(!el||el.getAttribute('contenteditable')==='false'){toast&&toast('請先按「✎ 編輯」再清除','✎');return;}
-  // 解開所有螢光筆標記（span 有背景色，或 font[color]/帶背景的 font）
-  el.querySelectorAll('span[style*="background"],font[color],font[style*="background"]').forEach(function(sp){
+  if(!el)return;
+  el.querySelectorAll('span[style*="background"],span[style*="color"],font[color],font[style*="background"]').forEach(function(sp){
     var p=sp.parentNode; if(!p) return;
     while(sp.firstChild) p.insertBefore(sp.firstChild,sp);
     p.removeChild(sp);
   });
   el.normalize();
   ceSyncRaw(field);
-  toast&&toast('已清除螢光筆','🧽');
 }
 
 function ceSyncRaw(field){

@@ -3038,5 +3038,9 @@ tr[draggable='true']:hover td:first-child { color: var(--gold); }
   .sk-bracket, .sk-title, .sk-reminder, .sk-notice, .sk-urgent, .sk-director {
     font-size: 0.85em;
     padding: 1px 4px;
+    word-break: keep-all;
   }
+  .sk-legend { gap: 5px; padding: 5px 8px; }
+  .sk-legend .sk-reminder, .sk-legend .sk-notice,
+  .sk-legend .sk-urgent, .sk-legend .sk-director { letter-spacing: 1px; }
 }
