@@ -522,7 +522,8 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .sdp-script-area:focus{border-color:var(--border,rgba(255,255,255,0.15));}
 
 /* ── contenteditable editor variant (台詞 / 場景指示) ── */
-.sdp-ce{white-space:pre-wrap;word-break:break-word;overflow-y:auto;cursor:text;}
+/* 讓欄位隨內容自動長高，交給整頁(.content)捲動，避免在框內被「卡住」滑不動、要滑旁邊才行 */
+.sdp-ce{white-space:pre-wrap;word-break:break-word;cursor:text;height:auto;max-height:none !important;overflow:visible !important;resize:none !important;}
 .sdp-ce[contenteditable="false"]{cursor:default;}
 .sdp-ce:empty:before{content:attr(data-placeholder);color:var(--text-muted,#888);opacity:.7;pointer-events:none;}
 .sdp-ce.sdp-readonly{background:var(--bg-raised,#111);opacity:.92;}
@@ -5528,9 +5529,13 @@ function saveCurrentProjectState(){
   const p=getCurrentProject();
   if(!p) return;
   ensureProjectData(p);
+  // 只有「正在劇本共編頁」時，才用該頁 textarea 的內容回寫場景的 sceneScript。
+  // 否則（例如在場景進度詳情頁編輯指示/劇本、或儲存台詞/備註/鏡頭時）
+  // 不能拿那個可能是舊的/空的 textarea 蓋掉剛編好的內容，否則一存就不見。
+  const scriptPageActive = !!(document.getElementById('page-script') && document.getElementById('page-script').classList.contains('active'));
   const selectedScriptScene = getSelectedScriptScene && getSelectedScriptScene();
   const scriptEl = document.getElementById('script-text');
-  if(selectedScriptScene && scriptEl){
+  if(scriptPageActive && selectedScriptScene && scriptEl){
     normalizeSceneTextFields(selectedScriptScene);
     selectedScriptScene.sceneScript = scriptEl.value || '';
     p.script = selectedScriptScene.sceneScript;
@@ -5541,7 +5546,7 @@ function saveCurrentProjectState(){
   p.announcements=clone(announcements);
   p.crew=clone(crew);
   p.equipment=clone(equipment);
-  p.script=document.getElementById('script-text')?.value||p.script||'';
+  if(scriptPageActive){ p.script=document.getElementById('script-text')?.value||p.script||''; }
   persistSave();
   // 全量同步到 Supabase（非阻塞，後台執行）
   pushAllToSupabase();
