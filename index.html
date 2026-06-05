@@ -7,6 +7,70 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="production-hub.css">
 <style>
+/* ── SCRIPT KEYWORD FORMATTING (純 CSS，無 color bug) ── */
+/* 方括號快捷 〔...〕 → 角色名 / 場景標記 */
+.sk-bracket {
+  font-weight: 700;
+  font-family: var(--font-mono,'DM Mono'),monospace;
+  font-size: 0.95em;
+  letter-spacing: 0.3px;
+}
+/* 全形書名號 【...】 → 標題 / 地點 */
+.sk-title {
+  font-weight: 700;
+  font-style: italic;
+  font-size: 1.0em;
+}
+/* -提醒- */
+.sk-reminder {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.88em;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(212,168,67,0.45);
+  background: rgba(212,168,67,0.12);
+  font-family: var(--font-mono,'DM Mono'),monospace;
+}
+/* -注意- */
+.sk-notice {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.88em;
+  letter-spacing: 1.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(52,152,219,0.45);
+  background: rgba(52,152,219,0.12);
+  font-family: var(--font-mono,'DM Mono'),monospace;
+}
+/* -重要- / -緊急- */
+.sk-urgent {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.88em;
+  letter-spacing: 1.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(231,76,60,0.45);
+  background: rgba(231,76,60,0.12);
+  font-family: var(--font-mono,'DM Mono'),monospace;
+}
+/* -導演- / -指示- */
+.sk-director {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.88em;
+  letter-spacing: 1.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(230,126,34,0.45);
+  background: rgba(230,126,34,0.12);
+  font-family: var(--font-mono,'DM Mono'),monospace;
+}
+
 /* ── AI IMPORT ── */
 .ai-import-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;}
 .ai-import-badge{flex-shrink:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:var(--font-mono,'DM Mono'),monospace;color:var(--gold,#C9A84C);border:1px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.1);border-radius:20px;padding:5px 14px;white-space:nowrap;}
@@ -3559,17 +3623,32 @@ const typeLabels={general:'一般',director:'導演指示',notice:'注意事項'
 function renderAnnouncements(){
   const board=document.getElementById('ann-board');
   if(!announcements.length){board.innerHTML='<div class="empty-state"><div class="empty-icon">◎</div>尚無公告</div>';return;}
+
+  // 公告訊息格式化：純文字跳脫 + CSS 關鍵字樣式（不插入 <color>/<font> 等 bug tag）
+  function fmtMsg(raw){
+    var s=String(raw||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\r\n?|\n/g,'<br>');
+    return s
+      .replace(/〔([^〕]*?)〕/g,'<span class="sk-bracket">〔$1〕</span>')
+      .replace(/【([^】]*?)】/g,'<span class="sk-title">【$1】</span>')
+      .replace(/-(提醒|REMINDER|Reminder)-/g,'<span class="sk-reminder">-$1-</span>')
+      .replace(/-(注意|NOTICE|Notice)-/g,'<span class="sk-notice">-$1-</span>')
+      .replace(/-(重要|緊急|URGENT|Urgent|IMPORTANT|Important)-/g,'<span class="sk-urgent">-$1-</span>')
+      .replace(/-(導演|指示|DIRECTOR|Director)-/g,'<span class="sk-director">-$1-</span>');
+  }
+  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  const typeTagClass={general:'ann-tag-general',director:'ann-tag-director',notice:'ann-tag-notice',urgent:'ann-tag-urgent'};
+
   board.innerHTML=announcements.map((a,i)=>`
     <div class="ann-card">
-      <div class="ann-card-accent" style="background:${typeColors[a.type]}"></div>
+      <div class="ann-card-accent ann-accent-${a.type||'general'}"></div>
       <div class="ann-card-body">
         <div class="ann-meta">
-          <span class="ann-from">${a.from}</span>
-          <span class="ann-tag" style="background:${typeColors[a.type]}22;color:${typeColors[a.type]};border:1px solid ${typeColors[a.type]}44">${typeLabels[a.type]}</span>
-          <span class="ann-time">${a.date} ${a.time}</span>
+          <span class="ann-from">${esc(a.from)}</span>
+          <span class="ann-tag ${typeTagClass[a.type||'general']||''}">${esc(typeLabels[a.type]||a.type)}</span>
+          <span class="ann-time">${esc(a.date)} ${esc(a.time)}</span>
           <button onclick="deleteAnnouncement(${i})" style="margin-left:auto;background:transparent;border:1px solid rgba(231,76,60,0.3);border-radius:5px;color:var(--red-light);font-size:11px;padding:2px 8px;cursor:pointer;opacity:0.7;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">🗑 刪除</button>
         </div>
-        <div class="ann-msg">${a.msg}</div>
+        <div class="ann-msg">${fmtMsg(a.msg)}</div>
       </div>
     </div>
   `).join('');
@@ -6957,18 +7036,52 @@ function ceSetContent(field, htmlOrText){
   if(!el)return;
   var val = (htmlOrText==null) ? '' : String(htmlOrText);
   if(!val.trim()){el.innerHTML='';return;}
-  function hasTag(s){return /<(br|div|p|span|b|i|u|font|strong|em|h[1-6]|ul|ol|li)\b|<\/(div|p|span|b|i|u|font|strong|em|h[1-6]|ul|ol|li)>/i.test(s);}
-  // 修復舊資料的「重複跳脫」問題：沒有真正的標籤、卻含有被跳脫成文字的標籤（例如 &lt;br&gt; 甚至 &amp;amp;…）→ 反覆解碼到穩定，避免畫面一直出現文字版的 <br>
-  if(!hasTag(val) && /&(amp|lt|gt|#0*38|#0*60|#0*62|nbsp);/i.test(val)){
-    var prev, guard=0, dec=document.createElement('textarea');
-    do { prev=val; dec.innerHTML=val; val=dec.value; guard++; } while(val!==prev && guard<8);
+
+  // ── 1. 如果是舊的 HTML（有真正的標籤），先把純文字抽出來，避免 <color>、<font> 等 bug tag 被 render
+  function stripToPlainText(s){
+    // 先把 &lt;br&gt; 等跳脫的假標籤解碼，然後把 <br>/<div>/<p> 換成換行，最後 strip 所有其他 tag
+    var d=document.createElement('div');
+    d.innerHTML=s;
+    // 把 br/p/div 轉換成 \n 讓結構保留
+    d.querySelectorAll('br').forEach(function(b){b.replaceWith('\n');});
+    d.querySelectorAll('p,div').forEach(function(b){b.insertAdjacentText('afterend','\n');});
+    return d.textContent||d.innerText||'';
   }
-  if(hasTag(val)){
-    el.innerHTML=val;                       // 真正的 HTML（保留換行 <br> 與螢光筆 <span>）
-  } else {
-    // 純文字 — 跳脫一次並把換行轉成 <br>
-    el.innerHTML=val.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\r\n?|\n/g,'<br>');
+
+  function hasRealTag(s){return /<(br|div|p|span|b|i|u|font|strong|em|h[1-6]|ul|ol|li)\b|<\/(div|p|span|b|i|u|font|strong|em|h[1-6]|ul|ol|li)>/i.test(s);}
+
+  // 如果含有 HTML tag，先還原成純文字
+  if(hasRealTag(val)) val = stripToPlainText(val);
+
+  // 如果還有 HTML 實體（&lt; 等被跳脫過的內容），解碼一次
+  if(/&(amp|lt|gt|nbsp|#0*38|#0*60|#0*62);/i.test(val)){
+    var dec=document.createElement('textarea');
+    dec.innerHTML=val; val=dec.value;
   }
+
+  // ── 2. 純文字路徑：跳脫 HTML 特殊字元，換行轉 <br>，然後套用 CSS 關鍵字格式
+  var escaped = val
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/\r\n?|\n/g,'<br>');
+
+  // ── 3. CSS-only 關鍵字格式（無 inline color，不會出現 <br>/<color> 文字 bug）
+  escaped = escaped
+    // 〔...〕 → 角色名 / 場景標記
+    .replace(/〔([^〕]*?)〕/g,'<span class="sk-bracket">〔$1〕</span>')
+    // 【...】 → 標題 / 地點
+    .replace(/【([^】]*?)】/g,'<span class="sk-title">【$1】</span>')
+    // -提醒- / -reminder-
+    .replace(/-(提醒|REMINDER|Reminder)-/g,'<span class="sk-reminder">-$1-</span>')
+    // -注意- / -notice-
+    .replace(/-(注意|NOTICE|Notice)-/g,'<span class="sk-notice">-$1-</span>')
+    // -重要- / -緊急- / -urgent- / -important-
+    .replace(/-(重要|緊急|URGENT|Urgent|IMPORTANT|Important)-/g,'<span class="sk-urgent">-$1-</span>')
+    // -導演- / -指示- / -director-
+    .replace(/-(導演|指示|DIRECTOR|Director)-/g,'<span class="sk-director">-$1-</span>');
+
+  el.innerHTML = escaped;
 }
 
 function clapprHL(field, color){

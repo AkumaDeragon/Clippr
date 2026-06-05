@@ -3021,3 +3021,22 @@ html, body            { font-size: 17px; font-weight: 500; }   /* 原 14px 細�
 tr.drag-over td { background: rgba(212,168,67,0.10) !important; }
 tr[draggable='true']:hover td:first-child { color: var(--gold); }
 
+
+/* ── ANN ACCENT + TAG CSS CLASSES (替換舊的 inline style) ── */
+.ann-accent-general  { background: var(--text-muted); }
+.ann-accent-director { background: var(--amber-light); }
+.ann-accent-notice   { background: var(--blue-light); }
+.ann-accent-urgent   { background: var(--red-light); }
+
+.ann-tag-general  { background: rgba(90,86,80,0.25); color: var(--text-secondary); border: 1px solid rgba(90,86,80,0.4); border-radius: 20px; }
+.ann-tag-director { background: rgba(230,126,34,0.15); color: var(--amber-light); border: 1px solid rgba(230,126,34,0.35); border-radius: 20px; }
+.ann-tag-notice   { background: rgba(52,152,219,0.15); color: var(--blue-light); border: 1px solid rgba(52,152,219,0.35); border-radius: 20px; }
+.ann-tag-urgent   { background: rgba(231,76,60,0.15); color: var(--red-light); border: 1px solid rgba(231,76,60,0.35); border-radius: 20px; }
+
+/* 確保 sk-* 關鍵字標籤在手機上也清晰可見 */
+@media (max-width: 768px) {
+  .sk-bracket, .sk-title, .sk-reminder, .sk-notice, .sk-urgent, .sk-director {
+    font-size: 0.85em;
+    padding: 1px 4px;
+  }
+}
