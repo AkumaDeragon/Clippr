@@ -472,6 +472,12 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .sdp-shot-body{flex:1;}
 .sdp-shot-type{font-size:13px;color:var(--text-primary,#fff);font-weight:500;}
 .sdp-shot-meta{font-size:11px;color:var(--text-muted,#888);margin-top:2px;}
+/* 鏡頭清單直接編輯欄位 */
+.sdp-ed{display:inline-block;min-width:14px;border-radius:4px;padding:0 4px;margin:0 -2px;cursor:text;outline:none;transition:background .15s,box-shadow .15s;border-bottom:1px dashed transparent;}
+.sdp-ed:hover{background:rgba(201,168,76,.08);border-bottom-color:rgba(201,168,76,.35);}
+.sdp-ed:focus{background:rgba(201,168,76,.12);box-shadow:0 0 0 1px rgba(201,168,76,.45);border-bottom-color:transparent;}
+.sdp-ed:empty:before{content:attr(data-ph);color:var(--text-muted,#888);opacity:.55;}
+.sdp-ed-type{font-size:13px;color:var(--text-primary,#fff);font-weight:500;}
 .sdp-shot-btn{background:transparent;border:1px solid var(--border,rgba(255,255,255,0.1));border-radius:6px;color:var(--text-muted,#888);font-size:11px;padding:5px 10px;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:inherit;}
 .sdp-shot-btn.done-btn{border-color:rgba(39,174,96,0.5);color:var(--green-light,#2ecc71);}
 .sdp-shot-btn:hover{border-color:var(--gold,#C9A84C);color:var(--gold,#C9A84C);}
@@ -515,6 +521,22 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .sdp-script-area{width:100%;min-height:160px;max-height:280px;resize:vertical;background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:8px;color:var(--text-secondary,#aaa);font-size:13px;line-height:1.7;padding:14px 16px;font-family:'DM Mono','Courier New',monospace;outline:none;box-sizing:border-box;}
 .sdp-script-area:focus{border-color:var(--border,rgba(255,255,255,0.15));}
 
+/* ── contenteditable editor variant (台詞 / 場景指示) ── */
+.sdp-ce{white-space:pre-wrap;word-break:break-word;overflow-y:auto;cursor:text;}
+.sdp-ce[contenteditable="false"]{cursor:default;}
+.sdp-ce:empty:before{content:attr(data-placeholder);color:var(--text-muted,#888);opacity:.7;pointer-events:none;}
+.sdp-ce.sdp-readonly{background:var(--bg-raised,#111);opacity:.92;}
+.sdp-ce span[style*="background"],.sdp-ce font[color],.sdp-ce font[style*="background"]{color:#1a1a1a !important;border-radius:2px;padding:0 1px;}
+
+/* ── 場景進階篩選列 ── */
+.scene-filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--border,rgba(255,255,255,0.06));background:rgba(255,255,255,0.015);}
+.scene-filter-bar-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted,#888);font-family:var(--font-mono,'DM Mono'),monospace;}
+.scene-filter-sel{min-width:130px;font-size:12px;padding:6px 10px;}
+.scene-filter-reset{background:transparent;border:1px solid rgba(231,76,60,.4);border-radius:6px;color:rgba(231,76,60,.85);font-size:11px;padding:5px 10px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.scene-filter-reset:hover{background:rgba(231,76,60,.12);border-color:rgba(231,76,60,.7);}
+.scene-filter-count{font-size:11px;color:var(--gold,#C9A84C);margin-left:auto;font-family:var(--font-mono,'DM Mono'),monospace;}
+@media(max-width:640px){.scene-filter-sel{flex:1;min-width:0;}}
+
 /* ── BG ELEVATED ── */
 .bg-elevated,.sdp-section{background:var(--bg-elevated,#1a1a1a);}
 
@@ -535,34 +557,17 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
   z-index: 1;
   /* will be sized by JS to match textarea exactly */
 }
-.hl-wrap textarea,
-.hl-wrap [contenteditable] {
+.hl-wrap textarea {
   position: relative;
   z-index: 2;
   background: transparent !important;
   background-color: transparent !important;
+  /* keep caret visible */
   caret-color: var(--text-primary, #F0EBE0);
 }
 /* sdp-readonly overlays — make bg opaque so text is readable when locked */
-.hl-wrap textarea.sdp-readonly,
-.hl-wrap [contenteditable].sdp-readonly {
+.hl-wrap textarea.sdp-readonly {
   background: var(--bg-raised, #111) !important;
-}
-/* contenteditable div needs explicit display / overflow */
-.hl-wrap [contenteditable] {
-  display: block;
-  overflow-y: auto;
-  outline: none;
-  cursor: text;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-/* Placeholder for contenteditable divs */
-.hl-wrap [contenteditable]:empty::before {
-  content: attr(data-placeholder);
-  color: var(--text-muted, #888);
-  pointer-events: none;
-  white-space: pre-wrap;
 }
 .hl-mark { border-radius: 2px; }
 
@@ -753,34 +758,17 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
   z-index: 1;
   /* will be sized by JS to match textarea exactly */
 }
-.hl-wrap textarea,
-.hl-wrap [contenteditable] {
+.hl-wrap textarea {
   position: relative;
   z-index: 2;
   background: transparent !important;
   background-color: transparent !important;
+  /* keep caret visible */
   caret-color: var(--text-primary, #F0EBE0);
 }
 /* sdp-readonly overlays — make bg opaque so text is readable when locked */
-.hl-wrap textarea.sdp-readonly,
-.hl-wrap [contenteditable].sdp-readonly {
+.hl-wrap textarea.sdp-readonly {
   background: var(--bg-raised, #111) !important;
-}
-/* contenteditable div needs explicit display / overflow */
-.hl-wrap [contenteditable] {
-  display: block;
-  overflow-y: auto;
-  outline: none;
-  cursor: text;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-/* Placeholder for contenteditable divs */
-.hl-wrap [contenteditable]:empty::before {
-  content: attr(data-placeholder);
-  color: var(--text-muted, #888);
-  pointer-events: none;
-  white-space: pre-wrap;
 }
 .hl-mark { border-radius: 2px; }
 
@@ -1446,6 +1434,27 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             <button class="scene-filter-tab" data-filter="skip" onclick="filterScenesBy('skip')">暫緩</button>
           </div>
         </div>
+        <!-- 進階篩選：地點 / 角色 / 類型 -->
+        <div class="scene-filter-bar" id="scene-filter-bar">
+          <span class="scene-filter-bar-lbl">篩選</span>
+          <select class="meta-select scene-filter-sel" id="scene-filter-loc" onchange="applySceneFilters()">
+            <option value="">全部地點</option>
+          </select>
+          <select class="meta-select scene-filter-sel" id="scene-filter-cast" onchange="applySceneFilters()">
+            <option value="">全部角色</option>
+          </select>
+          <select class="meta-select scene-filter-sel" id="scene-filter-type" onchange="applySceneFilters()">
+            <option value="">全部類型</option>
+            <option value="inout:INT">內景 (INT)</option>
+            <option value="inout:EXT">外景 (EXT)</option>
+            <option value="dn:DAY">日景</option>
+            <option value="dn:NIGHT">夜景</option>
+            <option value="dn:DUSK">黃昏</option>
+            <option value="dn:DAWN">黎明</option>
+          </select>
+          <button class="scene-filter-reset" id="scene-filter-reset" onclick="resetSceneFilters()" style="display:none">✕ 清除篩選</button>
+          <span class="scene-filter-count" id="scene-filter-count"></span>
+        </div>
         <table class="scene-table" id="full-scene-table"></table>
       </div>
     </section>
@@ -1753,10 +1762,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <div class="hl-wrap" id="hl-wrap-dialogue">
               <div class="hl-overlay" id="hl-overlay-dialogue" aria-hidden="true"></div>
-              <div class="sdp-dialogue-area sdp-readonly" id="sdp-dialogue"
-                   contenteditable="false"
-                   data-placeholder="在這裡輸入台詞…&#10;&#10;[角色名]&#10;台詞內容&#10;&#10;[角色名]&#10;台詞內容…"
-                   spellcheck="false"></div>
+              <div class="sdp-dialogue-area sdp-readonly sdp-ce" id="sdp-dialogue" contenteditable="false" data-placeholder="在這裡輸入台詞…（例如：[角色名] 換行寫台詞內容）"></div>
             </div>
             <div class="sdp-safe-hint">避免誤按：目前預設不可修改，按上方「編輯」後才會開放輸入。</div>
           </div>
@@ -1785,10 +1791,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <div class="hl-wrap" id="hl-wrap-script">
               <div class="hl-overlay" id="hl-overlay-script" aria-hidden="true"></div>
-              <div class="sdp-script-area sdp-readonly" id="sdp-script-text"
-                   contenteditable="false"
-                   data-placeholder="場景動作說明、場面描述…&#10;&#10;INT./EXT. 地點 — 日/夜&#10;&#10;動作描述與場景指示…"
-                   spellcheck="false"></div>
+              <div class="sdp-script-area sdp-readonly sdp-ce" id="sdp-script-text" contenteditable="false" data-placeholder="場景動作說明、場面描述…（例如：INT./EXT. 地點 — 日/夜，動作描述與場景指示）"></div>
             </div>
             <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。</div>
           </div>
@@ -1851,10 +1854,9 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
           <div class="sdp-section">
             <div class="sdp-section-head compact-head">
               <div class="sdp-section-title">鏡頭清單</div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <span id="sdp-shots-status" style="font-size:10px;color:var(--text-muted);letter-spacing:.5px">唯讀</span>
-                <button class="btn btn-outline btn-sm" id="sdp-shots-edit-btn" onclick="sdpShotsEdit()">✎ 編輯</button>
-                <button class="btn btn-gold btn-sm" id="sdp-shots-done-btn" style="display:none" onclick="sdpShotsDone()">完成</button>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:10px;color:var(--text-muted);letter-spacing:.5px">點欄位即可直接修改</span>
+                <button class="btn btn-outline btn-sm" id="sdp-shots-add-btn" onclick="clapprSdpAddShot()">＋ 鏡頭</button>
               </div>
             </div>
             <div class="sdp-shot-list" id="sdp-shot-list"></div>
@@ -3201,6 +3203,9 @@ function renderDashScenes(){
 }
 
 let _sceneFilter = 'all';
+let _sceneFilterLoc = '';
+let _sceneFilterCast = '';
+let _sceneFilterType = '';
 
 function filterScenesBy(filter){
   _sceneFilter = filter;
@@ -3215,6 +3220,59 @@ function filterScenesBy(filter){
   renderScenes();
 }
 
+// 進階篩選：地點 / 角色 / 類型 ---------------------------------
+function applySceneFilters(){
+  const locEl = document.getElementById('scene-filter-loc');
+  const castEl = document.getElementById('scene-filter-cast');
+  const typeEl = document.getElementById('scene-filter-type');
+  _sceneFilterLoc  = locEl  ? locEl.value  : '';
+  _sceneFilterCast = castEl ? castEl.value : '';
+  _sceneFilterType = typeEl ? typeEl.value : '';
+  renderScenes();
+}
+
+function resetSceneFilters(){
+  _sceneFilterLoc = _sceneFilterCast = _sceneFilterType = '';
+  const locEl = document.getElementById('scene-filter-loc');
+  const castEl = document.getElementById('scene-filter-cast');
+  const typeEl = document.getElementById('scene-filter-type');
+  if(locEl) locEl.value='';
+  if(castEl) castEl.value='';
+  if(typeEl) typeEl.value='';
+  renderScenes();
+}
+
+// 把目前所有場景的地點 / 角色填入下拉選單（保留使用者已選的值）
+function populateSceneFilters(){
+  const locEl = document.getElementById('scene-filter-loc');
+  const castEl = document.getElementById('scene-filter-cast');
+  if(locEl){
+    const locs = [...new Set(scenes.map(s=>(s.loc||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+    const cur = locEl.value;
+    locEl.innerHTML = '<option value="">全部地點</option>' + locs.map(l=>`<option value="${l.replace(/"/g,'&quot;')}">${l}</option>`).join('');
+    locEl.value = locs.includes(cur) ? cur : '';
+    if(locEl.value!==cur) _sceneFilterLoc = locEl.value;
+  }
+  if(castEl){
+    const casts = [...new Set(scenes.flatMap(s=>Array.isArray(s.cast)?s.cast:[]).map(c=>(c||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+    const cur = castEl.value;
+    castEl.innerHTML = '<option value="">全部角色</option>' + casts.map(c=>`<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('');
+    castEl.value = casts.includes(cur) ? cur : '';
+    if(castEl.value!==cur) _sceneFilterCast = castEl.value;
+  }
+}
+
+function sceneMatchesAdvancedFilters(s){
+  if(_sceneFilterLoc && (s.loc||'').trim() !== _sceneFilterLoc) return false;
+  if(_sceneFilterCast && !(Array.isArray(s.cast) && s.cast.includes(_sceneFilterCast))) return false;
+  if(_sceneFilterType){
+    const [kind, val] = _sceneFilterType.split(':');
+    if(kind==='inout' && s.inout !== val) return false;
+    if(kind==='dn' && s.daynight !== val) return false;
+  }
+  return true;
+}
+
 function goScenesFilter(filter){
   switchPage('scenes', document.querySelector('.nav-item[onclick*="scenes"]'));
   filterScenesBy(filter || 'all');
@@ -3223,11 +3281,22 @@ function goScenesFilter(filter){
 }
 
 function renderScenes(){
+  populateSceneFilters();
   const filter = _sceneFilter || 'all';
-  const filtered = filter==='all' ? scenes : scenes.filter(s=>s.status===filter);
+  const byStatus = filter==='all' ? scenes : scenes.filter(s=>s.status===filter);
+  const filtered = byStatus.filter(sceneMatchesAdvancedFilters);
+
+  // 更新「清除篩選」按鈕與筆數
+  const hasAdv = !!(_sceneFilterLoc || _sceneFilterCast || _sceneFilterType);
+  const resetBtn = document.getElementById('scene-filter-reset');
+  if(resetBtn) resetBtn.style.display = hasAdv ? 'inline-flex' : 'none';
+  const countEl = document.getElementById('scene-filter-count');
+  if(countEl) countEl.textContent = hasAdv ? `符合 ${filtered.length} / ${scenes.length} 個場景` : '';
+
   const t=document.getElementById('full-scene-table');
   if(!filtered.length){
-    t.innerHTML=`<tbody><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);font-size:13px">此分類目前沒有場景</td></tr></tbody>`;
+    const msg = hasAdv ? '沒有符合篩選條件的場景' : '此分類目前沒有場景';
+    t.innerHTML=`<tbody><tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);font-size:13px">${msg}</td></tr></tbody>`;
     return;
   }
   t.innerHTML=`<thead><tr><th style="width:28px"></th><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th><th></th></tr></thead><tbody>${filtered.map(s=>sceneRow(s)).join('')}</tbody>`;
@@ -3334,6 +3403,25 @@ function toggleShot(sid,i){
 // ══════════════════════════════════════════
 //  SCRIPT
 // ══════════════════════════════════════════
+function htmlToText(html){
+  if(html == null) return '';
+  let str = String(html);
+  if(!str) return '';
+  // 先把多層跳脫的內容解碼到穩定（修復 &amp;amp;…&lt;br&gt; 這類舊資料）
+  if(/&(amp|lt|gt|#0*38|#0*60|#0*62|nbsp);/i.test(str)){
+    let prev, guard=0; const dec=document.createElement('textarea');
+    do { prev=str; dec.innerHTML=str; str=dec.value; guard++; } while(str!==prev && guard<8);
+  }
+  // 沒有任何標籤就直接回傳純文字
+  if(!/<[a-z!/]/i.test(str)) return str.replace(/\r\n?/g,'\n');
+  // 有標籤：把換行類標籤轉成 \n，再取純文字
+  const tmp = document.createElement('div');
+  tmp.innerHTML = str
+    .replace(/<\/(div|p|h[1-6]|li)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n');
+  return (tmp.innerText || tmp.textContent || '').replace(/\n{3,}/g, '\n\n');
+}
+
 function normalizeSceneTextFields(scene){
   if(!scene) return scene;
   if(scene.dialogue === undefined) scene.dialogue = '';
@@ -3377,7 +3465,7 @@ function loadScriptSceneContent(showToast=false){
     scene.sceneScript = project.script;
     project._scriptMigrated = true;
   }
-  ta.value = scene.sceneScript || '';
+  ta.value = htmlToText(scene.sceneScript || '');
   const note = document.getElementById('script-note');
   if(note && safeEditGroups.script?.locked) note.value = '';
   if(showToast) toast(`已切換到 ${scene.id} — ${scene.name}`, '📄');
@@ -3396,8 +3484,8 @@ function saveScript(){
   }
   // ── 同步到場景進度的 sdp-script-text（如果開著同一場景）
   if(_currentSDP === scene.id){
-    const sdpEl = document.getElementById('sdp-script-text');
-    if(sdpEl){ if(sdpEl.tagName==='TEXTAREA') sdpEl.value = scene.sceneScript; else if(typeof ceSetContent==='function') ceSetContent('script', scene.sceneScript || ''); }
+    if(typeof ceSetContent === 'function') ceSetContent('script', scene.sceneScript || '');
+    else { const sdpEl = document.getElementById('sdp-script-text'); if(sdpEl) sdpEl.textContent = scene.sceneScript || ''; }
   }
   const author=getEditor();
   const note=document.getElementById('script-note').value.trim()||`儲存 ${scene.id} 劇本`;
@@ -4994,22 +5082,20 @@ async function handleRemoteChange(payload){
     const scriptScene = scenes.find(x=>x.id===scriptSel.value);
     if(scriptScene){
       const scriptTa = document.getElementById('script-text');
-      if(scriptTa && document.activeElement !== scriptTa) scriptTa.value = scriptScene.sceneScript || '';
+      if(scriptTa && document.activeElement !== scriptTa) scriptTa.value = htmlToText(scriptScene.sceneScript || '');
     }
   }
-  // 遠端更新後，刷新場景進度 sdp 的指示/台詞欄位
+  // 遠端更新後，刷新場景進度 sdp 的指示/台詞欄位（contenteditable，正在編輯中則不覆蓋）
   if(_currentSDP){
     const sdpScene = scenes.find(x=>x.id===_currentSDP);
     if(sdpScene){
       const sdpScript = document.getElementById('sdp-script-text');
       const sdpDialogue = document.getElementById('sdp-dialogue');
-      if(sdpScript && document.activeElement !== sdpScript){
-        if(sdpScript.tagName==='TEXTAREA') sdpScript.value = sdpScene.sceneScript || '';
-        else if(typeof ceSetContent==='function') ceSetContent('script', sdpScene.sceneScript || '');
-      }
-      if(sdpDialogue && document.activeElement !== sdpDialogue){
-        if(sdpDialogue.tagName==='TEXTAREA') sdpDialogue.value = sdpScene.dialogue || '';
-        else if(typeof ceSetContent==='function') ceSetContent('dialogue', sdpScene.dialogue || '');
+      const dActive = document.activeElement;
+      const dEditing = el => el && (el === dActive || el.getAttribute('contenteditable') === 'true');
+      if(typeof ceSetContent === 'function'){
+        if(sdpScript && !dEditing(sdpScript)) ceSetContent('script', sdpScene.sceneScript || '');
+        if(sdpDialogue && !dEditing(sdpDialogue)) ceSetContent('dialogue', sdpScene.dialogue || '');
       }
     }
   }
@@ -5446,11 +5532,8 @@ function saveCurrentProjectState(){
   const scriptEl = document.getElementById('script-text');
   if(selectedScriptScene && scriptEl){
     normalizeSceneTextFields(selectedScriptScene);
-    // 只在劇本頁的 textarea 有值時才覆蓋，避免空白蓋掉 SDP 剛存的內容
-    if(scriptEl.value.trim()){
-      selectedScriptScene.sceneScript = scriptEl.value;
-      p.script = selectedScriptScene.sceneScript;
-    }
+    selectedScriptScene.sceneScript = scriptEl.value || '';
+    p.script = selectedScriptScene.sceneScript;
   }
   scenes.forEach(normalizeSceneTextFields);
   p.scenes=clone(scenes);
@@ -5458,8 +5541,7 @@ function saveCurrentProjectState(){
   p.announcements=clone(announcements);
   p.crew=clone(crew);
   p.equipment=clone(equipment);
-  const _scriptVal = document.getElementById('script-text')?.value;
-  if(_scriptVal) p.script = _scriptVal;
+  p.script=document.getElementById('script-text')?.value||p.script||'';
   persistSave();
   // 全量同步到 Supabase（非阻塞，後台執行）
   pushAllToSupabase();
@@ -5961,9 +6043,8 @@ function saveSceneDialogue(){
   if(!_currentSDP) return;
   const s=scenes.find(x=>x.id===_currentSDP);
   if(s){
-    const el = document.getElementById('sdp-dialogue');
-    const rawD = el ? (el.tagName === 'TEXTAREA' ? el.value : (el.querySelector('span[style*="background"]') ? el.innerHTML : ceStripToPlain(el.innerHTML))) : '';
-    s.dialogue = rawD;
+    const el=document.getElementById('sdp-dialogue');
+    s.dialogue = (typeof ceGetText==='function') ? ceGetText('dialogue') : (el ? el.innerHTML : '');
     saveCurrentProjectState();
     syncSceneToDB(s);
     broadcastChange('更新台詞 ' + _currentSDP);
@@ -5976,9 +6057,8 @@ function saveSceneScript(){
   if(!_currentSDP) return;
   const s=scenes.find(x=>x.id===_currentSDP);
   if(s){
-    const el = document.getElementById('sdp-script-text');
-    const rawS = el ? (el.tagName === 'TEXTAREA' ? el.value : (el.querySelector('span[style*="background"]') ? el.innerHTML : ceStripToPlain(el.innerHTML))) : '';
-    s.sceneScript = rawS;
+    const el=document.getElementById('sdp-script-text');
+    s.sceneScript = (typeof ceGetText==='function') ? ceGetText('script') : (el ? el.innerHTML : '');
     saveCurrentProjectState();
     syncSceneToDB(s);
     broadcastChange('更新場景指示 ' + _currentSDP);
@@ -5987,8 +6067,7 @@ function saveSceneScript(){
     const scriptSel = document.getElementById('script-scene-sel');
     if(scriptSel && scriptSel.value === s.id){
       const scriptTa = document.getElementById('script-text');
-      // plain text for the legacy script page textarea
-      if(scriptTa){ const d=document.getElementById('sdp-script-text'); scriptTa.value=d?(d.tagName==='TEXTAREA'?d.value:d.innerText||d.textContent||''):''; }
+      if(scriptTa) scriptTa.value = htmlToText(s.sceneScript);
     }
     toast('劇本已儲存','📄');
   }
@@ -6003,8 +6082,13 @@ openDetail = function(sid){
   normalizeSceneTextFields(s);
   const dEl = document.getElementById('sdp-dialogue');
   const sEl = document.getElementById('sdp-script-text');
-  if(dEl){ if(dEl.tagName==='TEXTAREA') dEl.value = s.dialogue || ''; else if(typeof ceSetContent==='function') ceSetContent('dialogue', s.dialogue || ''); }
-  if(sEl){ if(sEl.tagName==='TEXTAREA') sEl.value = s.sceneScript || ''; else if(typeof ceSetContent==='function') ceSetContent('script', s.sceneScript || ''); }
+  if(typeof ceSetContent === 'function'){
+    ceSetContent('dialogue', s.dialogue || '');
+    ceSetContent('script', s.sceneScript || '');
+  } else {
+    if(dEl) dEl.textContent = htmlToText(s.dialogue || '');
+    if(sEl) sEl.textContent = htmlToText(s.sceneScript || '');
+  }
   setAllSceneFieldsReadOnly();
 };
 
@@ -6027,12 +6111,7 @@ function setSceneFieldReadOnly(kind, readOnly=true){
   const cancelBtn = document.getElementById(cfg.cancel);
   const saveBtn = document.getElementById(cfg.save);
   if(el){
-    // Support both <textarea> (readOnly) and <div contenteditable>
-    if(el.tagName === 'TEXTAREA'){
-      el.readOnly = readOnly;
-    } else {
-      el.contentEditable = readOnly ? 'false' : 'true';
-    }
+    el.readOnly = readOnly;
     el.classList.toggle('sdp-readonly', readOnly);
   }
   if(status) status.textContent = readOnly ? '唯讀 · 按「編輯」才可修改' : '編輯中 · 按「儲存」後會自動鎖回';
@@ -6057,8 +6136,8 @@ function enableSceneFieldEdit(kind){
 function cancelSceneFieldEdit(kind){
   const s = scenes.find(x=>x.id===_currentSDP);
   if(s){
-    if(kind==='dialogue') ceSetContent('dialogue', s.dialogue || '');
-    if(kind==='script') ceSetContent('script', s.sceneScript || '');
+    if(kind==='dialogue'){ if(typeof ceSetContent==='function') ceSetContent('dialogue', s.dialogue||''); else document.getElementById('sdp-dialogue').textContent = htmlToText(s.dialogue||''); }
+    if(kind==='script'){ if(typeof ceSetContent==='function') ceSetContent('script', s.sceneScript||''); else document.getElementById('sdp-script-text').textContent = htmlToText(s.sceneScript||''); }
     if(kind==='notes') document.getElementById('sdp-notes').value = s.notes || '';
   }
   setSceneFieldReadOnly(kind, true);
@@ -6071,7 +6150,9 @@ function cancelSceneFieldEdit(kind){
 document.addEventListener('pointerdown', function(e){
   const field = e.target.closest('#sdp-dialogue, #sdp-script-text, #sdp-notes');
   if(!field) return;
-  const isLocked = field.tagName === 'TEXTAREA' ? field.readOnly : field.contentEditable === 'false';
+  const isLocked = field.tagName === 'TEXTAREA'
+    ? field.readOnly
+    : field.getAttribute('contenteditable') === 'false';
   if(isLocked){
     toast('請先按 ✎ 編輯，改完按 💾 儲存後會自動鎖回唯讀', '✎');
   }
@@ -6731,37 +6812,102 @@ function sdpShotsDone(){
   clapprRefreshSdpShots();
 }
 
+function _sdpEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// 更新場景詳情頁的「拍攝進度」進度條（新增/刪除鏡頭後呼叫）
+function clapprSyncSdpProgress(){
+  var sid=(typeof _currentSDP!=='undefined')?_currentSDP:null;if(!sid)return;
+  var arr=(typeof shots!=='undefined'&&shots[sid])?shots[sid]:[];
+  var done=arr.filter(function(s){return s.done;}).length;
+  var total=arr.length;
+  var pct=total>0?Math.round(done/total*100):0;
+  var fill=document.getElementById('sdp-progress-fill');
+  var label=document.getElementById('sdp-progress-label');
+  if(fill)fill.style.width=pct+'%';
+  if(label)label.textContent=done+' / '+total+' 鏡頭完成';
+}
+
 function clapprRefreshSdpShots(){
   var container=document.getElementById('sdp-shot-list');if(!container)return;
   var sid=(typeof _currentSDP!=='undefined')?_currentSDP:null;if(!sid)return;
   var arr=(typeof shots!=='undefined'&&shots[sid])?shots[sid]:[];
-  if(!arr.length){container.innerHTML='<div style="font-size:12px;color:var(--text-muted)">此場景尚未建立鏡頭</div>';return;}
+  if(!arr.length){container.innerHTML='<div style="font-size:12px;color:var(--text-muted)">此場景尚未建立鏡頭，按右上「＋ 鏡頭」新增。</div>';return;}
+  // 直接編輯：type / angle / lens / note 皆為可點擊的 contenteditable 欄位，失焦自動儲存
   container.innerHTML=arr.map(function(sh,i){
     var imgRow='<div class="shot-img-row">'+simgRowHtml(sh.id)+'</div>';
-    var delBtn=_sdpShotsEditing
-      ?'<button onclick="clapprSdpDelShot(\''+sid+'\','+i+')" style="margin-left:8px;background:transparent;border:1px solid rgba(231,76,60,.25);border-radius:5px;color:rgba(231,76,60,.5);font-size:10px;padding:2px 6px;cursor:pointer;flex-shrink:0">🗑</button>':'';
+    var typeF='<span class="sdp-ed sdp-ed-type" contenteditable="true" data-sid="'+_sdpEsc(sid)+'" data-i="'+i+'" data-field="type" data-ph="鏡別/景別" onblur="clapprSdpEditField(this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">'+_sdpEsc(sh.type)+'</span>';
+    var angleF='<span class="sdp-ed" contenteditable="true" data-sid="'+_sdpEsc(sid)+'" data-i="'+i+'" data-field="angle" data-ph="角度" onblur="clapprSdpEditField(this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">'+_sdpEsc(sh.angle)+'</span>';
+    var lensF='<span class="sdp-ed" contenteditable="true" data-sid="'+_sdpEsc(sid)+'" data-i="'+i+'" data-field="lens" data-ph="鏡頭" onblur="clapprSdpEditField(this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">'+_sdpEsc(sh.lens)+'</span>';
+    var noteF='<span class="sdp-ed sdp-ed-note" contenteditable="true" data-sid="'+_sdpEsc(sid)+'" data-i="'+i+'" data-field="note" data-ph="加備註…" onblur="clapprSdpEditField(this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">'+_sdpEsc(sh.note)+'</span>';
+    var delBtn='<button title="刪除鏡頭" onclick="clapprSdpDelShot(\''+_sdpEsc(sid)+'\','+i+')" style="margin-left:8px;background:transparent;border:1px solid rgba(231,76,60,.25);border-radius:5px;color:rgba(231,76,60,.55);font-size:11px;padding:3px 7px;cursor:pointer;flex-shrink:0">🗑</button>';
     return '<div class="sdp-shot-item '+(sh.done?'done-shot':'')+'">'+
-      '<div class="sdp-shot-num">'+sh.id+'</div>'+
-      '<div style="flex:1">'+
-        '<div class="sdp-shot-type">'+sh.type+'</div>'+
-        '<div class="sdp-shot-meta">'+sh.angle+' · 📷 '+sh.lens+(sh.note?' · '+sh.note:'')+'</div>'+
+      '<div class="sdp-shot-num">'+_sdpEsc(sh.id)+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div class="sdp-shot-type">'+typeF+'</div>'+
+        '<div class="sdp-shot-meta">'+angleF+' · 📷 '+lensF+' · '+noteF+'</div>'+
         imgRow+
       '</div>'+
-      '<button class="sdp-shot-btn '+(sh.done?'done-btn':'')+'" onclick="toggleShotFromDetail(\''+sid+'\','+i+')">'+(sh.done?'✓ 完成':'標記完成')+'</button>'+
+      '<button class="sdp-shot-btn '+(sh.done?'done-btn':'')+'" onclick="toggleShotFromDetail(\''+_sdpEsc(sid)+'\','+i+')">'+(sh.done?'✓ 完成':'標記完成')+'</button>'+
       delBtn+
     '</div>';
   }).join('');
 }
 
+// 失焦時把欄位寫回 shots 物件並同步（不重繪，避免游標跳掉）
+function clapprSdpEditField(el){
+  if(!el)return;
+  var sid=el.getAttribute('data-sid');
+  var i=parseInt(el.getAttribute('data-i'),10);
+  var field=el.getAttribute('data-field');
+  if(typeof shots==='undefined'||!shots[sid]||!shots[sid][i])return;
+  var sh=shots[sid][i];
+  var val=(el.innerText||el.textContent||'').replace(/\u00a0/g,' ').trim();
+  if(sh[field]===val)return; // 沒變更就不動作
+  sh[field]=val;
+  if(typeof persistSave==='function')persistSave();
+  if(typeof syncShotToDB==='function')syncShotToDB(sid,sh);
+  if(typeof broadcastChange==='function')broadcastChange('更新鏡頭 '+sh.id);
+}
+
+// 在目前場景直接新增一個鏡頭
+function clapprSdpAddShot(){
+  var sid=(typeof _currentSDP!=='undefined')?_currentSDP:null;if(!sid)return;
+  if(typeof shots==='undefined')return;
+  var arr=shots[sid]||(shots[sid]=[]);
+  // 產生不重複的鏡頭代號（沿用 場景-字母 規則）
+  var used={};arr.forEach(function(s){used[s.id]=1;});
+  var letterIdx=arr.length; var newId;
+  do{ newId=sid+'-'+String.fromCharCode(65+letterIdx); letterIdx++; }while(used[newId]&&letterIdx<260);
+  var shot={id:newId,type:'主鏡 (MS)',angle:'正面平拍',lens:'50mm',note:'',done:false};
+  arr.push(shot);
+  clapprRefreshSdpShots();
+  if(typeof clapprSyncSdpProgress==='function')clapprSyncSdpProgress();
+  if(typeof persistSave==='function')persistSave();
+  if(typeof syncShotToDB==='function')syncShotToDB(sid,shot);
+  if(typeof broadcastChange==='function')broadcastChange('新增鏡頭 '+shot.id);
+  toast&&toast('已新增鏡頭 '+shot.id+'，點欄位即可修改','⊡');
+  // 自動聚焦到新鏡頭的「鏡別」欄位
+  setTimeout(function(){
+    var list=document.getElementById('sdp-shot-list');
+    if(!list)return;
+    var fields=list.querySelectorAll('.sdp-ed-type');
+    var last=fields[fields.length-1];
+    if(last){last.focus();var r=document.createRange();r.selectNodeContents(last);var s=window.getSelection();s.removeAllRanges();s.addRange(r);}
+  },30);
+}
+
 function clapprSdpDelShot(sid,index){
-  if(typeof confirmDelete!=='function')return;
   var sh=(shots[sid]||[])[index];if(!sh)return;
-  confirmDelete('確定要刪除鏡頭「'+sh.id+'」？',function(){
+  var doDelete=function(){
     shots[sid].splice(index,1);
     clapprRefreshSdpShots();
+    if(typeof clapprSyncSdpProgress==='function')clapprSyncSdpProgress();
     if(typeof persistSave==='function')persistSave();
+    if(typeof broadcastChange==='function')broadcastChange('刪除鏡頭 '+sh.id);
     toast&&toast('鏡頭已刪除','🗑');
-  });
+  };
+  if(typeof confirmDelete==='function') confirmDelete('確定要刪除鏡頭「'+sh.id+'」？',doDelete);
+  else if(confirm('確定要刪除鏡頭「'+sh.id+'」？')) doDelete();
 }
 
 /* ─── CONTENTEDITABLE HIGHLIGHT EDITOR ──────────────────── */
@@ -6778,18 +6924,6 @@ var _ceIds = {
   dialogue: 'sdp-dialogue',
   script:   'sdp-script-text'
 };
-/* Strip HTML tags from saved text, convert <br> to \n — keeps storage clean */
-function ceStripToPlain(html){
-  if(!html) return '';
-  return html
-    .replace(/<br\s*\/?>/gi,'\n')
-    .replace(/<div>/gi,'\n').replace(/<\/div>/gi,'')
-    .replace(/<p>/gi,'').replace(/<\/p>/gi,'\n')
-    .replace(/<[^>]+>/g,'')
-    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ')
-    .replace(/\r\n/g,'\n').replace(/\r/g,'\n')
-    .replace(/\n{3,}/g,'\n\n').trim();
-}
 
 function ceSetReadonly(field, readonly){
   var el=document.getElementById(_ceIds[field]);
@@ -6804,13 +6938,8 @@ function ceSetReadonly(field, readonly){
 function ceGetText(field){
   var el=document.getElementById(_ceIds[field]);
   if(!el)return'';
-  // If there are highlight spans, preserve innerHTML (contains spans + <br>)
-  if(el.querySelector('span[style*="background"]')){
-    return el.innerHTML;
-  }
-  // Otherwise return plain text with real newlines
-  // innerText respects <br> as \n naturally
-  return (el.innerText||el.textContent||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  // return innerHTML to preserve marks
+  return el.innerHTML;
 }
 function ceGetPlainText(field){
   var el=document.getElementById(_ceIds[field]);
@@ -6821,104 +6950,89 @@ function ceGetPlainText(field){
 function ceSetContent(field, htmlOrText){
   var el=document.getElementById(_ceIds[field]);
   if(!el)return;
-  if(!htmlOrText||!htmlOrText.trim()){el.innerHTML='';return;}
-
-  // Always work in plain text — use ceStripToPlain to decode any HTML residue
-  var plain = ceStripToPlain(htmlOrText);
-
-  // If there are highlight spans saved, restore them carefully
-  var hasHighlight = /<span[^>]+style[^>]*background/i.test(htmlOrText);
-  if(hasHighlight){
-    // Re-parse: split on span tags, set each text node safely via DOM
-    el.innerHTML = '';
-    var parts = htmlOrText
-      .replace(/<div>/gi,'\n').replace(/<\/div>/gi,'')
-      .replace(/<p[^>]*>/gi,'').replace(/<\/p>/gi,'\n')
-      .split(/(<span[^>]*>[\s\S]*?<\/span>)/gi);
-    parts.forEach(function(part){
-      if(/^<span/i.test(part)){
-        var tmp=document.createElement('div'); tmp.innerHTML=part;
-        var sp=tmp.firstChild;
-        if(sp){ el.appendChild(sp); }
-      } else {
-        // plain text segment — split on \n, insert text nodes + <br>
-        var lines = part.replace(/<br\s*\/?>/gi,'\n').split('\n');
-        lines.forEach(function(line, i){
-          el.appendChild(document.createTextNode(line));
-          if(i < lines.length-1) el.appendChild(document.createElement('br'));
-        });
-      }
-    });
+  var val = (htmlOrText==null) ? '' : String(htmlOrText);
+  if(!val.trim()){el.innerHTML='';return;}
+  function hasTag(s){return /<(br|div|p|span|b|i|u|font|strong|em|h[1-6]|ul|ol|li)\b|<\/(div|p|span|b|i|u|font|strong|em|h[1-6]|ul|ol|li)>/i.test(s);}
+  // 修復舊資料的「重複跳脫」問題：沒有真正的標籤、卻含有被跳脫成文字的標籤（例如 &lt;br&gt; 甚至 &amp;amp;…）→ 反覆解碼到穩定，避免畫面一直出現文字版的 <br>
+  if(!hasTag(val) && /&(amp|lt|gt|#0*38|#0*60|#0*62|nbsp);/i.test(val)){
+    var prev, guard=0, dec=document.createElement('textarea');
+    do { prev=val; dec.innerHTML=val; val=dec.value; guard++; } while(val!==prev && guard<8);
+  }
+  if(hasTag(val)){
+    el.innerHTML=val;                       // 真正的 HTML（保留換行 <br> 與螢光筆 <span>）
   } else {
-    // Pure plain text: use DOM text nodes — zero escaping needed, zero double-encode
-    el.innerHTML = '';
-    var lines = plain.split('\n');
-    lines.forEach(function(line, i){
-      el.appendChild(document.createTextNode(line));
-      if(i < lines.length-1) el.appendChild(document.createElement('br'));
-    });
+    // 純文字 — 跳脫一次並把換行轉成 <br>
+    el.innerHTML=val.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\r\n?|\n/g,'<br>');
   }
 }
 
 function clapprHL(field, color){
   var el=document.getElementById(_ceIds[field]);
-  if(!el||el.contentEditable==='false'){toast&&toast('請先按「✎ 編輯」再標色','✎');return;}
-  // Make sure the div is focused and selection exists
+  if(!el||el.getAttribute('contenteditable')==='false'){toast&&toast('請先按「✎ 編輯」再標色','✎');return;}
+  el.focus();
   var sel=window.getSelection();
   if(!sel||!sel.rangeCount||sel.isCollapsed){
-    // try saved selection
-    if(_ceSavedRange[field]){
-      sel.removeAllRanges();sel.addRange(_ceSavedRange[field]);
-    } else {
-      toast&&toast('請先選取文字','💡');return;
+    if(_ceSavedRange[field]){ sel.removeAllRanges(); sel.addRange(_ceSavedRange[field]); }
+    else { toast&&toast('請先選取要標色的文字','💡'); return; }
+  }
+  var range=sel.getRangeAt(0);
+  if(range.collapsed){ toast&&toast('請先選取要標色的文字','💡'); return; }
+  // 安全防呆：選取範圍必須在這個編輯框內，避免動到頁面其他地方
+  if(!el.contains(range.commonAncestorContainer)){ toast&&toast('請在台詞／劇本框內選取文字','💡'); return; }
+
+  // 先用瀏覽器內建指令（最穩、不會吃掉內容）
+  var done=false;
+  try{ done=document.execCommand('hiliteColor', false, color); }catch(e){}
+  if(!done){ try{ done=document.execCommand('backColor', false, color); }catch(e){} }
+
+  // 內建指令失敗才用手動包 span，並在失敗時把內容放回去，絕不遺失文字
+  if(!done){
+    var span=document.createElement('span');
+    span.className='hl-mark';
+    span.style.backgroundColor=color;
+    try{
+      range.surroundContents(span);
+      done=true;
+    }catch(ex){
+      try{
+        var frag=range.extractContents();
+        span.appendChild(frag);
+        range.insertNode(span);
+        done=true;
+      }catch(e2){
+        // 還原：把已抽出的內容放回原處
+        if(span && span.childNodes.length && !span.parentNode){
+          while(span.firstChild) range.insertNode(span.firstChild);
+        }
+        toast&&toast('這段選取無法標色，請選短一點再試一次','⚠');
+      }
     }
   }
-  // use execCommand — most reliable cross-browser approach
-  var range=sel.getRangeAt(0);
-  if(range.collapsed){toast&&toast('請先選取文字','💡');return;}
-  // wrap selection in a span
-  var span=document.createElement('span');
-  span.style.background=color;
-  span.style.opacity='0.45';
-  span.style.borderRadius='2px';
-  span.style.padding='0 1px';
-  try{
-    range.surroundContents(span);
-  } catch(ex){
-    // selection crosses nodes — use extractContents
-    var frag=range.extractContents();
-    span.appendChild(frag);
-    range.insertNode(span);
-  }
+  // 統一把螢光筆文字維持深色、好閱讀
+  el.querySelectorAll('span[style*="background"],font[color]').forEach(function(m){ m.style.color='#1a1a1a'; });
   sel.removeAllRanges();
-  // sync raw textarea
+  _ceSavedRange[field]=null;
   ceSyncRaw(field);
 }
 
 function clapprHLClear(field){
   var el=document.getElementById(_ceIds[field]);
-  if(!el||el.contentEditable==='false'){toast&&toast('請先按「✎ 編輯」再清除','✎');return;}
-  // remove all highlight spans
-  el.querySelectorAll('span[style*="background"]').forEach(function(sp){
-    var p=sp.parentNode;
-    while(sp.firstChild)p.insertBefore(sp.firstChild,sp);
+  if(!el||el.getAttribute('contenteditable')==='false'){toast&&toast('請先按「✎ 編輯」再清除','✎');return;}
+  // 解開所有螢光筆標記（span 有背景色，或 font[color]/帶背景的 font）
+  el.querySelectorAll('span[style*="background"],font[color],font[style*="background"]').forEach(function(sp){
+    var p=sp.parentNode; if(!p) return;
+    while(sp.firstChild) p.insertBefore(sp.firstChild,sp);
     p.removeChild(sp);
   });
   el.normalize();
   ceSyncRaw(field);
+  toast&&toast('已清除螢光筆','🧽');
 }
 
 function ceSyncRaw(field){
   // keep hidden textarea in sync for any legacy save code that reads .value
   var raw=document.getElementById(_ceIds[field]+'-raw');
-  if(raw){
-    var el=document.getElementById(_ceIds[field]);
-    if(!el){raw.value='';return;}
-    // store plain text (or HTML with spans if highlighted)
-    raw.value = el.querySelector('span[style*="background"]')
-      ? el.innerHTML
-      : ceStripToPlain(el.innerHTML);
-  }
+  if(raw){var el=document.getElementById(_ceIds[field]);raw.value=el?el.innerHTML:'';}
 }
 
 /* Save selection so clicking hl button doesn't lose it */
@@ -7015,7 +7129,7 @@ function ceSetupEvents(){
     saveSceneDialogue=function(){
       var s=(typeof _currentSDP!=='undefined'&&typeof scenes!=='undefined')?scenes.find(function(x){return x.id===_currentSDP;}):null;
       if(s){
-        s.dialogue=ceGetText('dialogue'); // ceGetText already returns plain text or HTML-with-spans
+        s.dialogue=ceGetText('dialogue');
         if(typeof saveCurrentProjectState==='function')saveCurrentProjectState();
         if(typeof syncSceneToDB==='function')syncSceneToDB(s);
         if(typeof broadcastChange==='function')broadcastChange('更新台詞 '+_currentSDP);
@@ -7034,7 +7148,7 @@ function ceSetupEvents(){
     saveSceneScript=function(){
       var s=(typeof _currentSDP!=='undefined'&&typeof scenes!=='undefined')?scenes.find(function(x){return x.id===_currentSDP;}):null;
       if(s){
-        s.sceneScript=ceGetText('script'); // ceGetText already returns plain text or HTML-with-spans
+        s.sceneScript=ceGetText('script');
         if(typeof saveCurrentProjectState==='function')saveCurrentProjectState();
         if(typeof syncSceneToDB==='function')syncSceneToDB(s);
         if(typeof broadcastChange==='function')broadcastChange('更新場景指示 '+_currentSDP);
