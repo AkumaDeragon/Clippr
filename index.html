@@ -3401,8 +3401,8 @@ function sceneRow(s, showDetail=false){
   const skipBtn = s.status === 'skip'
     ? `<button class="btn btn-green btn-sm" onclick="event.stopPropagation();resumeScene('${s.id}')">取消暫緩</button>`
     : `<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();skipScene('${s.id}')">暫緩</button>`;
-  const dragAttrs = IS_TOUCH_PRIMARY ? '' : ' draggable="true" ondragstart="sceneDragStart(event)" ondragover="sceneDragOver(event)" ondrop="sceneDrop(event)" ondragend="sceneDragEnd(event)"';
-  return `<tr class="${s.status==='current'?'current-row':''}"${dragAttrs} data-scene-id="${s.id}">
+  // 拖拽改順序已移除（會在觸控/觸控螢幕上搶走捲動手勢）。改順序請用 ▲▼ 按鈕。
+  return `<tr class="${s.status==='current'?'current-row':''}" data-scene-id="${s.id}">
     <td style="width:44px;padding:0 2px 0 6px;white-space:nowrap">
       <button onclick="event.stopPropagation();sceneMoveUp('${s.id}')" title="上移" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;display:block;width:100%">▲</button>
       <button onclick="event.stopPropagation();sceneMoveDown('${s.id}')" title="下移" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;display:block;width:100%">▼</button>
