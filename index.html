@@ -7186,7 +7186,17 @@ function clapprSdpAddShot(){
 
 function clapprSdpDelShot(sid,index){
   var sh=(shots[sid]||[])[index];if(!sh)return;
-  var doDelete=function(){
+  var doDelete=async function(){
+    // 先刪雲端那筆鏡頭，否則重新整理會被雲端資料拉回來（看起來就像刪不掉）
+    if(typeof supabase!=='undefined' && supabase){
+      _suppressRemoteReloadUntil = Date.now()+4000; // 抑制自己刪除造成的回音
+      try{
+        await supabase.from('shots').delete().eq('project_id', getProjectId()).eq('shot_id', sh.id);
+        await supabase.from('shot_images').delete().eq('project_id', getProjectId()).eq('shot_id', sh.id);
+      }catch(e){ console.error('刪除鏡頭雲端同步失敗',e); toast&&toast('刪除未同步到雲端，請檢查連線','⚠'); }
+    }
+    // 一併清掉本機這個鏡頭的圖片快取，避免殘留
+    try{ var _d=simgLoad(); if(_d[sh.id]){ delete _d[sh.id]; simgSave(_d); } }catch(e){}
     shots[sid].splice(index,1);
     clapprRefreshSdpShots();
     if(typeof clapprSyncSdpProgress==='function')clapprSyncSdpProgress();
