@@ -7198,6 +7198,122 @@ function clapprSdpDelShot(sid,index){
   else if(confirm('確定要刪除鏡頭「'+sh.id+'」？')) doDelete();
 }
 
+/* ═══ SHOT IMAGE CLOUD SYNC (Supabase) ═══════════════════════
+   原本鏡頭圖片只存在各裝置自己的 localStorage（key: clappr_shot_imgs_v2），
+   從來沒有上雲端，所以手機跟電腦各看各的、出現「完全不同的照片」。
+   這段把圖片跟著 shots 一起同步到 Supabase 的 shot_images 表，
+   所有裝置共用同一份。需先在 Supabase SQL Editor 跑一次建表 SQL（見說明）。
+*/
+(function(){
+  var TBL='shot_images';
+  function _pid(){ return (typeof getProjectId==='function')?getProjectId():'clappr-default'; }
+  function _hasDB(){ return typeof supabase!=='undefined' && supabase; }
+
+  // 把某個鏡頭目前快取裡的圖片整批覆蓋寫回雲端（先刪後插，索引才不會錯亂）
+  async function simgSyncShotToDB(shotId){
+    if(!_hasDB() || !shotId) return;
+    var pid=_pid();
+    var arr=(typeof simgGet==='function')?simgGet(shotId):[];
+    try{
+      _suppressRemoteReloadUntil = Date.now()+4000; // 抑制自己寫入造成的回音
+      await supabase.from(TBL).delete().eq('project_id',pid).eq('shot_id',shotId);
+      if(arr.length){
+        var rows=arr.map(function(data,idx){
+          return { project_id:pid, shot_id:shotId, idx:idx, data:data, updated_at:new Date().toISOString() };
+        });
+        var res=await supabase.from(TBL).upsert(rows,{ onConflict:'project_id,shot_id,idx' });
+        if(res && res.error){ console.error('圖片上傳失敗:',res.error); toast&&toast('圖片雲端同步失敗（請檢查 shot_images 表/權限）','⚠'); }
+      }
+    }catch(e){ console.error('simgSyncShotToDB error',e); }
+  }
+
+  // 從雲端載入整個專案的圖片，覆蓋本機快取（雲端為準 → 各裝置一致）
+  async function simgLoadFromDB(){
+    if(!_hasDB()) return;
+    try{
+      var res=await supabase.from(TBL).select('*').eq('project_id',_pid());
+      if(res && res.error){ console.error('圖片讀取失敗:',res.error); return; }
+      var rows=res.data||[];
+      var grouped={};
+      rows.forEach(function(r){ (grouped[r.shot_id]=grouped[r.shot_id]||[]).push(r); });
+      Object.keys(grouped).forEach(function(k){
+        grouped[k].sort(function(a,b){ return (a.idx||0)-(b.idx||0); });
+        grouped[k]=grouped[k].map(function(r){ return r.data; });
+      });
+      if(typeof simgSave==='function') simgSave(grouped); // 用雲端資料覆蓋本機快取
+    }catch(e){ console.error('simgLoadFromDB error',e); }
+  }
+
+  // ── 包住上傳：原本只寫 localStorage，現在寫完再推上雲端 ──
+  if(typeof clapprImgUpload==='function'){
+    var _origUpload=clapprImgUpload;
+    window.clapprImgUpload=clapprImgUpload=function(ev,shotId){
+      var files=Array.from((ev.target&&ev.target.files)||[]);
+      var before=(typeof simgGet==='function')?simgGet(shotId).length:0;
+      var expected=Math.min(files.length, 7-before);
+      _origUpload(ev,shotId); // 原函式逐張經 FileReader+canvas 壓縮後 push 進快取
+      if(!files.length || expected<=0) return;
+      // 輪詢等快取數量到位（每張圖需要一點處理時間），到位後一次同步整個鏡頭
+      var tries=0;
+      var t=setInterval(function(){
+        tries++;
+        var now=(typeof simgGet==='function')?simgGet(shotId).length:0;
+        if(now>=before+expected || tries>60){ clearInterval(t); simgSyncShotToDB(shotId); }
+      },150);
+    };
+  }
+
+  // ── 包住刪除：刪完本機後同步雲端 ──
+  if(typeof simgDelAndRefresh==='function'){
+    var _origDel=simgDelAndRefresh;
+    window.simgDelAndRefresh=simgDelAndRefresh=function(id,i){
+      _origDel(id,i);
+      simgSyncShotToDB(id);
+    };
+  }
+
+  // ── 包住 loadAllFromDB：載完文字資料後，也把圖片從雲端拉回來並刷新畫面 ──
+  if(typeof loadAllFromDB==='function'){
+    var _origLoad=loadAllFromDB;
+    loadAllFromDB=window.loadAllFromDB=async function(){
+      await _origLoad.apply(this,arguments);
+      await simgLoadFromDB();
+      if(typeof clapprRefreshShotCards==='function') clapprRefreshShotCards();
+      if(typeof clapprRefreshSdpShots==='function') clapprRefreshSdpShots();
+    };
+  }
+
+  // ── 即時同步：別的裝置改了圖片，這裡收到通知就重抓並刷新 ──
+  var imgChannel=null;
+  function subscribeImageRealtime(){
+    if(!_hasDB()) return;
+    if(imgChannel){ try{ supabase.removeChannel(imgChannel); }catch(e){} imgChannel=null; }
+    imgChannel=supabase
+      .channel('imgs-'+_pid())
+      .on('postgres_changes',{ event:'*', schema:'public', table:TBL, filter:'project_id=eq.'+_pid() }, async function(){
+        if(Date.now() < _suppressRemoteReloadUntil) return; // 自己剛寫的，略過避免閃動
+        await simgLoadFromDB();
+        if(typeof clapprRefreshShotCards==='function') clapprRefreshShotCards();
+        if(typeof clapprRefreshSdpShots==='function') clapprRefreshSdpShots();
+      })
+      .subscribe();
+  }
+  if(typeof subscribeRealtime==='function'){
+    var _origSub=subscribeRealtime;
+    subscribeRealtime=window.subscribeRealtime=function(){
+      _origSub.apply(this,arguments);
+      subscribeImageRealtime();
+    };
+  }
+
+  // 若 supabase 在本段執行前就已連線（subscribeRealtime 早於本 patch 跑過），補訂閱一次
+  setTimeout(function(){ if(_hasDB()) subscribeImageRealtime(); }, 3000);
+
+  // 對外曝露，方便除錯
+  window.simgSyncShotToDB=simgSyncShotToDB;
+  window.simgLoadFromDB=simgLoadFromDB;
+})();
+
 /* ─── CONTENTEDITABLE HIGHLIGHT EDITOR ──────────────────── */
 /*  Strategy:
     - sdp-dialogue and sdp-script-text are now <div contenteditable>
