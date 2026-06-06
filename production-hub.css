@@ -41,7 +41,7 @@ html, body {
   overflow: hidden;
   /* 手機觸控修復：防止 iOS 橡皮筋效果造成卡頓 */
   overscroll-behavior: none;
-  -webkit-overflow-scrolling: auto;
+  /* 移除 -webkit-overflow-scrolling: auto — 此設定會關閉 iOS 慣性滑動，導致子元素滑不動 */
 }
 
 /* 手機觸控：確保可滾動區域不被攔截 */
