@@ -1166,31 +1166,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
   .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   桌機捲動修正：用和手機「完全相同」的整頁流式捲動（已證實可用）。
-   side bar 改成 fixed 完全脫離排版，內容用 padding-left 讓開，
-   這樣側邊欄絕對不會卡住整頁捲動。
-   ══════════════════════════════════════════════════════════════ */
-@media (min-width: 769px){
-  html{ height:auto !important; overflow-x:hidden !important; overflow-y:auto !important; }
-  body{
-    height:auto !important; min-height:100%;
-    overflow-x:hidden !important; overflow-y:auto !important;
-    overscroll-behavior-y:auto;
-  }
-  .app{ height:auto !important; min-height:100vh; overflow:visible !important; display:block !important; }
-  /* 頂列固定在最上面 */
-  .topbar{ position:sticky; top:0; z-index:60; }
-  /* main-body 用 block（跟手機一樣），不再用 flex，避免 flex 卡住捲動 */
-  .main-body{ display:block !important; height:auto !important; min-height:0 !important; overflow:visible !important; padding-bottom:0 !important; }
-  .content{ height:auto !important; min-height:auto !important; max-height:none !important; overflow:visible !important; overflow-x:hidden !important; }
-  /* 側邊欄固定在左側（fixed＝完全脫離排版，不影響捲動）；內容整塊往右讓開 */
-  body.project-mode .sidebar{
-    position:fixed !important; top:62px; left:0; bottom:0;
-    width:220px !important; overflow-y:auto; z-index:40;
-  }
-  body.project-mode .main-body{ padding-left:220px; }
-}
+/* 桌機版不需額外覆寫，production-hub.css 的 flex 佈局已正確處理滾動 */
 </style>
 <body>
 <!-- ═══ PROFILE ONBOARDING OVERLAY ═══ -->
