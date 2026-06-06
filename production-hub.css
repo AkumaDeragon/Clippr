@@ -143,7 +143,7 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
 .btn-icon:hover { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-faint); }
 
 /* ── MAIN BODY ── */
-.main-body { display: flex; flex: 1; overflow: hidden; }
+.main-body { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
 /* ── LEFT SIDEBAR ── */
 .sidebar {
@@ -196,7 +196,7 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
 
 /* ── CONTENT AREA ── */
 .content {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
+  flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
   background: var(--bg-base);
   position: relative;
 }
@@ -1636,9 +1636,9 @@ html, body { height: 100dvh; }
   #page-scenes .table-header{align-items:flex-start; gap:12px; flex-direction:column;}
   #page-scenes .table-title{font-size:18px;}
   #page-scenes .scene-filter-tab{font-size:13px; padding:8px 14px;}
-  #page-scenes .table-header > div{width:100%; overflow-x:auto; padding-bottom:4px; touch-action:pan-x;}
-  /* 寬表格只負責左右滑，直向捲動交還給整頁 → 整頁可以正常往下滑 */
-  .table-wrap{ touch-action:pan-x; -webkit-overflow-scrolling:touch; }
+  #page-scenes .table-header > div{width:100%; overflow-x:auto; padding-bottom:4px;}
+  /* 寬表格可左右滑；直向捲動由整頁負責（靠 .content/.main-body 的 min-height:0 生效） */
+  .table-wrap{ -webkit-overflow-scrolling:touch; }
   .sdp-section-head{align-items:flex-start; gap:8px; flex-direction:column;}
   .sdp-edit-actions{justify-content:flex-start; width:100%;}
   .sdp-edit-actions .btn{flex:1 1 auto; justify-content:center;}
