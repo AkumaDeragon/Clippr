@@ -1166,9 +1166,32 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
   .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   桌機捲動修正：同樣改成整頁原生捲動，但側邊欄用 sticky 固定不跟著捲。
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 769px){
+  html{ height:auto !important; overflow-x:hidden !important; overflow-y:auto !important; }
+  body{
+    height:auto !important; min-height:100%;
+    overflow-x:hidden !important; overflow-y:auto !important;
+    overscroll-behavior-y:auto;
+  }
+  .app{ height:auto !important; min-height:100vh; overflow:visible !important; display:block !important; }
+  /* 頂列固定在最上面 */
+  .topbar{ position:sticky; top:0; z-index:60; }
+  .main-body{ height:auto !important; min-height:0 !important; overflow:visible !important; align-items:flex-start; }
+  body.project-mode .main-body{ display:flex !important; align-items:flex-start !important; }
+  /* 側邊欄固定不動，內容區跟著整頁捲 */
+  body.project-mode .sidebar{
+    position:sticky; top:62px; align-self:flex-start;
+    height:calc(100vh - 62px); overflow-y:auto;
+  }
+  .content{ height:auto !important; min-height:calc(100vh - 62px); max-height:none !important; overflow:visible !important; overflow-x:hidden !important; }
+}
+
 /* 暫時的版本標記：確認有載到新檔（確認沒問題後可移除） */
 body::after{
-  content:"scroll-fix v6";
+  content:"scroll-fix v7";
   position:fixed; left:8px; bottom:calc(74px + env(safe-area-inset-bottom,0px));
   z-index:99999; font:10px/1 ui-monospace,monospace; letter-spacing:.5px;
   color:rgba(201,168,76,.9); background:rgba(0,0,0,.55);
@@ -5101,6 +5124,8 @@ const getProjectId = () => window._activeProjectId || currentProjectId || 'clapp
 let supabase = null;
 let currentEditor = '導演';
 let realtimeChannel = null;
+// 自己剛寫入 DB 後，短時間內忽略「自己造成的」即時回音，避免重新載入把剛排好的順序洗掉（回朔）。
+let _suppressRemoteReloadUntil = 0;
 
 // ── Supabase 初始化 ──────────────────────
 async function initSupabase(){
@@ -5287,6 +5312,8 @@ function subscribeRealtime(){
 
 // ── 遠端變更處理 ─────────────────────────
 async function handleRemoteChange(payload){
+  // 如果是自己剛剛寫入造成的回音，直接略過（本機狀態已是最新，避免回朔/閃動）
+  if (Date.now() < _suppressRemoteReloadUntil) return;
   const tbl = payload && (payload.table || (payload.data && payload.data.table) || '');
   const evt = '';
   const isNewAnn = tbl === 'announcements';
@@ -5779,6 +5806,8 @@ function pushAllToSupabase(){
   if(!pid || pid === 'clappr-default') return;
   clearTimeout(_pushTimer);
   _pushTimer = setTimeout(async () => {
+    // 接下來幾秒內，自己造成的即時回音都先略過，避免剛排好的順序被重新載入洗掉
+    _suppressRemoteReloadUntil = Date.now() + 5000;
     try {
       // scenes
       if(scenes.length){
@@ -5795,6 +5824,8 @@ function pushAllToSupabase(){
           toast('⚠ 場景同步失敗：' + se.message, '⚠');
           return;
         }
+        // 場景已寫入，延長忽略回音的時間，確保「自己造成的」回音不會把順序洗回去
+        _suppressRemoteReloadUntil = Date.now() + 4000;
       }
       // shots
       const shotRows = [];
