@@ -1115,6 +1115,65 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .menu-item-scenes { background:rgba(201,168,76,.06)!important; }
 .menu-item-scenes .menu-ic { color:rgba(201,168,76,.7)!important; }
 .menu-item-scenes span:last-child { color:rgba(201,168,76,.85)!important; }
+
+/* ══════════════════════════════════════════════════════════════
+   手機捲動修正（最後一條規則，蓋過所有設定）
+   不再用「內層容器捲動」那種容易卡死的做法，改成整個頁面原生捲動。
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px){
+  html{
+    height:auto !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    -webkit-text-size-adjust:100%;
+  }
+  body{
+    height:auto !important;
+    min-height:100%;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:auto;
+    /* 留空間給固定的底部導覽列 */
+    padding-bottom:calc(78px + env(safe-area-inset-bottom,0px)) !important;
+    touch-action:auto !important;
+  }
+  .app{
+    height:auto !important;
+    min-height:100dvh;
+    overflow:visible !important;
+    display:block !important;
+  }
+  .main-body{
+    display:block !important;
+    height:auto !important;
+    min-height:0 !important;
+    overflow:visible !important;
+    padding-bottom:0 !important;
+  }
+  .content{
+    height:auto !important;
+    min-height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+    overflow-x:hidden !important;
+    padding-bottom:8px !important;
+    touch-action:auto !important;
+  }
+  /* 頂列跟著捲動時黏在最上面，不會擋住內容 */
+  .topbar{ position:sticky; top:0; z-index:60; }
+  /* 寬表格自己負責左右滑，不影響整頁上下捲動 */
+  .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+
+/* 暫時的版本標記：確認有載到新檔（確認沒問題後可移除） */
+body::after{
+  content:"scroll-fix v6";
+  position:fixed; left:8px; bottom:calc(74px + env(safe-area-inset-bottom,0px));
+  z-index:99999; font:10px/1 ui-monospace,monospace; letter-spacing:.5px;
+  color:rgba(201,168,76,.9); background:rgba(0,0,0,.55);
+  padding:3px 7px; border-radius:6px; pointer-events:none;
+}
 </style>
 <body>
 <!-- ═══ PROFILE ONBOARDING OVERLAY ═══ -->
