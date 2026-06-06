@@ -3250,8 +3250,8 @@ function enableSceneInfoEdit(){
   const saveBtn = document.getElementById('sdp-info-save-btn');
   const statusEl = document.getElementById('sdp-info-status');
   if(editBtn) editBtn.style.display = 'none';
-  if(cancelBtn) cancelBtn.style.display = '';
-  if(saveBtn) saveBtn.style.display = '';
+  if(cancelBtn) cancelBtn.style.display = 'inline-flex';
+  if(saveBtn) saveBtn.style.display = 'inline-flex';
   if(statusEl) statusEl.textContent = '✎ 編輯中';
   // 聚焦名稱欄位
   const nameInput = document.getElementById('sdp-edit-name');
