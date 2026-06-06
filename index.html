@@ -1968,8 +1968,53 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
         <div class="sdp-sidebar">
           <!-- 基本資訊 -->
           <div class="sdp-section">
-            <div class="sdp-section-title">基本資訊</div>
+            <div class="sdp-section-head compact-head">
+              <div class="sdp-section-title">基本資訊</div>
+              <div class="sdp-edit-actions">
+                <span id="sdp-info-status" class="sdp-edit-status">唯讀</span>
+                <button class="btn btn-outline btn-sm" id="sdp-info-edit-btn" onclick="enableSceneInfoEdit()">✎ 編輯</button>
+                <button class="btn btn-outline btn-sm sdp-edit-only" id="sdp-info-cancel-btn" onclick="cancelSceneInfoEdit()" style="display:none">取消</button>
+                <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-info-save-btn" onclick="saveSceneInfo()" style="display:none">💾 儲存</button>
+              </div>
+            </div>
+            <!-- 唯讀顯示 -->
             <div class="sdp-info-grid" id="sdp-info-grid"></div>
+            <!-- 編輯模式 -->
+            <div id="sdp-info-edit-form" style="display:none">
+              <div class="form-grid2" style="gap:8px;margin-bottom:8px">
+                <div class="form-field">
+                  <label class="form-label" style="font-size:10px">場景名稱</label>
+                  <input class="form-input" id="sdp-edit-name" placeholder="場景名稱" style="font-size:13px">
+                </div>
+                <div class="form-field">
+                  <label class="form-label" style="font-size:10px">地點</label>
+                  <input class="form-input" id="sdp-edit-loc" placeholder="地點" style="font-size:13px">
+                </div>
+              </div>
+              <div class="form-grid2" style="gap:8px;margin-bottom:8px">
+                <div class="form-field">
+                  <label class="form-label" style="font-size:10px">內 / 外景</label>
+                  <select class="form-select" id="sdp-edit-inout" style="font-size:13px">
+                    <option value="INT">INT — 內景</option>
+                    <option value="EXT">EXT — 外景</option>
+                    <option value="INT/EXT">INT/EXT — 混合</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label class="form-label" style="font-size:10px">日 / 夜景</label>
+                  <select class="form-select" id="sdp-edit-daynight" style="font-size:13px">
+                    <option value="DAY">日景</option>
+                    <option value="NIGHT">夜景</option>
+                    <option value="DUSK">黃昏</option>
+                    <option value="DAWN">黎明</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-field" style="margin-bottom:0">
+                <label class="form-label" style="font-size:10px">頁碼</label>
+                <input class="form-input" id="sdp-edit-page" type="number" placeholder="0" style="font-size:13px;width:80px">
+              </div>
+            </div>
           </div>
           <!-- 參與角色 -->
           <div class="sdp-section">
@@ -3036,6 +3081,20 @@ function openDetail(sid) {
   const s = scenes.find(x => x.id === sid);
   if (!s) return;
   _currentSDP = sid;
+  // 重置基本資訊編輯狀態
+  _sceneInfoEditing = false;
+  const _infoGrid = document.getElementById('sdp-info-grid');
+  const _infoForm = document.getElementById('sdp-info-edit-form');
+  const _infoEditBtn = document.getElementById('sdp-info-edit-btn');
+  const _infoCancelBtn = document.getElementById('sdp-info-cancel-btn');
+  const _infoSaveBtn = document.getElementById('sdp-info-save-btn');
+  const _infoStatus = document.getElementById('sdp-info-status');
+  if(_infoGrid) _infoGrid.style.display = '';
+  if(_infoForm) _infoForm.style.display = 'none';
+  if(_infoEditBtn) _infoEditBtn.style.display = '';
+  if(_infoCancelBtn) _infoCancelBtn.style.display = 'none';
+  if(_infoSaveBtn) _infoSaveBtn.style.display = 'none';
+  if(_infoStatus) _infoStatus.textContent = '唯讀';
 
   // Figure out which page we came from to go back
   const active = document.querySelector('.page.active');
@@ -3107,6 +3166,7 @@ function backToSceneListFromDetail() {
   // 返回固定回「場景進度」列表，不再照來源頁亂跳。
   setAllSceneFieldsReadOnly?.();
   _sceneFieldEditing = { dialogue:false, script:false, notes:false };
+  _sceneInfoEditing = false;
   _currentSDP = null;
 
   // 離開場景詳情，按鈕改回「回主頁」
@@ -3124,6 +3184,7 @@ function backToSceneListFromDetail() {
 function backFromSceneDetail() {
   // 不自動儲存，避免誤按或誤改；只有按「儲存」才會寫入。
   _sceneFieldEditing = { dialogue:false, script:false, notes:false };
+  _sceneInfoEditing = false;
   _currentSDP = null;
 
   // 離開場景詳情，按鈕改回「回主頁」
@@ -3162,6 +3223,106 @@ function saveSceneNotes() {
       toast('備注已儲存', '💾');
     }
   }
+}
+
+// ── 場景基本資訊編輯 ──────────────────────────────────────────
+let _sceneInfoEditing = false;
+
+function enableSceneInfoEdit(){
+  if(_sceneInfoEditing) return;
+  const s = (typeof _currentSDP !== 'undefined' && typeof scenes !== 'undefined') ? scenes.find(x => x.id === _currentSDP) : null;
+  if(!s) return;
+  _sceneInfoEditing = true;
+  // 填入目前值
+  const n = document.getElementById('sdp-edit-name'); if(n) n.value = s.name || '';
+  const l = document.getElementById('sdp-edit-loc');  if(l) l.value = s.loc || '';
+  const io = document.getElementById('sdp-edit-inout'); if(io) io.value = s.inout || 'INT';
+  const dn = document.getElementById('sdp-edit-daynight'); if(dn) dn.value = s.daynight || 'DAY';
+  const pg = document.getElementById('sdp-edit-page'); if(pg) pg.value = s.page || '';
+  // 切換顯示
+  const grid = document.getElementById('sdp-info-grid');
+  const form = document.getElementById('sdp-info-edit-form');
+  if(grid) grid.style.display = 'none';
+  if(form) form.style.display = 'block';
+  // 按鈕
+  const editBtn = document.getElementById('sdp-info-edit-btn');
+  const cancelBtn = document.getElementById('sdp-info-cancel-btn');
+  const saveBtn = document.getElementById('sdp-info-save-btn');
+  const statusEl = document.getElementById('sdp-info-status');
+  if(editBtn) editBtn.style.display = 'none';
+  if(cancelBtn) cancelBtn.style.display = '';
+  if(saveBtn) saveBtn.style.display = '';
+  if(statusEl) statusEl.textContent = '✎ 編輯中';
+  // 聚焦名稱欄位
+  const nameInput = document.getElementById('sdp-edit-name');
+  if(nameInput) setTimeout(() => nameInput.focus(), 0);
+}
+
+function cancelSceneInfoEdit(){
+  _sceneInfoEditing = false;
+  const grid = document.getElementById('sdp-info-grid');
+  const form = document.getElementById('sdp-info-edit-form');
+  if(grid) grid.style.display = '';
+  if(form) form.style.display = 'none';
+  const editBtn = document.getElementById('sdp-info-edit-btn');
+  const cancelBtn = document.getElementById('sdp-info-cancel-btn');
+  const saveBtn = document.getElementById('sdp-info-save-btn');
+  const statusEl = document.getElementById('sdp-info-status');
+  if(editBtn) editBtn.style.display = '';
+  if(cancelBtn) cancelBtn.style.display = 'none';
+  if(saveBtn) saveBtn.style.display = 'none';
+  if(statusEl) statusEl.textContent = '唯讀';
+  if(typeof toast === 'function') toast('已取消，未儲存任何變更', '↩');
+}
+
+function saveSceneInfo(){
+  const s = (typeof _currentSDP !== 'undefined' && typeof scenes !== 'undefined') ? scenes.find(x => x.id === _currentSDP) : null;
+  if(!s) return;
+  const newName  = (document.getElementById('sdp-edit-name')?.value || '').trim() || s.name;
+  const newLoc   = (document.getElementById('sdp-edit-loc')?.value || '').trim() || '—';
+  const newInout = document.getElementById('sdp-edit-inout')?.value || s.inout;
+  const newDn    = document.getElementById('sdp-edit-daynight')?.value || s.daynight;
+  const newPage  = parseInt(document.getElementById('sdp-edit-page')?.value) || s.page || 0;
+  s.name    = newName;
+  s.loc     = newLoc;
+  s.inout   = newInout;
+  s.daynight = newDn;
+  s.page    = newPage;
+  if(typeof saveCurrentProjectState === 'function') saveCurrentProjectState();
+  if(typeof syncSceneToDB === 'function') syncSceneToDB(s);
+  if(typeof broadcastChange === 'function') broadcastChange('更新場景資訊 ' + s.id);
+  _sceneInfoEditing = false;
+  // 重新渲染詳情頁 header 和 info grid（不用整頁重開）
+  const titleEl = document.getElementById('sdp-title');
+  if(titleEl) titleEl.innerHTML = `${s.id} — <span>${s.name}</span>`;
+  const subEl = document.getElementById('sdp-subtitle');
+  const dnLabel = s.daynight === 'DAY' ? '日景' : s.daynight === 'NIGHT' ? '夜景' : s.daynight === 'DUSK' ? '黃昏' : '黎明';
+  if(subEl) subEl.textContent = `${s.inout === 'INT' ? '內景' : '外景'} · ${dnLabel} · ${s.loc || '—'}`;
+  // 重建 info grid
+  document.getElementById('sdp-info-grid').innerHTML = [
+    { key: '場景編號', val: s.id },
+    { key: '內/外景', val: s.inout },
+    { key: '日/夜景', val: dnLabel },
+    { key: '地點', val: s.loc || '—' },
+    { key: '頁碼', val: `P.${s.page || '—'}` },
+    { key: '狀態', val: s.status === 'done' ? '✓ 已拍完' : s.status === 'current' ? '● 未拍完' : s.status === 'skip' ? '⏭ 先跳過' : '○ 還沒拍' },
+  ].map(item => `<div class="sdp-info-item"><div class="info-key">${item.key}</div><div class="info-val">${item.val}</div></div>`).join('');
+  // 切回唯讀顯示
+  const grid = document.getElementById('sdp-info-grid');
+  const form = document.getElementById('sdp-info-edit-form');
+  if(grid) grid.style.display = '';
+  if(form) form.style.display = 'none';
+  const editBtn = document.getElementById('sdp-info-edit-btn');
+  const cancelBtn = document.getElementById('sdp-info-cancel-btn');
+  const saveBtn = document.getElementById('sdp-info-save-btn');
+  const statusEl = document.getElementById('sdp-info-status');
+  if(editBtn) editBtn.style.display = '';
+  if(cancelBtn) cancelBtn.style.display = 'none';
+  if(saveBtn) saveBtn.style.display = 'none';
+  if(statusEl) statusEl.textContent = '唯讀';
+  // 更新場景列表（sidebar）
+  if(typeof refreshSceneViews === 'function') refreshSceneViews();
+  if(typeof toast === 'function') toast('場景資訊已儲存', '💾');
 }
 
 function refreshSceneViews(){
