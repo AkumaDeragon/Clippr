@@ -1257,7 +1257,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
   <!-- SIDEBAR -->
   <nav class="sidebar">
     <div class="sidebar-section workspace-panel">
-      <button class="btn btn-gold btn-sm" onclick="backToSceneListFromDetail()">← 返回場景列表</button>
+      <button class="workspace-back" onclick="showHome()">← 回主頁</button>
       <div class="sidebar-label">目前專案</div>
       <button class="workspace-btn" onclick="openProjectModal()">
         <span>
@@ -3092,6 +3092,14 @@ function openDetail(sid) {
   // Switch to detail page
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-scene-detail').classList.add('active');
+
+  // 進入場景詳情時，把左上角按鈕換成「返回場景列表」（金色）
+  const wb = document.querySelector('.workspace-back');
+  if (wb) {
+    wb.textContent = '← 返回場景列表';
+    wb.classList.add('btn-gold');
+    wb.onclick = backToSceneListFromDetail;
+  }
 }
 
 
@@ -3100,6 +3108,15 @@ function backToSceneListFromDetail() {
   setAllSceneFieldsReadOnly?.();
   _sceneFieldEditing = { dialogue:false, script:false, notes:false };
   _currentSDP = null;
+
+  // 離開場景詳情，按鈕改回「回主頁」
+  const wb = document.querySelector('.workspace-back');
+  if (wb) {
+    wb.textContent = '← 回主頁';
+    wb.classList.remove('btn-gold');
+    wb.onclick = showHome;
+  }
+
   const scenesNav = Array.from(document.querySelectorAll('.nav-item')).find(el => (el.textContent || '').includes('場景進度'));
   switchPage('scenes', scenesNav || null);
 }
@@ -3108,6 +3125,15 @@ function backFromSceneDetail() {
   // 不自動儲存，避免誤按或誤改；只有按「儲存」才會寫入。
   _sceneFieldEditing = { dialogue:false, script:false, notes:false };
   _currentSDP = null;
+
+  // 離開場景詳情，按鈕改回「回主頁」
+  const wb = document.querySelector('.workspace-back');
+  if (wb) {
+    wb.textContent = '← 回主頁';
+    wb.classList.remove('btn-gold');
+    wb.onclick = showHome;
+  }
+
   // Go back to wherever we came from
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const target = document.getElementById('page-' + _prevPage) || document.getElementById('page-scenes');
