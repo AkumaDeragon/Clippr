@@ -1506,13 +1506,14 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
         </div>
       </div>
 
-      <div class="table-wrap" id="dash-scene-wrap">
+      <div class="table-wrap">
         <div class="table-header">
           <span class="table-title">今日場景快覽</span>
           <button class="btn btn-outline btn-sm" onclick="switchPage('scenes',document.querySelectorAll('.nav-item')[1])">查看全部 →</button>
         </div>
-        <div id="dash-scene-scroll">
-          <table class="scene-table" id="dash-scene-table"></table>
+        <table class="scene-table" id="dash-scene-table"></table>
+        <div id="dash-scene-more-row" style="display:none;padding:12px 16px;border-top:1px solid var(--border);text-align:center;">
+          <button id="dash-scene-more-btn" class="btn btn-outline btn-sm" style="width:100%;font-size:12px;letter-spacing:.5px;" onclick="dashSceneLoadMore()">▼ 顯示更多場景</button>
         </div>
       </div>
 
@@ -3599,9 +3600,29 @@ function sceneRow(s, showDetail=false){
   </tr>`;
 }
 
+var _dashSceneLimit = 6;
 function renderDashScenes(){
-  const t=document.getElementById('dash-scene-table');
-  t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th><th></th></tr></thead><tbody>${scenes.map(s=>sceneRow(s)).join('')}</tbody>`;
+  var t=document.getElementById('dash-scene-table');
+  var moreRow=document.getElementById('dash-scene-more-row');
+  var moreBtn=document.getElementById('dash-scene-more-btn');
+  var visible=scenes.slice(0,_dashSceneLimit);
+  var remaining=scenes.length-_dashSceneLimit;
+  t.innerHTML='<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th><th></th></tr></thead><tbody>'+visible.map(function(s){return sceneRow(s);}).join('')+'</tbody>';
+  if(moreRow){
+    if(remaining>0){
+      moreRow.style.display='block';
+      if(moreBtn) moreBtn.textContent='▼ 還有 '+remaining+' 場，點此展開';
+    } else {
+      moreRow.style.display='none';
+    }
+  }
+}
+function dashSceneLoadMore(){
+  _dashSceneLimit+=10;
+  renderDashScenes();
+  // scroll page down a bit so user sees new rows
+  var wrap=document.getElementById('dash-scene-table');
+  if(wrap) wrap.scrollIntoView({behavior:'smooth',block:'end'});
 }
 
 let _sceneFilter = 'all';
@@ -5921,7 +5942,7 @@ function mobileTab(pageId, el){
   // 同步桌面版 sidebar
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   // 確保資料都有 render
-  if(pageId === 'dashboard'){ renderStats(); renderDashScenes(); renderActivity(); }
+  if(pageId === 'dashboard'){ _dashSceneLimit=6; renderStats(); renderDashScenes(); renderActivity(); }
   if(pageId === 'scenes'){ renderScenes(); renderScenesStatCards(); renderSceneDots(); }
   if(pageId === 'shots'){ buildShotSelect(); renderShots(); }
   if(pageId === 'script'){ buildScriptSceneSelect(true); initSafeEditMode(); setSafeEditLocked('script', true); }
