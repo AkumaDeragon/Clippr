@@ -566,6 +566,10 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .sdp-info-item .info-key{font-size:10px;color:var(--text-muted,#888);margin-bottom:4px;font-family:var(--font-mono,'DM Mono'),monospace;}
 .sdp-info-item .info-val{font-size:13px;color:var(--text-primary,#fff);}
 .sdp-shot-list{display:flex;flex-direction:column;gap:8px;}
+.sdp-shot-list::-webkit-scrollbar{width:4px;}
+.sdp-shot-list::-webkit-scrollbar-track{background:transparent;}
+.sdp-shot-list::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.3);border-radius:2px;}
+.sdp-shot-list::-webkit-scrollbar-thumb:hover{background:rgba(201,168,76,0.6);}
 .sdp-shot-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-raised,#111);border:1px solid var(--border,rgba(255,255,255,0.06));border-radius:8px;transition:border-color .2s;}
 .sdp-shot-item.done-shot{border-color:rgba(39,174,96,0.3);background:rgba(39,174,96,0.05);}
 .sdp-shot-num{font-family:var(--font-mono,'DM Mono'),monospace;font-size:12px;color:var(--gold,#C9A84C);min-width:48px;}
@@ -1920,7 +1924,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <div class="hl-wrap" id="hl-wrap-dialogue">
               <div class="hl-overlay" id="hl-overlay-dialogue" aria-hidden="true"></div>
-              <div class="sdp-dialogue-area sdp-readonly sdp-ce" id="sdp-dialogue" contenteditable="false" data-placeholder="在這裡輸入台詞…（例如：[角色名] 換行寫台詞內容）"></div>
+              <div class="sdp-dialogue-area sdp-readonly sdp-ce" id="sdp-dialogue" contenteditable="false" data-placeholder="在這裡輸入台詞…（例如：[角色名] 換行寫台詞內容）" style="max-height:420px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;"></div>
             </div>
             <div class="sdp-safe-hint">避免誤按：目前預設不可修改，按上方「編輯」後才會開放輸入。</div>
           </div>
@@ -1948,7 +1952,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
             </div>
             <div class="hl-wrap" id="hl-wrap-script">
               <div class="hl-overlay" id="hl-overlay-script" aria-hidden="true"></div>
-              <div class="sdp-script-area sdp-readonly sdp-ce" id="sdp-script-text" contenteditable="false" data-placeholder="場景動作說明、場面描述…（例如：INT./EXT. 地點 — 日/夜，動作描述與場景指示）"></div>
+              <div class="sdp-script-area sdp-readonly sdp-ce" id="sdp-script-text" contenteditable="false" data-placeholder="場景動作說明、場面描述…（例如：INT./EXT. 地點 — 日/夜，動作描述與場景指示）" style="max-height:320px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;"></div>
             </div>
             <div class="sdp-safe-hint">按「編輯」後才能修改；儲存或取消後會回到唯讀。</div>
           </div>
@@ -1964,7 +1968,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
                 <button class="btn btn-gold btn-sm sdp-edit-only" id="sdp-notes-save-btn" onclick="saveSceneNotes()">💾 儲存</button>
               </div>
             </div>
-            <textarea class="notes-area sdp-readonly" id="sdp-notes" readonly placeholder="導演指示或備注…" style="min-height:100px;resize:vertical"></textarea>
+            <textarea class="notes-area sdp-readonly" id="sdp-notes" readonly placeholder="導演指示或備注…" style="min-height:100px;max-height:220px;resize:vertical;overflow-y:auto;"></textarea>
             <div class="sdp-safe-hint">備注也必須先按「編輯」才可以輸入。</div>
           </div>
 
@@ -2061,7 +2065,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
                 <button class="btn btn-outline btn-sm" id="sdp-shots-add-btn" onclick="clapprSdpAddShot()">＋ 鏡頭</button>
               </div>
             </div>
-            <div class="sdp-shot-list" id="sdp-shot-list"></div>
+            <div class="sdp-shot-list" id="sdp-shot-list" style="max-height:400px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-right:4px;"></div>
           </div>
         </div>
 
