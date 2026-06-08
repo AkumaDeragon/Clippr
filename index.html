@@ -106,6 +106,43 @@
 /* 舊的標色工具列 / 螢光筆覆蓋層全部停用，避免任何顏色殘留 */
 .hl-bar,.hl-dot,.hl-lbl,.hl-clear,.hl-overlay{ display:none !important; }
 
+/* ── DASHBOARD 今日場景快覽 捲動容器 ── */
+.dash-scene-scroll-wrap {
+  max-height: 420px;
+  overflow-y: auto;
+  border-radius: 0 0 10px 10px;
+  /* 自訂捲軸：細緻 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.35) transparent;
+}
+.dash-scene-scroll-wrap::-webkit-scrollbar {
+  width: 5px;
+}
+.dash-scene-scroll-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dash-scene-scroll-wrap::-webkit-scrollbar-thumb {
+  background: rgba(201,168,76,0.35);
+  border-radius: 3px;
+}
+.dash-scene-scroll-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(201,168,76,0.6);
+}
+/* 讓 thead 固定在頂端 */
+.dash-scene-scroll-wrap .scene-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-elevated, #1a1a1a);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.07);
+}
+/* 最底部漸層提示還有內容 */
+.dash-scene-scroll-wrap::after {
+  content: '';
+  display: block;
+  height: 1px;
+}
+
 
 /* ── AI IMPORT ── */
 .ai-import-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;}
@@ -1509,9 +1546,14 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
       <div class="table-wrap">
         <div class="table-header">
           <span class="table-title">今日場景快覽</span>
-          <button class="btn btn-outline btn-sm" onclick="switchPage('scenes',document.querySelectorAll('.nav-item')[1])">查看全部 →</button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="dash-scene-count" style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono,'DM Mono'),monospace;letter-spacing:1px;"></span>
+            <button class="btn btn-outline btn-sm" onclick="switchPage('scenes',document.querySelectorAll('.nav-item')[1])">查看全部 →</button>
+          </div>
         </div>
-        <table class="scene-table" id="dash-scene-table"></table>
+        <div class="dash-scene-scroll-wrap">
+          <table class="scene-table" id="dash-scene-table"></table>
+        </div>
       </div>
 
       <div class="activity-strip">
@@ -3599,7 +3641,9 @@ function sceneRow(s, showDetail=false){
 
 function renderDashScenes(){
   const t=document.getElementById('dash-scene-table');
-  t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th><th></th></tr></thead><tbody>${scenes.slice(0,6).map(s=>sceneRow(s)).join('')}</tbody>`;
+  t.innerHTML=`<thead><tr><th>編號</th><th>場景名稱</th><th>類型</th><th>地點</th><th>角色</th><th>鏡頭</th><th>狀態</th><th></th></tr></thead><tbody>${scenes.map(s=>sceneRow(s)).join('')}</tbody>`;
+  const cnt=document.getElementById('dash-scene-count');
+  if(cnt) cnt.textContent = scenes.length ? scenes.length+' 場' : '';
 }
 
 let _sceneFilter = 'all';
