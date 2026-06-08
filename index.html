@@ -5138,9 +5138,18 @@ function openEquipModal(){openModal('modal-equip');}
 function addEquip(){
   const name=document.getElementById('eq-name').value.trim();
   if(!name){toast('請輸入器材名稱','⚠');return;}
-  equipment.push({name,cat:document.getElementById('eq-cat').value,qty:parseInt(document.getElementById('eq-qty').value)||1,owner:document.getElementById('eq-owner').value||'—',status:'ok'});
+  equipment.push({
+    id: `eq-${Date.now()}`,
+    name,
+    cat:document.getElementById('eq-cat').value,
+    qty:parseInt(document.getElementById('eq-qty').value)||1,
+    owner:document.getElementById('eq-owner').value||'—',
+    status:'ok'
+  });
   renderEquip();closeModal('modal-equip');toast(`${name} 已新增`,'◧');
   persistSave();
+  _suppressRemoteReloadUntil = Date.now() + 5000;
+  syncAllEquipmentToDB();
   broadcastChange('新增器材');
 }
 
@@ -5369,16 +5378,17 @@ async function seedDefaultData(){
 
 // ── 從 DB 載入全部資料 ───────────────────
 async function loadAllFromDB(){
-  const [sc, sh, an, cr, act] = await Promise.all([
+  const [sc, sh, an, cr, act, eq] = await Promise.all([
     supabase.from('scenes').select('*').eq('project_id', getProjectId()).order('page'),
     supabase.from('shots').select('*').eq('project_id', getProjectId()),
     supabase.from('announcements').select('*').eq('project_id', getProjectId()).order('created_at', { ascending: false }),
     supabase.from('crew').select('*').eq('project_id', getProjectId()),
-    supabase.from('activity_log').select('*').eq('project_id', getProjectId()).order('created_at', { ascending: false }).limit(20)
+    supabase.from('activity_log').select('*').eq('project_id', getProjectId()).order('created_at', { ascending: false }).limit(20),
+    supabase.from('equipment').select('*').eq('project_id', getProjectId()).order('created_at', { ascending: true })
   ]);
 
   // 浮現讀取錯誤（最常見是 RLS 權限或 Realtime 未開），讓使用者知道要去 Supabase 設定
-  const firstErr = [sc, sh, an, cr, act].map(r => r && r.error).find(Boolean);
+  const firstErr = [sc, sh, an, cr, act, eq].map(r => r && r.error).find(Boolean);
   if(firstErr){
     console.error('Supabase 讀取錯誤:', firstErr);
     toast('資料庫讀取被拒（請檢查 Supabase RLS 權限）', '⚠');
@@ -5433,6 +5443,18 @@ async function loadAllFromDB(){
     }));
   }
 
+  if (eq.data && eq.data.length > 0) {
+    equipment.length = 0;
+    eq.data.forEach(r => equipment.push({
+      id:     r.equip_id,
+      name:   r.name,
+      cat:    r.cat,
+      qty:    r.qty,
+      owner:  r.owner,
+      status: r.status
+    }));
+  }
+
   // 把 DB 最新資料存回 localStorage（只在有資料時更新對應欄位）
   const p = getCurrentProject();
   if(p){
@@ -5441,6 +5463,7 @@ async function loadAllFromDB(){
     if(Object.keys(shots).length) p.shots = clone(shots);
     p.announcements = clone(announcements);
     if(crew.length) p.crew = clone(crew);
+    if(equipment.length) p.equipment = clone(equipment);
     persistSave();
   }
 
@@ -5448,7 +5471,7 @@ async function loadAllFromDB(){
   scenes.forEach(normalizeSceneTextFields);
   renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots();
   buildShotSelect(); buildScriptSceneSelect(true); renderCallsheet(); renderAnnouncements(); renderAnnStats();
-  renderCrew(); renderTicker(); renderActivity();
+  renderCrew(); renderEquip(); renderTicker(); renderActivity();
 }
 
 // ── Realtime 訂閱 ────────────────────────
@@ -5461,6 +5484,7 @@ function subscribeRealtime(){
     .on('postgres_changes', { event: '*', schema: 'public', table: 'shots',         filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements', filter: `project_id=eq.${getProjectId()}` }, handleRemoteAnnouncement)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'crew',          filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment',     filter: `project_id=eq.${getProjectId()}` }, handleRemoteChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'projects',      filter: `project_id=eq.${getProjectId()}` }, () => loadProjectMetaFromDB())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log',  filter: `project_id=eq.${getProjectId()}` }, handleActivityChange)
     .subscribe((status) => {
@@ -5701,6 +5725,28 @@ async function syncAllCrewToDB(){
 async function syncCrewToDB(member){
   if (!supabase) return;
   await syncAllCrewToDB();
+}
+
+// ── 器材同步寫回 DB ──────────────────────
+// 每次儲存全部 equipment（同 crew 做法，delete + insert）
+async function syncAllEquipmentToDB(){
+  if (!supabase) return;
+  try {
+    await supabase.from('equipment').delete().eq('project_id', getProjectId());
+    if (!equipment.length) return;
+    const rows = equipment.map((e, i) => ({
+      project_id:  getProjectId(),
+      equip_id:    e.id || `eq-${Date.now()}-${i}`,
+      name:        e.name,
+      cat:         e.cat  || '攝影機',
+      qty:         e.qty  || 1,
+      owner:       e.owner || '—',
+      status:      e.status || 'ok',
+      created_at:  new Date().toISOString()
+    }));
+    const { error } = await supabase.from('equipment').insert(rows);
+    if (error) console.error('equipment sync error:', error);
+  } catch(e){ console.error('syncAllEquipmentToDB error:', e); }
 }
 
 // ── 同步狀態 UI ──────────────────────────
