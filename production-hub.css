@@ -3036,6 +3036,23 @@ tr[draggable='true']:hover td:first-child { color: var(--gold); }
 .ann-tag-notice   { background: rgba(52,152,219,0.15); color: var(--blue-light); border: 1px solid rgba(52,152,219,0.35); border-radius: 20px; }
 .ann-tag-urgent   { background: rgba(231,76,60,0.15); color: var(--red-light); border: 1px solid rgba(231,76,60,0.35); border-radius: 20px; }
 
+/* ════════════════════════════════════════════════════════════
+   FIX: 桌機 trackpad / 滾輪在 scene-table 上的滾動解鎖
+   問題：<tr> 的 onclick + touch-action 讓 macOS trackpad 
+         誤判手勢為點擊，造成畫面鎖死滑不動。
+   解法：顯式允許垂直 pan，讓 wheel/trackpad 事件正常穿透。
+   ════════════════════════════════════════════════════════════ */
+.scene-table,
+.scene-table thead,
+.scene-table tbody,
+.scene-table tbody tr,
+.scene-table tbody td,
+.scene-table tbody th,
+#page-scenes .table-wrap,
+#page-dashboard .table-wrap {
+  touch-action: pan-y !important;
+}
+
 /* 確保 sk-* 關鍵字標籤在手機上也清晰可見 */
 @media (max-width: 768px) {
   .sk-bracket, .sk-title, .sk-reminder, .sk-notice, .sk-urgent, .sk-director {

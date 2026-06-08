@@ -622,9 +622,9 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .sdp-script-area:focus{border-color:var(--border,rgba(255,255,255,0.15));}
 
 /* ── contenteditable editor variant (台詞 / 場景指示) ── */
-/* 讓欄位隨內容自動長高，交給整頁(.content)捲動，避免在框內被「卡住」滑不動、要滑旁邊才行 */
-.sdp-ce{white-space:pre-wrap;word-break:break-word;cursor:text;height:auto;max-height:none !important;overflow:visible !important;resize:none !important;}
-.sdp-ce[contenteditable="false"]{cursor:default;}
+/* 固定高度 + overflow-y:auto：讓框內可以往下捲，同時不會溢出容器 */
+.sdp-ce{white-space:pre-wrap;word-break:break-word;cursor:text;overflow-x:hidden !important;overflow-y:auto !important;resize:vertical !important;}
+.sdp-ce[contenteditable="false"]{cursor:default;resize:none !important;}
 .sdp-ce:empty:before{content:attr(data-placeholder);color:var(--text-muted,#888);opacity:.7;pointer-events:none;}
 .sdp-ce.sdp-readonly{background:var(--bg-raised,#111);opacity:.92;}
 .sdp-ce span[style*="background"],.sdp-ce font[color],.sdp-ce font[style*="background"]{color:#1a1a1a !important;border-radius:2px;padding:0 1px;}
@@ -1164,6 +1164,12 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
   .topbar{ position:sticky; top:0; z-index:60; }
   /* 寬表格自己負責左右滑，不影響整頁上下捲動 */
   .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  /* 台詞/劇本/導演 CE 編輯框：手機版維持框內捲動，不受整頁捲動規則影響 */
+  .sdp-ce{
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    -webkit-overflow-scrolling:touch;
+  }
 }
 
 
