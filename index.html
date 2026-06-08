@@ -2488,7 +2488,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 <div class="modal-overlay" id="modal-equip">
   <div class="modal">
     <div class="modal-head">
-      <span class="modal-title">新增器材</span>
+      <span class="modal-title" id="equip-modal-title">新增器材</span>
       <button class="modal-close" onclick="closeModal('modal-equip')">×</button>
     </div>
     <div class="modal-body">
@@ -2519,7 +2519,7 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-equip')">取消</button>
-      <button class="btn btn-gold" onclick="addEquip()">新增器材</button>
+      <button class="btn btn-gold" id="equip-save-btn" onclick="addEquip()">新增器材</button>
     </div>
   </div>
 </div>
@@ -4014,15 +4014,32 @@ function renderCrew(){
 // ══════════════════════════════════════════
 //  EQUIPMENT
 // ══════════════════════════════════════════
+const EQUIP_STATUS_CYCLE = ['ok','repair','rest','missing'];
+const EQUIP_STATUS_LABEL = { ok:'正常', repair:'維修中', rest:'暫停使用', missing:'遺失/找不到' };
+const EQUIP_STATUS_BADGE = { ok:'badge-done', repair:'badge-skip', rest:'badge-pending', missing:'badge-urgent' };
+
+function equipStatusBadge(status){
+  const s = EQUIP_STATUS_CYCLE.includes(status) ? status : 'ok';
+  return `<span class="badge ${EQUIP_STATUS_BADGE[s]}" style="cursor:pointer;user-select:none" title="點擊切換狀態" onclick="toggleEquipStatus(${EQUIP_STATUS_CYCLE.indexOf(s)},this.closest('tr').dataset.equipIdx)">${EQUIP_STATUS_LABEL[s]}</span>`;
+}
+
 function renderEquip(){
   const t=document.getElementById('equip-table');
-  t.innerHTML=`<thead><tr><th>器材名稱</th><th>類別</th><th>數量</th><th>負責人</th><th>狀態</th></tr></thead><tbody>${equipment.map(e=>`
-    <tr>
+  if(!equipment.length){
+    t.innerHTML=`<thead><tr><th>器材名稱</th><th>類別</th><th>數量</th><th>負責人</th><th>狀態</th><th></th></tr></thead><tbody><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px">尚無器材，點擊「＋ 新增器材」開始建立</td></tr></tbody>`;
+    return;
+  }
+  t.innerHTML=`<thead><tr><th>器材名稱</th><th>類別</th><th>數量</th><th>負責人</th><th>狀態</th><th style="width:80px"></th></tr></thead><tbody>${equipment.map((e,i)=>`
+    <tr data-equip-idx="${i}">
       <td class="scene-name-cell">${e.name}</td>
       <td><span class="badge badge-pending">${e.cat}</span></td>
       <td style="font-family:var(--font-mono)">${e.qty}</td>
       <td style="font-size:12px;color:var(--text-muted)">${e.owner}</td>
-      <td>${e.status==='ok'?'<span class="badge badge-done">正常</span>':'<span class="badge badge-skip">維修中</span>'}</td>
+      <td>${equipStatusBadge(e.status)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-outline btn-sm" onclick="openEditEquipModal(${i})" title="編輯">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteEquip(${i})" title="刪除" style="margin-left:4px">🗑</button>
+      </td>
     </tr>
   `).join('')}</tbody>`;
 }
@@ -5134,23 +5151,80 @@ function addShot(){
 // ══════════════════════════════════════════
 //  ADD EQUIP
 // ══════════════════════════════════════════
-function openEquipModal(){openModal('modal-equip');}
+let _editEquipIdx = -1; // -1 = 新增模式，>=0 = 編輯模式
+
+function openEquipModal(){
+  _editEquipIdx = -1;
+  document.getElementById('equip-modal-title').textContent = '新增器材';
+  document.getElementById('eq-name').value = '';
+  document.getElementById('eq-cat').value = '攝影機';
+  document.getElementById('eq-qty').value = '1';
+  document.getElementById('eq-owner').value = '';
+  document.getElementById('equip-save-btn').textContent = '新增器材';
+  openModal('modal-equip');
+}
+
+function openEditEquipModal(idx){
+  const e = equipment[idx];
+  if(!e) return;
+  _editEquipIdx = idx;
+  document.getElementById('equip-modal-title').textContent = '編輯器材';
+  document.getElementById('eq-name').value = e.name;
+  document.getElementById('eq-cat').value = e.cat;
+  document.getElementById('eq-qty').value = e.qty;
+  document.getElementById('eq-owner').value = e.owner === '—' ? '' : e.owner;
+  document.getElementById('equip-save-btn').textContent = '儲存修改';
+  openModal('modal-equip');
+}
+
 function addEquip(){
   const name=document.getElementById('eq-name').value.trim();
   if(!name){toast('請輸入器材名稱','⚠');return;}
-  equipment.push({
-    id: `eq-${Date.now()}`,
-    name,
-    cat:document.getElementById('eq-cat').value,
-    qty:parseInt(document.getElementById('eq-qty').value)||1,
-    owner:document.getElementById('eq-owner').value||'—',
-    status:'ok'
-  });
-  renderEquip();closeModal('modal-equip');toast(`${name} 已新增`,'◧');
+  const cat = document.getElementById('eq-cat').value;
+  const qty = parseInt(document.getElementById('eq-qty').value)||1;
+  const owner = document.getElementById('eq-owner').value||'—';
+
+  if(_editEquipIdx >= 0){
+    // 編輯模式
+    const e = equipment[_editEquipIdx];
+    e.name = name; e.cat = cat; e.qty = qty; e.owner = owner;
+    renderEquip(); closeModal('modal-equip'); toast(`${name} 已更新`,'✎');
+  } else {
+    // 新增模式
+    equipment.push({ id:`eq-${Date.now()}`, name, cat, qty, owner, status:'ok' });
+    renderEquip(); closeModal('modal-equip'); toast(`${name} 已新增`,'◧');
+  }
   persistSave();
   _suppressRemoteReloadUntil = Date.now() + 5000;
   syncAllEquipmentToDB();
-  broadcastChange('新增器材');
+  broadcastChange(_editEquipIdx >= 0 ? `編輯器材 ${name}` : '新增器材');
+  _editEquipIdx = -1;
+}
+
+function deleteEquip(idx){
+  const e = equipment[idx];
+  if(!e) return;
+  if(!confirm(`確定要刪除「${e.name}」嗎？`)) return;
+  equipment.splice(idx, 1);
+  renderEquip();
+  persistSave();
+  _suppressRemoteReloadUntil = Date.now() + 5000;
+  syncAllEquipmentToDB();
+  broadcastChange(`刪除器材 ${e.name}`);
+  toast(`${e.name} 已刪除`,'🗑');
+}
+
+function toggleEquipStatus(currentStatusIdx, idx){
+  const e = equipment[parseInt(idx)];
+  if(!e) return;
+  const nextIdx = (parseInt(currentStatusIdx) + 1) % EQUIP_STATUS_CYCLE.length;
+  e.status = EQUIP_STATUS_CYCLE[nextIdx];
+  renderEquip();
+  persistSave();
+  _suppressRemoteReloadUntil = Date.now() + 5000;
+  syncAllEquipmentToDB();
+  broadcastChange(`更新器材狀態 ${e.name} → ${EQUIP_STATUS_LABEL[e.status]}`);
+  toast(`${e.name}：${EQUIP_STATUS_LABEL[e.status]}`,'◧');
 }
 
 // ══════════════════════════════════════════
