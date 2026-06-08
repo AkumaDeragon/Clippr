@@ -38,10 +38,9 @@ html, body {
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
+  /* 桌機：overflow 由 .content 自己控制，不可在 body 鎖住，
+     否則觸控板 wheel event 會被截掉，導致內容滑不動 */
   overflow: hidden;
-  /* 手機觸控修復：防止 iOS 橡皮筋效果造成卡頓 */
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: auto;
 }
 
 /* 手機觸控：確保可滾動區域不被攔截 */
@@ -199,6 +198,8 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
   flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
   background: var(--bg-base);
   position: relative;
+  /* 桌機觸控板：確保 wheel 事件可以捲動 */
+  overscroll-behavior-y: auto;
 }
 
 /* decorative grid bg */
