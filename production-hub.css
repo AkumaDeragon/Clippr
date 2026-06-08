@@ -314,6 +314,29 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
   overflow: hidden;
 }
+
+/* ── 今日場景快覽：可捲動 ── */
+#dash-scene-wrap {
+  overflow: visible; /* 覆蓋上面的 overflow:hidden，讓子層可以捲動 */
+}
+#dash-scene-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.4) transparent;
+}
+#dash-scene-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+#dash-scene-scroll::-webkit-scrollbar-track { background: transparent; }
+#dash-scene-scroll::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.4); border-radius: 3px; }
+#dash-scene-scroll::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.7); }
+#dash-scene-scroll .scene-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-surface);
+}
 .table-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 18px; border-bottom: 1px solid var(--border);
