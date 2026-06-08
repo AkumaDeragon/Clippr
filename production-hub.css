@@ -314,6 +314,23 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
   overflow: hidden;
 }
+
+/* ── 今日場景快覽：tbody 捲動（display:block 讓 tbody 自己形成捲動容器） ── */
+#dash-scene-wrap .scene-table { table-layout: fixed; width: 100%; }
+#dash-scene-wrap .scene-table thead { display: block; width: 100%; }
+#dash-scene-wrap .scene-table thead tr { display: table; width: 100%; table-layout: fixed; }
+#dash-scene-wrap .scene-table tbody {
+  display: block;
+  max-height: 380px;
+  overflow-y: auto;
+  width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.45) transparent;
+}
+#dash-scene-wrap .scene-table tbody::-webkit-scrollbar { width: 5px; }
+#dash-scene-wrap .scene-table tbody::-webkit-scrollbar-track { background: transparent; }
+#dash-scene-wrap .scene-table tbody::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.45); border-radius: 3px; }
+#dash-scene-wrap .scene-table tbody tr { display: table; width: 100%; table-layout: fixed; }
 .table-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 18px; border-bottom: 1px solid var(--border);
