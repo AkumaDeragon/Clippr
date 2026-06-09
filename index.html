@@ -2414,11 +2414,11 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
       <div class="form-grid2">
         <div class="form-field">
           <label class="form-label">姓名</label>
-          <input class="form-input" id="cr-name" placeholder="真實姓名">
+          <input class="form-input" id="cr-name" placeholder="真實姓名" autocomplete="off">
         </div>
         <div class="form-field">
           <label class="form-label">劇中角色名</label>
-          <input class="form-input" id="cr-char" placeholder="如：李主任（如為演員）">
+          <input class="form-input" id="cr-char" placeholder="如：李主任（如為演員）" autocomplete="off">
         </div>
       </div>
       <div class="form-grid2">
@@ -5103,7 +5103,11 @@ function addScene(){
 // ══════════════════════════════════════════
 //  ADD CREW
 // ══════════════════════════════════════════
-function openCrewModal(){openModal('modal-crew');}
+function openCrewModal(){
+  var n=document.getElementById('cr-name'),c=document.getElementById('cr-char');
+  if(n)n.value='';if(c)c.value='';
+  openModal('modal-crew');
+}
 
 // 進入/加入專案時，自動把「目前使用者本人」加進「該專案」的劇組（只屬於這個專案）
 function ensureSelfInCrew(){

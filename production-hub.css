@@ -1436,6 +1436,7 @@ body.project-mode .main-body { display: flex; }
   border-radius: var(--radius-lg);
   padding: 20px 24px;
   margin-bottom: 20px;
+  touch-action: pan-y;
 }
 .scene-slider-header {
   display: flex; justify-content: space-between; align-items: center;
@@ -1480,6 +1481,7 @@ body.project-mode .main-body { display: flex; }
   cursor: pointer; pointer-events: auto;
   transition: transform .15s, width .15s, height .15s;
   z-index: 3;
+  touch-action: pan-y;
 }
 .scene-dot-btn:hover { transform: translateX(-50%) scale(1.4); z-index: 5; }
 .scene-dot-tooltip {
