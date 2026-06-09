@@ -2414,11 +2414,11 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
       <div class="form-grid2">
         <div class="form-field">
           <label class="form-label">姓名</label>
-          <input class="form-input" id="cr-name" placeholder="真實姓名" autocomplete="off">
+          <input class="form-input" id="cr-name" placeholder="真實姓名" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')">
         </div>
         <div class="form-field">
           <label class="form-label">劇中角色名</label>
-          <input class="form-input" id="cr-char" placeholder="如：李主任（如為演員）" autocomplete="off">
+          <input class="form-input" id="cr-char" placeholder="如：李主任（如為演員）" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')">
         </div>
       </div>
       <div class="form-grid2">
@@ -5105,7 +5105,8 @@ function addScene(){
 // ══════════════════════════════════════════
 function openCrewModal(){
   var n=document.getElementById('cr-name'),c=document.getElementById('cr-char');
-  if(n)n.value='';if(c)c.value='';
+  if(n){n.value='';n.setAttribute('readonly','');}
+  if(c){c.value='';c.setAttribute('readonly','');}
   openModal('modal-crew');
 }
 
