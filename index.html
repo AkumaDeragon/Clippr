@@ -7914,7 +7914,8 @@ function clapprCastSuggest(val){
   var q=val.trim().toLowerCase();
   if(!q||typeof crew==='undefined'||!crew.length){box.style.display='none';return;}
   var matches=crew.filter(function(c){
-    return (c.name||'').toLowerCase().includes(q)||(c.char||'').toLowerCase().includes(q)||(c.role||'').toLowerCase().includes(q);
+    var charName=(c.char&&c.char!=='—')?c.char:'';
+    return charName.toLowerCase().includes(q);
   }).slice(0,6);
   if(!matches.length){box.style.display='none';return;}
   box.innerHTML=matches.map(function(c){
