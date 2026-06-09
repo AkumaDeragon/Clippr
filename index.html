@@ -3130,7 +3130,7 @@ function openDetail(sid) {
     const m = crew.find(cr => cr.char === c);
     return `<div class="cast-item">
       <div style="width:32px;height:32px;border-radius:50%;background:${avatarColors[i % 7]}22;color:${avatarColors[i % 7]};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;border:1px solid ${avatarColors[i % 7]}33;flex-shrink:0">${c.slice(0, 1)}</div>
-      <div><div class="cast-char">${c}</div><div class="cast-actor">${m ? m.name : '—'}</div></div>
+      <div><div class="cast-char">${c}</div><div class="cast-actor">${m ? (m.role||'成員') : '成員'}</div></div>
     </div>`;
   }).join('') : '<div style="font-size:12px;color:var(--text-muted)">無角色資訊</div>';
 
@@ -7914,13 +7914,12 @@ function clapprCastSuggest(val){
   var q=val.trim().toLowerCase();
   if(!q||typeof crew==='undefined'||!crew.length){box.style.display='none';return;}
   var matches=crew.filter(function(c){
-    var charName=(c.char&&c.char!=='—')?c.char:'';
-    return charName.toLowerCase().includes(q);
+    return (c.name||'').toLowerCase().includes(q);
   }).slice(0,6);
   if(!matches.length){box.style.display='none';return;}
   box.innerHTML=matches.map(function(c){
-    var display=c.char?c.char+'<span style="color:var(--text-muted);font-size:11px"> — '+c.name+'</span>':c.name;
-    var v=(c.char||c.name).replace(/'/g,"\\'");
+    var display=c.name+(c.role&&c.role!=='成員'?'<span style="color:var(--text-muted);font-size:11px"> — '+c.role+'</span>':'');
+    var v=(c.name).replace(/'/g,"\\'");
     return '<div onclick="clapprCastPickSuggest(\''+v+'\')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)" onmouseover="this.style.background=\'rgba(201,168,76,.1)\'" onmouseout="this.style.background=\'\'">'+display+'</div>';
   }).join('');
   box.style.display='block';
@@ -7971,7 +7970,7 @@ function clapprRenderCast(s){
     var safe=c.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return '<div class="cast-item" style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
       '<div style="width:32px;height:32px;border-radius:50%;background:'+ac[i%7]+'22;color:'+ac[i%7]+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border:1px solid '+ac[i%7]+'44;flex-shrink:0">'+c.slice(0,1)+'</div>'+
-      '<div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--text-primary)">'+c+'</div><div style="font-size:11px;color:var(--text-muted)">'+(m?m.name:'—')+'</div></div>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--text-primary)">'+c+'</div><div style="font-size:11px;color:var(--text-muted)">'+(m?(m.role||'成員'):'成員')+'</div></div>'+
       '<button class="cast-del" onclick="clapprCastDel(\''+safe+'\')">× 刪</button>'+
     '</div>';
   }).join('');
