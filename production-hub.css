@@ -433,6 +433,28 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
   font-size: 15px; line-height: 1.85; resize: vertical;
   letter-spacing: .1px; font-weight: 400;
 }
+/* 唯讀狀態：不讓 textarea 自己捲動，讓手指/滑鼠滾輪穿透到外層頁面 */
+.script-textarea[readonly] {
+  overflow: hidden;
+  resize: none;
+  touch-action: pan-y;
+  overscroll-behavior: none;
+  pointer-events: none;   /* 桌機滾輪也穿透 */
+}
+/* 編輯中恢復正常 */
+.script-textarea:not([readonly]) {
+  overflow-y: auto;
+  resize: vertical;
+  touch-action: auto;
+  pointer-events: auto;
+}
+/* 共編頁的 sk-legend 標記列 */
+#script-all-scenes .ss-sk-legend {
+  margin: 2px 0 4px;
+}
+#script-all-scenes .ss-sk-legend .sk-chip {
+  font-size: 12px;
+}
 .script-sidebar-panel { display: flex; flex-direction: column; gap: 12px; }
 .script-meta-card, .edit-history-card {
   background: var(--bg-card); border: 1px solid var(--border);

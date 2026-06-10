@@ -3810,13 +3810,12 @@ function buildScriptAllScenes(){
   if(!container) return;
   // 單向同步：重新渲染時只讀取場景的 sceneScript，
   // 不把共編 textarea 的值寫回 scene.sceneScript。
-  // （場景詳情頁儲存 → 更新到共編；共編儲存 → 不反寫到場景）
   if(!scenes.length){
     container.innerHTML = '<div style="color:var(--text-muted);padding:32px;text-align:center">尚未建立場景</div>';
     return;
   }
   container.innerHTML = scenes.map((scene,i)=>{
-    // 優先用共編草稿（_scriptDrafts），沒有才用場景的 sceneScript（單向同步來源）
+    // 優先用共編草稿（_scriptDrafts），沒有才用場景的 sceneScript
     const raw = (_scriptDrafts && _scriptDrafts[scene.id] !== undefined)
       ? _scriptDrafts[scene.id]
       : (scene.sceneScript || '');
@@ -3828,22 +3827,39 @@ function buildScriptAllScenes(){
         <div style="flex:1;height:1px;background:rgba(201,168,76,.35)"></div>
        </div>`;
     return divider +
-      `<div style="display:flex;flex-direction:column;gap:8px">
+      `<div style="display:flex;flex-direction:column;gap:6px">
+        <!-- 場景標題列 -->
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px">
           <div style="font-size:12px;font-weight:600;color:#C9A84C;letter-spacing:.5px;font-family:monospace">${scene.id} — ${scene.name||''}</div>
-          <div class="script-scene-tools" style="display:flex;gap:6px;align-items:center;opacity:0.35;pointer-events:none">
-            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[場景]')" tabindex="-1">場景</button>
-            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[對白]')" tabindex="-1">對白</button>
-            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[動作]')" tabindex="-1">動作</button>
-            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','INT.')" tabindex="-1">INT.</button>
-            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','EXT.')" tabindex="-1">EXT.</button>
+          <!-- 工具按鈕：唯讀時淡化，編輯中才能用 -->
+          <div class="script-scene-tools ss-tools-wrap" style="display:flex;gap:6px;align-items:center">
+            <button class="editor-btn ss-tool-btn" type="button" onclick="ssTaInsert('${scene.id}','[場景]')" tabindex="-1">場景</button>
+            <button class="editor-btn ss-tool-btn" type="button" onclick="ssTaInsert('${scene.id}','[對白]')" tabindex="-1">對白</button>
+            <button class="editor-btn ss-tool-btn" type="button" onclick="ssTaInsert('${scene.id}','[動作]')" tabindex="-1">動作</button>
+            <button class="editor-btn ss-tool-btn" type="button" onclick="ssTaInsert('${scene.id}','INT.')" tabindex="-1">INT.</button>
+            <button class="editor-btn ss-tool-btn" type="button" onclick="ssTaInsert('${scene.id}','EXT.')" tabindex="-1">EXT.</button>
           </div>
         </div>
-        <textarea class="script-textarea" data-scene-id="${scene.id}" style="min-height:180px;resize:vertical;opacity:0.7;cursor:default" placeholder="在這裡輸入 ${scene.id} 的劇本內容…" oninput="ssAutoResize(this)" readonly>${txt}</textarea>
+        <!-- sk-legend 標記列（和場景詳情頁一樣） -->
+        <div class="sk-legend ss-sk-legend" id="ss-sk-legend-${scene.id}" style="display:none">
+          <span class="sk-legend-lbl">插入標記</span>
+          <button type="button" class="sk-chip sk-bracket"  onclick="ssTaInsert('${scene.id}','〔','〕')">〔角色〕</button>
+          <button type="button" class="sk-chip sk-title"    onclick="ssTaInsert('${scene.id}','【','】')">【場景】</button>
+          <button type="button" class="sk-chip sk-reminder" onclick="ssTaInsert('${scene.id}','-提醒-')">-提醒-</button>
+          <button type="button" class="sk-chip sk-notice"   onclick="ssTaInsert('${scene.id}','-注意-')">-注意-</button>
+          <button type="button" class="sk-chip sk-urgent"   onclick="ssTaInsert('${scene.id}','-重要-')">-重要-</button>
+          <button type="button" class="sk-chip sk-director" onclick="ssTaInsert('${scene.id}','-導演-')">-導演-</button>
+        </div>
+        <!-- textarea：唯讀時 pointer-events:none 讓滾動穿透到頁面 -->
+        <textarea class="script-textarea" data-scene-id="${scene.id}"
+          placeholder="在這裡輸入 ${scene.id} 的劇本內容…"
+          oninput="ssAutoResize(this)"
+          readonly>${txt}</textarea>
       </div>`;
   }).join('');
   container.querySelectorAll('textarea[data-scene-id]').forEach(ssAutoResize);
 }
+
 
 function ssAutoResize(ta){
   ta.style.height='auto';
@@ -7246,12 +7262,12 @@ function initSafeEditMode(){
 //  按「💾 全部儲存」或「取消」後再鎖回。
 // ══════════════════════════════════════════
 let _scriptEditing = false;
-let _scriptSnapshots = new Map();  // 記錄解鎖前各 textarea 的值，用於「取消」復原
+let _scriptSnapshots = new Map();
 
 function _applyScriptLock(locked) {
   _scriptEditing = !locked;
 
-  // 頂部按鈕顯示切換
+  // 頂部按鈕
   const editBtn   = document.getElementById('script-edit-btn');
   const cancelBtn = document.getElementById('script-cancel-btn');
   const saveBtn   = document.getElementById('script-save-btn');
@@ -7259,22 +7275,58 @@ function _applyScriptLock(locked) {
   if (cancelBtn) cancelBtn.style.display = locked ? 'none' : 'inline-flex';
   if (saveBtn)   saveBtn.style.display   = locked ? 'none' : 'inline-flex';
 
-  // 所有場景 textarea
   const container = document.getElementById('script-all-scenes');
   if (!container) return;
+
+  // textarea：唯讀時 pointer-events:none 讓滾輪/觸控穿透到外層
   container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
     ta.readOnly = locked;
-    ta.style.opacity = locked ? '0.7' : '1';
-    ta.style.cursor  = locked ? 'default' : '';
+    ta.style.opacity      = locked ? '0.72' : '1';
+    ta.style.cursor       = locked ? 'default' : '';
+    // pointer-events:none 讓唯讀 textarea 完全透明給捲動事件
+    ta.style.pointerEvents = locked ? 'none' : 'auto';
+    ta.style.userSelect   = locked ? 'none' : 'auto';
   });
-  // 工具按鈕（場景 / 對白 / 動作 / INT. / EXT.）
-  container.querySelectorAll('.script-scene-tools').forEach(wrap => {
-    wrap.style.opacity       = locked ? '0.35' : '1';
+
+  // 工具按鈕列（場景 / 對白 / 動作 / INT. / EXT.）
+  container.querySelectorAll('.ss-tools-wrap').forEach(wrap => {
+    wrap.style.opacity       = locked ? '0.3' : '1';
     wrap.style.pointerEvents = locked ? 'none' : '';
   });
   container.querySelectorAll('.ss-tool-btn').forEach(btn => {
     btn.tabIndex = locked ? -1 : 0;
   });
+
+  // sk-legend 標記列：編輯中才顯示
+  container.querySelectorAll('.ss-sk-legend').forEach(leg => {
+    leg.style.display = locked ? 'none' : 'flex';
+  });
+}
+
+// ── textarea 版本的標記插入（共編頁用）──────────────────────
+// 和場景詳情頁的 skInsert 功能相同，但針對 <textarea> 元素
+function ssTaInsert(sceneId, before, after) {
+  after = after || '';
+  const ta = document.querySelector(`#script-all-scenes textarea[data-scene-id="${sceneId}"]`);
+  if (!ta || ta.readOnly) return;
+  ta.focus();
+  const start = ta.selectionStart;
+  const end   = ta.selectionEnd;
+  const selected = ta.value.slice(start, end);
+  const insert = before + selected + after;
+  // 用 execCommand 保留 undo 歷史
+  let done = false;
+  try { done = document.execCommand('insertText', false, insert); } catch(e) {}
+  if (!done) {
+    ta.setRangeText(insert, start, end, 'end');
+    ta.dispatchEvent(new Event('input'));
+  }
+  // 成對符號且沒有選字 → 游標移回中間
+  if (after && !selected) {
+    const pos = ta.selectionStart - after.length;
+    ta.setSelectionRange(pos, pos);
+  }
+  ssAutoResize(ta);
 }
 
 function enableScriptEdit() {
