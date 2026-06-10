@@ -3130,7 +3130,7 @@ function openDetail(sid) {
     const m = crew.find(cr => cr.char === c);
     return `<div class="cast-item">
       <div style="width:32px;height:32px;border-radius:50%;background:${avatarColors[i % 7]}22;color:${avatarColors[i % 7]};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;border:1px solid ${avatarColors[i % 7]}33;flex-shrink:0">${c.slice(0, 1)}</div>
-      <div><div class="cast-char">${c}</div><div class="cast-actor">${m ? (m.role||'成員') : '成員'}</div></div>
+      <div><div class="cast-char">${c}</div><div class="cast-actor">${m ? m.name : '—'}</div></div>
     </div>`;
   }).join('') : '<div style="font-size:12px;color:var(--text-muted)">無角色資訊</div>';
 
@@ -3260,8 +3260,8 @@ function enableSceneInfoEdit(){
   const saveBtn = document.getElementById('sdp-info-save-btn');
   const statusEl = document.getElementById('sdp-info-status');
   if(editBtn) editBtn.style.display = 'none';
-  if(cancelBtn) cancelBtn.style.display = 'inline-flex';
-  if(saveBtn) saveBtn.style.display = 'inline-flex';
+  if(cancelBtn) cancelBtn.classList.add('sdp-visible');
+  if(saveBtn) saveBtn.classList.add('sdp-visible');
   if(statusEl) statusEl.textContent = '✎ 編輯中';
   // 聚焦名稱欄位
   const nameInput = document.getElementById('sdp-edit-name');
@@ -3279,8 +3279,8 @@ function cancelSceneInfoEdit(){
   const saveBtn = document.getElementById('sdp-info-save-btn');
   const statusEl = document.getElementById('sdp-info-status');
   if(editBtn) editBtn.style.display = '';
-  if(cancelBtn) cancelBtn.style.display = 'none';
-  if(saveBtn) saveBtn.style.display = 'none';
+  if(cancelBtn) cancelBtn.classList.remove('sdp-visible');
+  if(saveBtn) saveBtn.classList.remove('sdp-visible');
   if(statusEl) statusEl.textContent = '唯讀';
   if(typeof toast === 'function') toast('已取消，未儲存任何變更', '↩');
 }
@@ -3327,8 +3327,8 @@ function saveSceneInfo(){
   const saveBtn = document.getElementById('sdp-info-save-btn');
   const statusEl = document.getElementById('sdp-info-status');
   if(editBtn) editBtn.style.display = '';
-  if(cancelBtn) cancelBtn.style.display = 'none';
-  if(saveBtn) saveBtn.style.display = 'none';
+  if(cancelBtn) cancelBtn.classList.remove('sdp-visible');
+  if(saveBtn) saveBtn.classList.remove('sdp-visible');
   if(statusEl) statusEl.textContent = '唯讀';
   // 更新場景列表（sidebar）
   if(typeof refreshSceneViews === 'function') refreshSceneViews();
@@ -6668,8 +6668,8 @@ function setSceneFieldReadOnly(kind, readOnly=true){
   if(editBtn) editBtn.style.display = readOnly ? 'inline-flex' : 'none';
   // 注意：取消 / 儲存按鈕本身有 .sdp-edit-only { display:none }，
   // 所以進入編輯狀態時一定要指定 inline-flex，不能只設成空字串。
-  if(cancelBtn) cancelBtn.style.display = readOnly ? 'none' : 'inline-flex';
-  if(saveBtn) saveBtn.style.display = readOnly ? 'none' : 'inline-flex';
+  if(cancelBtn) cancelBtn.classList.toggle('sdp-visible', !readOnly);
+  if(saveBtn) saveBtn.classList.toggle('sdp-visible', !readOnly);
   _sceneFieldEditing[kind] = !readOnly;
   // 編輯時顯示快捷標記說明列（取代舊的標色工具列）
   const legendId = kind === 'dialogue' ? 'sk-legend-dialogue' : kind === 'script' ? 'sk-legend-script' : null;
@@ -7140,8 +7140,8 @@ function setSafeEditLocked(key, locked=true){
     const saveBtn = bar.querySelector('.safe-edit-save');
     if(status) status.textContent = locked ? '唯讀 · 按筆才可修改' : '編輯中 · 按儲存後會自動鎖回';
     if(editBtn) editBtn.style.display = locked ? '' : 'none';
-    if(cancelBtn) cancelBtn.style.display = locked ? 'none' : '';
-    if(saveBtn) saveBtn.style.display = locked ? 'none' : '';
+    if(cancelBtn) cancelBtn.classList.toggle('sdp-visible', !locked);
+    if(saveBtn) saveBtn.classList.toggle('sdp-visible', !locked);
   }
 }
 function enableSafeEdit(key){
@@ -7914,12 +7914,12 @@ function clapprCastSuggest(val){
   var q=val.trim().toLowerCase();
   if(!q||typeof crew==='undefined'||!crew.length){box.style.display='none';return;}
   var matches=crew.filter(function(c){
-    return (c.name||'').toLowerCase().includes(q);
+    return (c.name||'').toLowerCase().includes(q)||(c.char||'').toLowerCase().includes(q)||(c.role||'').toLowerCase().includes(q);
   }).slice(0,6);
   if(!matches.length){box.style.display='none';return;}
   box.innerHTML=matches.map(function(c){
-    var display=c.name+(c.role&&c.role!=='成員'?'<span style="color:var(--text-muted);font-size:11px"> — '+c.role+'</span>':'');
-    var v=(c.name).replace(/'/g,"\\'");
+    var display=c.char?c.char+'<span style="color:var(--text-muted);font-size:11px"> — '+c.name+'</span>':c.name;
+    var v=(c.char||c.name).replace(/'/g,"\\'");
     return '<div onclick="clapprCastPickSuggest(\''+v+'\')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)" onmouseover="this.style.background=\'rgba(201,168,76,.1)\'" onmouseout="this.style.background=\'\'">'+display+'</div>';
   }).join('');
   box.style.display='block';
@@ -7970,7 +7970,7 @@ function clapprRenderCast(s){
     var safe=c.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return '<div class="cast-item" style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
       '<div style="width:32px;height:32px;border-radius:50%;background:'+ac[i%7]+'22;color:'+ac[i%7]+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border:1px solid '+ac[i%7]+'44;flex-shrink:0">'+c.slice(0,1)+'</div>'+
-      '<div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--text-primary)">'+c+'</div><div style="font-size:11px;color:var(--text-muted)">'+(m?(m.role||'成員'):'成員')+'</div></div>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--text-primary)">'+c+'</div><div style="font-size:11px;color:var(--text-muted)">'+(m?m.name:'—')+'</div></div>'+
       '<button class="cast-del" onclick="clapprCastDel(\''+safe+'\')">× 刪</button>'+
     '</div>';
   }).join('');
