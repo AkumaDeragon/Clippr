@@ -1121,62 +1121,31 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
 .menu-item-scenes span:last-child { color:rgba(201,168,76,.85)!important; }
 
 /* ══════════════════════════════════════════════════════════════
-   手機捲動修正（最後一條規則，蓋過所有設定）
-   不再用「內層容器捲動」那種容易卡死的做法，改成整個頁面原生捲動。
+   手機捲動修正（配合 production-hub.css 用 body 原生捲動）
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px){
-  html{
-    height:auto !important;
-    overflow-x:hidden !important;
-    overflow-y:auto !important;
-    -webkit-text-size-adjust:100%;
-  }
-  body{
-    height:auto !important;
-    min-height:100%;
-    overflow-x:hidden !important;
-    overflow-y:auto !important;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior-y:auto;
-    /* 留空間給固定的底部導覽列 */
-    padding-bottom:calc(78px + env(safe-area-inset-bottom,0px)) !important;
-    touch-action:auto !important;
-  }
+  /* app 改成 block，高度由內容決定 */
   .app{
     height:auto !important;
     min-height:100dvh;
     overflow:visible !important;
     display:block !important;
   }
-  .main-body{
-    display:block !important;
-    height:auto !important;
-    min-height:0 !important;
-    overflow:visible !important;
-    padding-bottom:0 !important;
-  }
-  .content{
-    height:auto !important;
-    min-height:auto !important;
-    max-height:none !important;
-    overflow:visible !important;
-    overflow-x:hidden !important;
-    padding-bottom:8px !important;
-    touch-action:auto !important;
-  }
-  /* 頂列跟著捲動時黏在最上面，不會擋住內容 */
+  /* 頂列黏在最上面 */
   .topbar{ position:sticky; top:0; z-index:60; }
-  /* 寬表格自己負責左右滑，不影響整頁上下捲動 */
+  /* body 加底部 padding，避免內容被 tab bar 蓋住 */
+  body{
+    padding-bottom:calc(78px + env(safe-area-inset-bottom,0px)) !important;
+  }
+  /* 寬表格自己負責左右滑 */
   .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  /* 台詞/劇本/導演 CE 編輯框：手機版維持框內捲動，不受整頁捲動規則影響 */
+  /* 台詞/劇本/導演 CE 編輯框：手機版維持框內捲動 */
   .sdp-ce{
     overflow-y:auto !important;
     overflow-x:hidden !important;
     -webkit-overflow-scrolling:touch;
   }
 }
-
-
 </style>
 <body>
 <!-- ═══ PROFILE ONBOARDING OVERLAY ═══ -->

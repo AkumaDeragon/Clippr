@@ -826,7 +826,16 @@ body { font-size: 13px; }
    ════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  html, body { overflow: hidden; font-size: 13px; overscroll-behavior: none; }
+  html, body {
+    /* 手機用 body 原生捲動，不鎖 overflow */
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100%;
+    font-size: 13px;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 
   /* ── 隱藏桌面版側欄 ── */
   .sidebar { display: none !important; }
@@ -875,22 +884,21 @@ body { font-size: 13px; }
 
   /* ── Main body 填滿 ── */
   .main-body {
-    flex: 1;
-    overflow: hidden;
-    padding-bottom: 64px; /* tab bar 高度 */
+    display: block;
+    overflow: visible;
+    padding-bottom: 0;
   }
 
-  /* ── Content 全寬 ── */
+  /* ── Content 全寬，讓 body 捲動 ── */
   .content {
     width: 100%;
-    height: 100%;
-    overflow-y: auto;
+    height: auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-    /* 修復 iOS 手指滑動卡頓 */
-    will-change: scroll-position;
-    transform: translateZ(0);
+    /* 底部留空間給 tab bar */
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 
   /* ── Page padding ── */
