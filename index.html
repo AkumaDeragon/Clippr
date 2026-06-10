@@ -1655,9 +1655,11 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
           <div class="page-title">劇本 <span>共編</span></div>
           <div class="page-subtitle">多人即時協作劇本編輯器</div>
         </div>
-        <div class="page-actions">
+        <div class="page-actions" id="script-page-actions">
           <input class="form-input" id="editor-name" placeholder="您的名字" value="導演" style="width:120px" onchange="setCurrentEditor(this.value)">
-          <button class="btn btn-gold" onclick="saveAllScripts()">💾 全部儲存</button>
+          <button class="btn btn-outline" id="script-edit-btn" onclick="enableScriptEdit()">✎ 編輯劇本</button>
+          <button class="btn btn-outline" id="script-cancel-btn" onclick="cancelScriptEdit()" style="display:none">取消</button>
+          <button class="btn btn-gold" id="script-save-btn" onclick="saveAllScriptsAndLock()" style="display:none">💾 全部儲存</button>
         </div>
       </div>
       <div class="script-layout">
@@ -3826,16 +3828,15 @@ function buildScriptAllScenes(){
       `<div style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px">
           <div style="font-size:12px;font-weight:600;color:#C9A84C;letter-spacing:.5px;font-family:monospace">${scene.id} — ${scene.name||''}</div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[場景]')">場景</button>
-            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[對白]')">對白</button>
-            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[動作]')">動作</button>
-            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','INT.')">INT.</button>
-            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','EXT.')">EXT.</button>
-            <button class="btn btn-gold btn-sm" style="font-size:11px;padding:4px 12px" onclick="saveOneScript('${scene.id}')">儲存</button>
+          <div class="script-scene-tools" style="display:flex;gap:6px;align-items:center;opacity:0.35;pointer-events:none">
+            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[場景]')" tabindex="-1">場景</button>
+            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[對白]')" tabindex="-1">對白</button>
+            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[動作]')" tabindex="-1">動作</button>
+            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','INT.')" tabindex="-1">INT.</button>
+            <button class="editor-btn ss-tool-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','EXT.')" tabindex="-1">EXT.</button>
           </div>
         </div>
-        <textarea class="script-textarea" data-scene-id="${scene.id}" style="min-height:180px;resize:vertical" placeholder="在這裡輸入 ${scene.id} 的劇本內容…" oninput="ssAutoResize(this)">${txt}</textarea>
+        <textarea class="script-textarea" data-scene-id="${scene.id}" style="min-height:180px;resize:vertical;opacity:0.7;cursor:default" placeholder="在這裡輸入 ${scene.id} 的劇本內容…" oninput="ssAutoResize(this)" readonly>${txt}</textarea>
       </div>`;
   }).join('');
   container.querySelectorAll('textarea[data-scene-id]').forEach(ssAutoResize);
@@ -7248,10 +7249,105 @@ function initSafeEditMode(){
 }
 
 // 包住原本儲存：使用原本按鈕或其他地方呼叫儲存時，也會自動鎖回去。
+// ══════════════════════════════════════════
+//  劇本共編 — 全域編輯鎖定 (Script Edit Lock)
+//  預設唯讀；按「✎ 編輯劇本」才解鎖所有 textarea 和工具按鈕；
+//  按「💾 全部儲存」或「取消」後再鎖回。
+// ══════════════════════════════════════════
+let _scriptEditing = false;
+let _scriptSnapshots = new Map();  // 記錄解鎖前各 textarea 的值，用於「取消」復原
+
+function _applyScriptLock(locked) {
+  _scriptEditing = !locked;
+
+  // 頂部按鈕顯示切換
+  const editBtn   = document.getElementById('script-edit-btn');
+  const cancelBtn = document.getElementById('script-cancel-btn');
+  const saveBtn   = document.getElementById('script-save-btn');
+  if (editBtn)   editBtn.style.display   = locked ? '' : 'none';
+  if (cancelBtn) cancelBtn.style.display = locked ? 'none' : 'inline-flex';
+  if (saveBtn)   saveBtn.style.display   = locked ? 'none' : 'inline-flex';
+
+  // 所有場景 textarea
+  const container = document.getElementById('script-all-scenes');
+  if (!container) return;
+  container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
+    ta.readOnly = locked;
+    ta.style.opacity = locked ? '0.7' : '1';
+    ta.style.cursor  = locked ? 'default' : '';
+  });
+  // 工具按鈕（場景 / 對白 / 動作 / INT. / EXT.）
+  container.querySelectorAll('.script-scene-tools').forEach(wrap => {
+    wrap.style.opacity       = locked ? '0.35' : '1';
+    wrap.style.pointerEvents = locked ? 'none' : '';
+  });
+  container.querySelectorAll('.ss-tool-btn').forEach(btn => {
+    btn.tabIndex = locked ? -1 : 0;
+  });
+}
+
+function enableScriptEdit() {
+  // 快照目前內容（取消時用）
+  _scriptSnapshots.clear();
+  const container = document.getElementById('script-all-scenes');
+  if (container) {
+    container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
+      _scriptSnapshots.set(ta.dataset.sceneId, ta.value);
+    });
+  }
+  _applyScriptLock(false);
+  // 聚焦到第一個 textarea
+  const first = container && container.querySelector('textarea[data-scene-id]');
+  if (first) { first.focus(); first.setSelectionRange(first.value.length, first.value.length); }
+  toast('劇本已解鎖，可以開始編輯', '✎');
+}
+
+function cancelScriptEdit() {
+  // 還原到快照
+  const container = document.getElementById('script-all-scenes');
+  if (container) {
+    container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
+      if (_scriptSnapshots.has(ta.dataset.sceneId)) {
+        ta.value = _scriptSnapshots.get(ta.dataset.sceneId);
+        ssAutoResize(ta);
+      }
+    });
+  }
+  _scriptSnapshots.clear();
+  _applyScriptLock(true);
+  toast('已取消，沒有儲存變更', '↩');
+}
+
+function saveAllScriptsAndLock() {
+  // 把各 textarea 的值寫回 scene.sceneScript
+  const container = document.getElementById('script-all-scenes');
+  if (container) {
+    container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
+      const s = scenes.find(x => x.id === ta.dataset.sceneId);
+      if (s) { normalizeSceneTextFields(s); s.sceneScript = ta.value; }
+    });
+  }
+  saveCurrentProjectState();
+  scenes.forEach(s => { if (typeof syncSceneToDB === 'function') syncSceneToDB(s); });
+  if (typeof broadcastChange === 'function') broadcastChange('儲存全部劇本');
+  _scriptSnapshots.clear();
+  _applyScriptLock(true);
+  toast('全部劇本已儲存', '💾');
+}
+
+// 確保每次 buildScriptAllScenes() 重新渲染後，鎖定狀態和按鈕仍然正確
+const _origBuildScriptAllScenes = buildScriptAllScenes;
+buildScriptAllScenes = function() {
+  _origBuildScriptAllScenes();
+  // 渲染完後，根據目前鎖定狀態重新套用
+  _applyScriptLock(!_scriptEditing);
+};
+
 const _safeOrigSaveScript = saveScript;
 saveScript = function(){
   _safeOrigSaveScript();
   if(safeEditGroups.script) setSafeEditLocked('script', true);
+  _applyScriptLock(true);
 };
 const _safeOrigSaveSettingsProject = saveSettingsProject;
 saveSettingsProject = function(){
