@@ -1629,6 +1629,7 @@ html, body { height: 100dvh; }
 .sdp-edit-actions{display:flex; align-items:center; justify-content:flex-end; gap:6px; flex-wrap:wrap;}
 .sdp-edit-status{font-size:10px; color:var(--text-muted); font-family:var(--font-mono); margin-right:2px;}
 .sdp-edit-only{display:none;}
+.sdp-edit-only.sdp-visible{display:inline-flex;}
 .sdp-readonly{
   cursor:default; color:var(--text-secondary) !important;
   border-color:var(--border) !important; background:rgba(255,255,255,.025) !important;

@@ -1657,56 +1657,23 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
         </div>
         <div class="page-actions">
           <input class="form-input" id="editor-name" placeholder="您的名字" value="導演" style="width:120px" onchange="setCurrentEditor(this.value)">
-          <button class="btn btn-outline" onclick="toggleHistory()">📋 編輯紀錄</button>
-          <button class="btn btn-gold" onclick="saveScript()">💾 儲存修改</button>
+          <button class="btn btn-gold" onclick="saveAllScripts()">💾 全部儲存</button>
         </div>
       </div>
       <div class="script-layout">
-        <div class="script-editor-wrap">
-          <div class="editor-toolbar">
-            <button class="editor-btn" onclick="insertTag('[場景]')">場景</button>
-            <button class="editor-btn" onclick="insertTag('[對白]')">對白</button>
-            <button class="editor-btn" onclick="insertTag('[動作]')">動作</button>
-            <button class="editor-btn" onclick="insertTag('[旁白]')">旁白</button>
-            <div class="editor-sep"></div>
-            <button class="editor-btn" onclick="insertTag('INT.')">INT.</button>
-            <button class="editor-btn" onclick="insertTag('EXT.')">EXT.</button>
-            <button class="editor-btn" onclick="insertTag('日景')">日景</button>
-            <button class="editor-btn" onclick="insertTag('夜景')">夜景</button>
-            <div class="editor-sep"></div>
-            <button class="editor-btn" onclick="insertTag('FADE IN:')">FADE IN</button>
-            <button class="editor-btn" onclick="insertTag('CUT TO:')">CUT TO</button>
-            <button class="editor-btn" onclick="insertTag('DISSOLVE TO:')">DISSOLVE</button>
-          </div>
-          <textarea class="script-textarea" id="script-text" placeholder="選取場景後開始編輯劇本…"></textarea>
+        <div class="script-editor-wrap" style="flex:1;min-width:0;overflow-y:auto">
+          <div id="script-all-scenes"></div>
         </div>
         <div class="script-sidebar-panel">
           <div class="script-meta-card">
-            <div class="card-head">場景資訊</div>
-            <div class="card-body">
-              <div class="meta-row">
-                <div class="meta-label">場景</div>
-                <select class="meta-select" id="script-scene-sel" onchange="loadScriptSceneContent()">
-                  <option value="">尚未建立場景</option>
-                </select>
-              </div>
-              <div class="meta-row">
-                <div class="meta-label">修訂版本</div>
-                <input class="meta-input" value="Rev. 3 — 青色稿" readonly>
-              </div>
-              <div class="meta-row">
-                <div class="meta-label">標籤備注</div>
-                <input class="meta-input" id="script-note" placeholder="修改原因…">
-              </div>
-              <button class="btn btn-gold" style="width:100%;margin-top:4px" onclick="saveScript()">儲存</button>
-            </div>
-          </div>
-          <div class="edit-history-card" id="history-card" style="display:none">
             <div class="card-head">編輯紀錄</div>
-            <div class="card-body" id="edit-entries" style="max-height:240px;overflow-y:auto"></div>
+            <div class="card-body" id="edit-entries" style="max-height:500px;overflow-y:auto"></div>
           </div>
         </div>
       </div>
+      <select id="script-scene-sel" style="display:none"><option value="">—</option></select>
+      <input id="script-note" style="display:none">
+      <textarea id="script-text" style="display:none"></textarea>
     </section>
 
     <!-- ═══ ANNOUNCE ═══ -->
@@ -3260,8 +3227,8 @@ function enableSceneInfoEdit(){
   const saveBtn = document.getElementById('sdp-info-save-btn');
   const statusEl = document.getElementById('sdp-info-status');
   if(editBtn) editBtn.style.display = 'none';
-  if(cancelBtn) cancelBtn.classList.add('sdp-visible');
-  if(saveBtn) saveBtn.classList.add('sdp-visible');
+  if(cancelBtn) cancelBtn.style.display = 'inline-flex';
+  if(saveBtn) saveBtn.style.display = 'inline-flex';
   if(statusEl) statusEl.textContent = '✎ 編輯中';
   // 聚焦名稱欄位
   const nameInput = document.getElementById('sdp-edit-name');
@@ -3279,8 +3246,8 @@ function cancelSceneInfoEdit(){
   const saveBtn = document.getElementById('sdp-info-save-btn');
   const statusEl = document.getElementById('sdp-info-status');
   if(editBtn) editBtn.style.display = '';
-  if(cancelBtn) cancelBtn.classList.remove('sdp-visible');
-  if(saveBtn) saveBtn.classList.remove('sdp-visible');
+  if(cancelBtn) cancelBtn.style.display='none';
+  if(saveBtn) saveBtn.style.display='none';
   if(statusEl) statusEl.textContent = '唯讀';
   if(typeof toast === 'function') toast('已取消，未儲存任何變更', '↩');
 }
@@ -3327,8 +3294,8 @@ function saveSceneInfo(){
   const saveBtn = document.getElementById('sdp-info-save-btn');
   const statusEl = document.getElementById('sdp-info-status');
   if(editBtn) editBtn.style.display = '';
-  if(cancelBtn) cancelBtn.classList.remove('sdp-visible');
-  if(saveBtn) saveBtn.classList.remove('sdp-visible');
+  if(cancelBtn) cancelBtn.style.display='none';
+  if(saveBtn) saveBtn.style.display='none';
   if(statusEl) statusEl.textContent = '唯讀';
   // 更新場景列表（sidebar）
   if(typeof refreshSceneViews === 'function') refreshSceneViews();
@@ -3835,6 +3802,91 @@ function getSelectedScriptScene(){
   return scenes.find(x=>x.id===sid) || scenes[0] || null;
 }
 
+// ── 連續劇本：render 所有場景 ──────────────────────────────
+function buildScriptAllScenes(){
+  const container = document.getElementById('script-all-scenes');
+  if(!container) return;
+  container.querySelectorAll('textarea[data-scene-id]').forEach(ta=>{
+    const s = scenes.find(x=>x.id===ta.dataset.sceneId);
+    if(s) s.sceneScript = ta.value;
+  });
+  if(!scenes.length){
+    container.innerHTML = '<div style="color:var(--text-muted);padding:32px;text-align:center">尚未建立場景</div>';
+    return;
+  }
+  container.innerHTML = scenes.map((scene,i)=>{
+    const txt = (typeof htmlToText==='function' ? htmlToText(scene.sceneScript||'') : (scene.sceneScript||'')).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const divider = i===0 ? '' :
+      `<div style="display:flex;align-items:center;gap:12px;padding:16px 0 12px">
+        <div style="flex:1;height:1px;background:rgba(201,168,76,.35)"></div>
+        <div style="font-size:11px;color:#C9A84C;font-family:monospace">◆</div>
+        <div style="flex:1;height:1px;background:rgba(201,168,76,.35)"></div>
+       </div>`;
+    return divider +
+      `<div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px">
+          <div style="font-size:12px;font-weight:600;color:#C9A84C;letter-spacing:.5px;font-family:monospace">${scene.id} — ${scene.name||''}</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[場景]')">場景</button>
+            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[對白]')">對白</button>
+            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','[動作]')">動作</button>
+            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','INT.')">INT.</button>
+            <button class="editor-btn" style="font-size:11px;padding:2px 7px" onclick="ssInsert('${scene.id}','EXT.')">EXT.</button>
+            <button class="btn btn-gold btn-sm" style="font-size:11px;padding:4px 12px" onclick="saveOneScript('${scene.id}')">儲存</button>
+          </div>
+        </div>
+        <textarea class="script-textarea" data-scene-id="${scene.id}" style="min-height:180px;resize:vertical" placeholder="在這裡輸入 ${scene.id} 的劇本內容…" oninput="ssAutoResize(this)">${txt}</textarea>
+      </div>`;
+  }).join('');
+  container.querySelectorAll('textarea[data-scene-id]').forEach(ssAutoResize);
+}
+
+function ssAutoResize(ta){
+  ta.style.height='auto';
+  ta.style.height=(ta.scrollHeight+4)+'px';
+}
+
+function ssInsert(sid, tag){
+  const ta = document.querySelector('textarea[data-scene-id="'+sid+'"]');
+  if(!ta) return;
+  const s=ta.selectionStart, e=ta.selectionEnd;
+  ta.value=ta.value.slice(0,s)+tag+ta.value.slice(e);
+  ta.selectionStart=ta.selectionEnd=s+tag.length;
+  ta.focus();
+  ssAutoResize(ta);
+}
+
+function saveOneScript(sid){
+  const ta = document.querySelector('textarea[data-scene-id="'+sid+'"]');
+  const s = scenes.find(x=>x.id===sid);
+  if(!s||!ta) return;
+  if(typeof normalizeSceneTextFields==='function') normalizeSceneTextFields(s);
+  s.sceneScript = ta.value;
+  const author = (typeof getEditor==='function') ? getEditor() : '匿名';
+  const now = new Date();
+  const timeStr = (typeof formatTime==='function') ? formatTime(now) : now.toLocaleTimeString();
+  const dateStr = (typeof formatDate==='function') ? formatDate(now) : now.toLocaleDateString();
+  if(typeof editLog !== 'undefined') editLog.unshift({author, time:timeStr, date:dateStr, note:sid+' — 儲存'});
+  const el = document.getElementById('edit-entries');
+  if(el && typeof editLog !== 'undefined') el.innerHTML = editLog.slice(0,20).map(e=>'<div class="edit-entry"><span class="edit-author">'+e.author+'</span><span class="edit-time">'+e.date+' '+e.time+'</span><span class="edit-note">'+e.note+'</span></div>').join('');
+  if(typeof saveCurrentProjectState==='function') saveCurrentProjectState();
+  if(typeof syncSceneToDB==='function') syncSceneToDB(s);
+  if(typeof _currentSDP!=='undefined' && _currentSDP===sid && typeof ceSetContent==='function') ceSetContent('script', s.sceneScript||'');
+  if(typeof toast==='function') toast(sid+' 劇本已儲存', '📄');
+}
+
+function saveAllScripts(){
+  const container = document.getElementById('script-all-scenes');
+  if(container) container.querySelectorAll('textarea[data-scene-id]').forEach(ta=>{
+    const s = scenes.find(x=>x.id===ta.dataset.sceneId);
+    if(s){ if(typeof normalizeSceneTextFields==='function') normalizeSceneTextFields(s); s.sceneScript=ta.value; }
+  });
+  if(typeof saveCurrentProjectState==='function') saveCurrentProjectState();
+  if(typeof scenes!=='undefined') scenes.forEach(s=>{ if(typeof syncSceneToDB==='function') syncSceneToDB(s); });
+  if(typeof toast==='function') toast('全部場景劇本已儲存','💾');
+}
+// ────────────────────────────────────────────────────────────
+
 function buildScriptSceneSelect(keepCurrent=true){
   const sel = document.getElementById('script-scene-sel');
   if(!sel) return;
@@ -3843,8 +3895,7 @@ function buildScriptSceneSelect(keepCurrent=true){
   if(!scenes.length){
     sel.innerHTML = '<option value="">尚未建立場景</option>';
     sel.disabled = true;
-    const ta = document.getElementById('script-text');
-    if(ta) ta.value = '';
+    buildScriptAllScenes();
     return;
   }
   sel.disabled = false;
@@ -5090,7 +5141,7 @@ function addScene(){
     shootTime, duration
   });
   shots[id]=[{id:`${id}-A`,type:'主鏡 (MS)',angle:'正面平拍',lens:'50mm',note:'',done:false}];
-  renderStats();renderDashScenes();renderFullScenes();renderScenesStatCards();renderSceneDots();buildShotSelect();buildScriptSceneSelect(true);renderCallsheet();renderTicker();
+  renderStats();renderDashScenes();renderFullScenes();renderScenesStatCards();renderSceneDots();buildShotSelect();buildScriptSceneSelect(true);buildScriptAllScenes();renderCallsheet();renderTicker();
   closeModal('modal-scene');
   toast(`場景 ${id} 已新增`,'➕');
   persistSave();
@@ -5332,7 +5383,7 @@ function switchPage(id,el){
   if(page) page.classList.add('active');
   if(id==='scenes'){renderScenes();renderScenesStatCards();renderSceneDots();}
   if(id==='shots'){buildShotSelect();}
-  if(id==='script'){buildScriptSceneSelect(true); initSafeEditMode(); setSafeEditLocked('script', true);}
+  if(id==='script'){buildScriptSceneSelect(true); buildScriptAllScenes(); initSafeEditMode(); setSafeEditLocked('script', true);}
   if(id==='callsheet')renderCallsheet();
   if(id==='crew')renderCrew();
   if(id==='equipment')renderEquip();
@@ -5596,13 +5647,14 @@ async function handleRemoteChange(payload){
   await loadAllFromDB();
 
   // 遠端更新後，刷新劇本共編 textarea
-  const scriptSel = document.getElementById('script-scene-sel');
-  if(scriptSel && scriptSel.value){
-    const scriptScene = scenes.find(x=>x.id===scriptSel.value);
-    if(scriptScene){
-      const scriptTa = document.getElementById('script-text');
-      if(scriptTa && document.activeElement !== scriptTa) scriptTa.value = htmlToText(scriptScene.sceneScript || '');
-    }
+  // 遠端更新後刷新連續劇本顯示（跳過正在編輯的 textarea）
+  {
+    const _c = document.getElementById('script-all-scenes');
+    if(_c) _c.querySelectorAll('textarea[data-scene-id]').forEach(ta=>{
+      if(document.activeElement===ta) return;
+      const sc=scenes.find(x=>x.id===ta.dataset.sceneId);
+      if(sc){ ta.value=htmlToText(sc.sceneScript||''); ssAutoResize(ta); }
+    });
   }
   // 遠端更新後，刷新場景進度 sdp 的指示/台詞欄位（contenteditable，正在編輯中則不覆蓋）
   if(_currentSDP){
@@ -5927,7 +5979,7 @@ function mobileTab(pageId, el){
   if(pageId === 'dashboard'){ renderStats(); renderDashScenes(); renderActivity(); }
   if(pageId === 'scenes'){ renderScenes(); renderScenesStatCards(); renderSceneDots(); }
   if(pageId === 'shots'){ buildShotSelect(); renderShots(); }
-  if(pageId === 'script'){ buildScriptSceneSelect(true); initSafeEditMode(); setSafeEditLocked('script', true); }
+  if(pageId === 'script'){ buildScriptSceneSelect(true); buildScriptAllScenes(); initSafeEditMode(); setSafeEditLocked('script', true); }
   if(pageId === 'callsheet'){ renderCallsheet(); }
   if(pageId === 'announce'){ renderAnnouncements(); renderAnnStats(); }
   if(pageId === 'crew'){ renderCrew(); }
@@ -6169,7 +6221,7 @@ function loadProjectState(p){
   const legacyScript = p.script || '';
   if(legacyScript && scenes.length && !scenes.some(x=>x.sceneScript)){ scenes[0].sceneScript = legacyScript; }
   applyProjectMeta(p);
-  renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots(); buildShotSelect(); buildScriptSceneSelect(false); renderCallsheet(); renderAnnouncements(); renderCrew(); renderEquip(); renderTicker(); renderActivity();
+  renderStats(); renderDashScenes(); renderScenes(); renderScenesStatCards(); renderSceneDots(); buildShotSelect(); buildScriptSceneSelect(false); buildScriptAllScenes(); renderCallsheet(); renderAnnouncements(); renderCrew(); renderEquip(); renderTicker(); renderActivity();
   ensureSelfInCrew();
 }
 
@@ -6666,10 +6718,8 @@ function setSceneFieldReadOnly(kind, readOnly=true){
   }
   if(status) status.textContent = readOnly ? '唯讀 · 按「編輯」才可修改' : '編輯中 · 按「儲存」後會自動鎖回';
   if(editBtn) editBtn.style.display = readOnly ? 'inline-flex' : 'none';
-  // 注意：取消 / 儲存按鈕本身有 .sdp-edit-only { display:none }，
-  // 所以進入編輯狀態時一定要指定 inline-flex，不能只設成空字串。
-  if(cancelBtn) cancelBtn.classList.toggle('sdp-visible', !readOnly);
-  if(saveBtn) saveBtn.classList.toggle('sdp-visible', !readOnly);
+  if(cancelBtn) cancelBtn.style.display = readOnly ? 'none' : 'inline-flex';
+  if(saveBtn) saveBtn.style.display = readOnly ? 'none' : 'inline-flex';
   _sceneFieldEditing[kind] = !readOnly;
   // 編輯時顯示快捷標記說明列（取代舊的標色工具列）
   const legendId = kind === 'dialogue' ? 'sk-legend-dialogue' : kind === 'script' ? 'sk-legend-script' : null;
@@ -7140,8 +7190,8 @@ function setSafeEditLocked(key, locked=true){
     const saveBtn = bar.querySelector('.safe-edit-save');
     if(status) status.textContent = locked ? '唯讀 · 按筆才可修改' : '編輯中 · 按儲存後會自動鎖回';
     if(editBtn) editBtn.style.display = locked ? '' : 'none';
-    if(cancelBtn) cancelBtn.classList.toggle('sdp-visible', !locked);
-    if(saveBtn) saveBtn.classList.toggle('sdp-visible', !locked);
+    if(cancelBtn) cancelBtn.style.display = locked ? 'none' : 'inline-flex';
+    if(saveBtn) saveBtn.style.display = locked ? 'none' : 'inline-flex';
   }
 }
 function enableSafeEdit(key){
