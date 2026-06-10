@@ -3764,6 +3764,8 @@ function normalizeSceneTextFields(scene){
   if(!scene) return scene;
   if(scene.dialogue === undefined) scene.dialogue = '';
   if(scene.sceneScript === undefined) scene.sceneScript = '';
+  // 共編頁專用欄位，完全獨立於場景詳情頁的 sceneScript
+  if(scene.coEditScript === undefined) scene.coEditScript = '';
   return scene;
 }
 
@@ -3784,10 +3786,8 @@ function buildScriptAllScenes(){
     return;
   }
   container.innerHTML = scenes.map((scene,i)=>{
-    // 優先用共編草稿（_scriptDrafts），沒有才用場景的 sceneScript
-    const raw = (_scriptDrafts && _scriptDrafts[scene.id] !== undefined)
-      ? _scriptDrafts[scene.id]
-      : (scene.sceneScript || '');
+    // 共編頁只讀寫 scene.coEditScript，與場景詳情頁的 sceneScript 完全獨立
+    const raw = scene.coEditScript || '';
     const txt = (typeof htmlToText==='function' ? htmlToText(raw) : raw).replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const divider = i===0 ? '' :
       `<div style="display:flex;align-items:center;gap:12px;padding:16px 0 12px">
@@ -5532,6 +5532,7 @@ async function loadAllFromDB(){
       cast: Array.isArray(r.cast) ? r.cast : (r.cast ? r.cast.split(",") : []),
       status: r.status, notes: r.notes, dialogue: r.dialogue || "",
       sceneScript: r.scene_script || r.sceneScript || "",
+      coEditScript: r.co_edit_script || r.coEditScript || "",
       shootOrder: r.shoot_order || r.shootOrder, page: r.page
     })));
     applySceneOrder();
@@ -5752,6 +5753,7 @@ async function syncSceneToDB(scene){
     notes:     scene.notes || '',
     dialogue:  scene.dialogue || '',
     scene_script: scene.sceneScript || '',
+    co_edit_script: scene.coEditScript || '',
     shoot_order: scene.shootOrder || null,
     page:      scene.page || 0
   }, { onConflict: 'project_id,scene_id' });
@@ -6645,17 +6647,7 @@ function saveSceneScript(){
     syncSceneToDB(s);
     broadcastChange('更新場景指示 ' + _currentSDP);
     setSceneFieldReadOnly('script', true);
-    // ── 單向同步：場景詳情頁儲存 → 更新共編草稿 _scriptDrafts
-    // （反方向：共編儲存 → 不寫回 sceneScript）
-    if(typeof _scriptDrafts !== 'undefined'){
-      _scriptDrafts[s.id] = htmlToText(s.sceneScript);
-    }
-    // 若共編頁目前開著，同步更新對應的 textarea 顯示
-    const ta = document.querySelector(`#script-all-scenes textarea[data-scene-id="${s.id}"]`);
-    if(ta){
-      ta.value = htmlToText(s.sceneScript);
-      if(typeof ssAutoResize === 'function') ssAutoResize(ta);
-    }
+    // 場景詳情頁的 sceneScript 與共編頁的 coEditScript 完全獨立，不互相同步
     toast('劇本已儲存','📄');
   }
 }
@@ -7330,15 +7322,16 @@ function cancelScriptEdit() {
   toast('已取消，沒有儲存變更', '↩');
 }
 
-// 共編頁專用草稿：儲存在這裡，不寫回 scene.sceneScript（單向同步）
-const _scriptDrafts = {};
-
 function saveAllScriptsAndLock() {
-  // 把各 textarea 的值存到 _scriptDrafts，不寫入 scene.sceneScript
+  // 把各 textarea 的值寫入 scene.coEditScript（共編專用欄位，不動 sceneScript）
   const container = document.getElementById('script-all-scenes');
   if (container) {
     container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
-      _scriptDrafts[ta.dataset.sceneId] = ta.value;
+      const s = scenes.find(x => x.id === ta.dataset.sceneId);
+      if (s) {
+        normalizeSceneTextFields(s);
+        s.coEditScript = ta.value;
+      }
     });
   }
   // 記錄編輯紀錄
@@ -7353,10 +7346,13 @@ function saveAllScriptsAndLock() {
       `<div class="edit-entry"><span class="edit-author">${e.author}</span><span class="edit-time">${e.date} ${e.time}</span><span class="edit-note">${e.note}</span></div>`
     ).join('');
   }
-  if (typeof broadcastChange === 'function') broadcastChange('共編 — 儲存劇本草稿');
+  // 持久化（存 localStorage + Supabase）
+  if (typeof saveCurrentProjectState === 'function') saveCurrentProjectState();
+  scenes.forEach(s => { if (typeof syncSceneToDB === 'function') syncSceneToDB(s); });
+  if (typeof broadcastChange === 'function') broadcastChange('共編 — 儲存劇本');
   _scriptSnapshots.clear();
   _applyScriptLock(true);
-  toast('共編劇本已儲存（不影響場景資料）', '💾');
+  toast('共編劇本已儲存', '💾');
 }
 
 // 確保每次 buildScriptAllScenes() 重新渲染後，鎖定狀態和按鈕仍然正確
