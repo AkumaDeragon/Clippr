@@ -448,7 +448,7 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
   resize: none;
   touch-action: pan-y;
   overscroll-behavior: contain;
-  /* 只擋鍵盤輸入，不擋滾動 — 不能用 pointer-events:none */
+  pointer-events: auto;
   cursor: default;
   user-select: none;
 }
@@ -475,9 +475,11 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
   letter-spacing: .1px; font-weight: 400;
 }
 .script-textarea[readonly] {
-  overflow: hidden; resize: none;
-  touch-action: pan-y; overscroll-behavior: none;
-  pointer-events: none;
+  overflow-y: auto; resize: none;
+  touch-action: pan-y; overscroll-behavior: contain;
+  pointer-events: auto;
+  cursor: default;
+  user-select: none;
 }
 .script-textarea:not([readonly]) {
   overflow-y: auto; resize: vertical;
