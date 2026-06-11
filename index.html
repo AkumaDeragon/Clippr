@@ -3919,10 +3919,9 @@ function saveAllScripts(){
 // ── 新版單 textarea 輔助函數 ──────────────────────────────────
 
 function sbAutoResize(ta){
+  // 固定高度版：textarea 自己 overflow-y: auto，不需撐高
   if(!ta) ta = document.getElementById('script-main-ta');
-  if(!ta) return;
-  ta.style.height = 'auto';
-  ta.style.height = Math.max(ta.scrollHeight + 4, 320) + 'px';
+  // noop — 高度由 CSS height: calc(...) 控制
 }
 
 // 插入標記到游標位置（before + 選取文字 + after）
@@ -5732,15 +5731,13 @@ async function handleRemoteChange(payload){
   // 重新載入全部資料並 re-render
   await loadAllFromDB();
 
-  // 遠端更新後，刷新劇本共編 textarea
-  // 遠端更新後刷新連續劇本顯示（跳過正在編輯的 textarea）
+  // 遠端更新後，刷新共編 textarea（非編輯中才覆蓋）
   {
-    const _c = document.getElementById('script-all-scenes');
-    if(_c) _c.querySelectorAll('textarea[data-scene-id]').forEach(ta=>{
-      if(document.activeElement===ta) return;
-      const sc=scenes.find(x=>x.id===ta.dataset.sceneId);
-      if(sc){ ta.value=htmlToText(sc.sceneScript||''); ssAutoResize(ta); }
-    });
+    const ta = document.getElementById('script-main-ta');
+    if(ta && ta.readOnly){
+      const p = getCurrentProject();
+      if(p && typeof p.script === 'string') ta.value = p.script;
+    }
   }
   // 遠端更新後，刷新場景進度 sdp 的指示/台詞欄位（contenteditable，正在編輯中則不覆蓋）
   if(_currentSDP){
@@ -5885,6 +5882,7 @@ async function syncProjectMetaToDB(p){
       dir:  p.dir || '',
       days: parseInt(p.days) || 45,
       spec: p.spec || '4K / 25fps',
+      script_body: p.script || '',
       updated_at: new Date().toISOString()
     }, { onConflict: 'project_id' });
     if(error) console.warn('projects meta sync skipped:', error.message);
@@ -5908,8 +5906,13 @@ async function loadProjectMetaFromDB(){
       p.dir  = r.dir  || p.dir;
       p.days = r.days || p.days;
       p.spec = r.spec || p.spec;
+      // 劇本共編內容同步
+      if(typeof r.script_body === 'string') p.script = r.script_body;
       applyProjectMeta(p);
       renderHomeProjects();
+      // 更新共編 textarea（若非正在編輯中）
+      const ta = document.getElementById('script-main-ta');
+      if(ta && ta.readOnly && typeof p.script === 'string') ta.value = p.script;
     }
   } catch(e){ console.warn('loadProjectMeta skipped:', e); }
 }
@@ -7420,6 +7423,8 @@ function saveAllScriptsAndLock() {
   }
 
   if(typeof saveCurrentProjectState === 'function') saveCurrentProjectState();
+  // 同步 script_body 到 Supabase projects table
+  if(typeof syncProjectMetaToDB === 'function') syncProjectMetaToDB(p);
   if(typeof broadcastChange === 'function') broadcastChange('共編 — 儲存劇本');
   _scriptSnapshots.clear();
   _applyScriptLock(true);
