@@ -5524,6 +5524,8 @@ async function initSupabase(){
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
     supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
     setSyncStatus('連線中…', false);
+    // 確保 projects table 有 script_body 欄
+    await ensureScriptBodyColumn();
     // 若已在某個專案（從 localStorage 恢復），立刻用雲端資料覆蓋本機快取
     if(getProjectId() && getProjectId() !== 'clappr-default'){
       setSyncStatus('從雲端同步最新資料…', false);
@@ -5538,6 +5540,24 @@ async function initSupabase(){
     setSyncStatus('離線模式', false);
     toast('無法連線 Supabase，使用本機模式', '⚠');
   }
+}
+
+// 確保 projects table 有 script_body TEXT 欄（用 RPC 執行 DDL；沒有 RPC 就跳過）
+async function ensureScriptBodyColumn(){
+  if(!supabase) return;
+  try {
+    // 先 probe：select script_body，有的話直接 return
+    const { error } = await supabase.from('projects').select('script_body').limit(0);
+    if(!error) return; // 欄位已存在
+    // 欄位不存在 → 嘗試用 exec_sql RPC 新增
+    const { error: rpcErr } = await supabase.rpc('exec_sql', {
+      sql: 'ALTER TABLE projects ADD COLUMN IF NOT EXISTS script_body TEXT DEFAULT \'\';'
+    });
+    if(rpcErr) {
+      // RPC 不存在也沒關係，給提示讓你手動加
+      console.warn('[Clappr] projects.script_body 欄不存在，請在 Supabase SQL Editor 執行：\nALTER TABLE projects ADD COLUMN IF NOT EXISTS script_body TEXT DEFAULT \'\';');
+    }
+  } catch(e){ /* 靜默 */ }
 }
 
 // ── （已停用）建表 / 寫入預設資料 ──────────
@@ -7338,11 +7358,11 @@ function _applyScriptLock(locked) {
   // 新版單 textarea
   const ta = document.getElementById('script-main-ta');
   if(ta){
-    ta.readOnly          = locked;
-    ta.style.opacity     = locked ? '0.72' : '1';
-    ta.style.cursor      = locked ? 'default' : '';
-    ta.style.pointerEvents = locked ? 'none' : 'auto';
-    ta.style.userSelect  = locked ? 'none' : 'auto';
+    ta.readOnly         = locked;
+    ta.style.opacity    = locked ? '0.85' : '1';
+    ta.style.cursor     = locked ? 'default' : '';
+    ta.style.userSelect = locked ? 'none' : 'auto';
+    // 不動 pointerEvents — readonly 本身就擋輸入，但保留滾動能力
   }
 
   // 工具列按鈕

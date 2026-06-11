@@ -432,19 +432,25 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
   border: 1px solid var(--border); border-top: none;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   overflow: hidden;
+  display: flex; flex-direction: column;
+  height: calc(100vh - 220px);
+  min-height: 320px;
 }
 .script-main-textarea {
-  width: 100%; min-height: 420px; padding: 24px 28px;
+  width: 100%; height: 100%; min-height: 0; padding: 24px 28px;
   background: transparent; border: none; outline: none;
   color: #E8E4DA; font-family: var(--font-body);
   font-size: 15px; line-height: 1.9; resize: none;
   letter-spacing: .1px; font-weight: 400;
-  display: block;
+  display: block; overflow-y: auto;
 }
 .script-main-textarea[readonly] {
-  overflow: hidden; resize: none;
-  touch-action: pan-y; overscroll-behavior: none;
-  pointer-events: none;
+  resize: none;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  /* 只擋鍵盤輸入，不擋滾動 — 不能用 pointer-events:none */
+  cursor: default;
+  user-select: none;
 }
 .script-main-textarea:not([readonly]) {
   overflow-y: auto; touch-action: auto; pointer-events: auto;
@@ -1072,10 +1078,10 @@ body { font-size: 13px; }
   .script-body-wrap {
     grid-template-columns: 1fr !important;
   }
-  /* 手機：側欄（編輯紀錄）移到最下面，display order 靠 order */
+  /* 手機：側欄（編輯紀錄）移到最下面 */
   .script-sidebar-panel { order: 2; }
-  .script-editor-wrap { order: 1; }
-  .script-main-textarea { min-height: 260px; font-size: 13px; padding: 16px 16px; }
+  .script-editor-wrap { order: 1; height: calc(100vh - 260px); min-height: 280px; }
+  .script-main-textarea { font-size: 13px; padding: 16px 16px; }
   .script-textarea { min-height: 200px; font-size: 12px; }
 
   /* ── Modals ── */
