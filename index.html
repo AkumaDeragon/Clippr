@@ -1625,26 +1625,60 @@ input[type="date"].callsheet-cell-input::-webkit-calendar-picker-indicator {
           <div class="page-subtitle">多人即時協作劇本編輯器</div>
         </div>
         <div class="page-actions" id="script-page-actions">
-          <input class="form-input" id="editor-name" placeholder="您的名字" value="導演" style="width:120px" onchange="setCurrentEditor(this.value)">
+          <input class="form-input" id="editor-name" placeholder="您的名字" value="導演" style="width:110px" onchange="setCurrentEditor(this.value)">
           <button class="btn btn-outline" id="script-edit-btn" onclick="enableScriptEdit()">✎ 編輯劇本</button>
           <button class="btn btn-outline" id="script-cancel-btn" onclick="cancelScriptEdit()" style="display:none">取消</button>
-          <button class="btn btn-gold" id="script-save-btn" onclick="saveAllScriptsAndLock()" style="display:none">💾 全部儲存</button>
+          <button class="btn btn-gold" id="script-save-btn" onclick="saveAllScriptsAndLock()" style="display:none">💾 儲存</button>
         </div>
       </div>
-      <div class="script-layout">
-        <div class="script-editor-wrap" style="flex:1;min-width:0;overflow-y:auto">
-          <div id="script-all-scenes"></div>
+
+      <!-- 工具列 -->
+      <div class="script-toolbar" id="script-toolbar">
+        <div class="script-toolbar-group">
+          <button class="editor-btn ss-tool-btn" type="button" onclick="sbInsert('[場景]')">場景</button>
+          <button class="editor-btn ss-tool-btn" type="button" onclick="sbInsert('[對白]')">對白</button>
+          <button class="editor-btn ss-tool-btn" type="button" onclick="sbInsert('[動作]')">動作</button>
+          <button class="editor-btn ss-tool-btn" type="button" onclick="sbInsert('INT.')">INT.</button>
+          <button class="editor-btn ss-tool-btn" type="button" onclick="sbInsert('EXT.')">EXT.</button>
         </div>
+        <div class="script-toolbar-sep"></div>
+        <div class="script-toolbar-group">
+          <button class="editor-btn ss-tool-btn sk-bracket" type="button" onclick="sbInsert('〔','〕')">〔角色〕</button>
+          <button class="editor-btn ss-tool-btn sk-title" type="button" onclick="sbInsert('【','】')">【場景】</button>
+          <button class="editor-btn ss-tool-btn sk-reminder" type="button" onclick="sbInsert('-提醒-')">提醒</button>
+          <button class="editor-btn ss-tool-btn sk-notice" type="button" onclick="sbInsert('-注意-')">注意</button>
+          <button class="editor-btn ss-tool-btn sk-urgent" type="button" onclick="sbInsert('-重要-')">重要</button>
+          <button class="editor-btn ss-tool-btn sk-director" type="button" onclick="sbInsert('-導演-')">導演</button>
+        </div>
+        <div class="script-toolbar-sep"></div>
+        <button class="editor-btn ss-tool-btn script-divider-btn" type="button" onclick="sbInsertDivider()">＋ 分隔線</button>
+      </div>
+
+      <!-- 主體 -->
+      <div class="script-body-wrap">
+        <div class="script-editor-wrap">
+          <textarea id="script-main-ta"
+            class="script-textarea script-main-textarea"
+            placeholder="開始輸入劇本內容…&#10;&#10;使用上方工具列插入標記，或按「＋ 分隔線」手動加分隔。"
+            oninput="sbAutoResize(this)"
+            readonly></textarea>
+        </div>
+
+        <!-- 側欄（電腦）/ 底部（手機） -->
         <div class="script-sidebar-panel">
           <div class="script-meta-card">
             <div class="card-head">編輯紀錄</div>
-            <div class="card-body" id="edit-entries" style="max-height:500px;overflow-y:auto"></div>
+            <div class="card-body" id="edit-entries" style="max-height:400px;overflow-y:auto"></div>
           </div>
         </div>
       </div>
+
+      <!-- legacy hidden fields -->
       <select id="script-scene-sel" style="display:none"><option value="">—</option></select>
       <input id="script-note" style="display:none">
       <textarea id="script-text" style="display:none"></textarea>
+      <!-- legacy container (kept for compat, hidden) -->
+      <div id="script-all-scenes" style="display:none"></div>
     </section>
 
     <!-- ═══ ANNOUNCE ═══ -->
@@ -3777,12 +3811,20 @@ function getSelectedScriptScene(){
 
 // ── 連續劇本：render 所有場景 ──────────────────────────────
 function buildScriptAllScenes(){
+  // ── 新版：單一大 textarea，從 project.script 讀取 ──
+  const ta = document.getElementById('script-main-ta');
+  if(ta){
+    const p = getCurrentProject();
+    ta.value = (p && typeof p.script === 'string') ? p.script : '';
+    sbAutoResize(ta);
+    _applyScriptLock(!_scriptEditing);
+  }
+}
+function _buildScriptAllScenes_legacy(){
   const container = document.getElementById('script-all-scenes');
   if(!container) return;
-  // 單向同步：重新渲染時只讀取場景的 sceneScript，
-  // 不把共編 textarea 的值寫回 scene.sceneScript。
   if(!scenes.length){
-    container.innerHTML = '<div style="color:var(--text-muted);padding:32px;text-align:center">尚未建立場景</div>';
+    container.innerHTML = '';
     return;
   }
   container.innerHTML = scenes.map((scene,i)=>{
@@ -3874,6 +3916,60 @@ function saveAllScripts(){
   if(typeof scenes!=='undefined') scenes.forEach(s=>{ if(typeof syncSceneToDB==='function') syncSceneToDB(s); });
   if(typeof toast==='function') toast('全部場景劇本已儲存','💾');
 }
+// ── 新版單 textarea 輔助函數 ──────────────────────────────────
+
+function sbAutoResize(ta){
+  if(!ta) ta = document.getElementById('script-main-ta');
+  if(!ta) return;
+  ta.style.height = 'auto';
+  ta.style.height = Math.max(ta.scrollHeight + 4, 320) + 'px';
+}
+
+// 插入標記到游標位置（before + 選取文字 + after）
+function sbInsert(before, after){
+  after = after || '';
+  const ta = document.getElementById('script-main-ta');
+  if(!ta || ta.readOnly) return;
+  ta.focus();
+  const start = ta.selectionStart;
+  const end   = ta.selectionEnd;
+  const selected = ta.value.slice(start, end);
+  const insert = before + selected + after;
+  let done = false;
+  try { done = document.execCommand('insertText', false, insert); } catch(e) {}
+  if(!done){
+    ta.setRangeText(insert, start, end, 'end');
+    ta.dispatchEvent(new Event('input'));
+  }
+  // 成對符號且無選字 → 游標移到中間
+  if(after && !selected){
+    const pos = ta.selectionStart - after.length;
+    ta.setSelectionRange(pos, pos);
+  }
+  sbAutoResize(ta);
+}
+
+// 插入分隔線
+function sbInsertDivider(){
+  const ta = document.getElementById('script-main-ta');
+  if(!ta || ta.readOnly) return;
+  ta.focus();
+  const start = ta.selectionStart;
+  // 確保分隔線前後各有換行
+  const before = ta.value.slice(0, start);
+  const after  = ta.value.slice(start);
+  const prefix = (before.length > 0 && !before.endsWith('\n')) ? '\n' : '';
+  const suffix = (!after.startsWith('\n')) ? '\n' : '';
+  const divider = prefix + '\n◆ ─────────────────────────────── ◆\n' + suffix;
+  let done = false;
+  try { done = document.execCommand('insertText', false, divider); } catch(e) {}
+  if(!done){
+    ta.setRangeText(divider, start, start, 'end');
+    ta.dispatchEvent(new Event('input'));
+  }
+  sbAutoResize(ta);
+}
+
 // ────────────────────────────────────────────────────────────
 
 function buildScriptSceneSelect(keepCurrent=true){
@@ -6104,6 +6200,7 @@ function ensureProjectData(p){
   if(!Array.isArray(p.announcements)) p.announcements=[];
   if(!Array.isArray(p.crew)) p.crew=[];
   if(!Array.isArray(p.equipment)) p.equipment=[];
+  if(typeof p.script !== 'string') p.script='';
   if(!p.callsheet || typeof p.callsheet !== 'object') p.callsheet={};
   if(typeof p.script !== 'string') p.script='';
 }
@@ -7228,40 +7325,32 @@ let _scriptSnapshots = new Map();
 function _applyScriptLock(locked) {
   _scriptEditing = !locked;
 
-  // 頂部按鈕
   const editBtn   = document.getElementById('script-edit-btn');
   const cancelBtn = document.getElementById('script-cancel-btn');
   const saveBtn   = document.getElementById('script-save-btn');
-  if (editBtn)   editBtn.style.display   = locked ? '' : 'none';
-  if (cancelBtn) cancelBtn.style.display = locked ? 'none' : 'inline-flex';
-  if (saveBtn)   saveBtn.style.display   = locked ? 'none' : 'inline-flex';
+  if(editBtn)   editBtn.style.display   = locked ? '' : 'none';
+  if(cancelBtn) cancelBtn.style.display = locked ? 'none' : 'inline-flex';
+  if(saveBtn)   saveBtn.style.display   = locked ? 'none' : 'inline-flex';
 
-  const container = document.getElementById('script-all-scenes');
-  if (!container) return;
-
-  // textarea：唯讀時 pointer-events:none 讓滾輪/觸控穿透到外層
-  container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
-    ta.readOnly = locked;
-    ta.style.opacity      = locked ? '0.72' : '1';
-    ta.style.cursor       = locked ? 'default' : '';
-    // pointer-events:none 讓唯讀 textarea 完全透明給捲動事件
+  // 新版單 textarea
+  const ta = document.getElementById('script-main-ta');
+  if(ta){
+    ta.readOnly          = locked;
+    ta.style.opacity     = locked ? '0.72' : '1';
+    ta.style.cursor      = locked ? 'default' : '';
     ta.style.pointerEvents = locked ? 'none' : 'auto';
-    ta.style.userSelect   = locked ? 'none' : 'auto';
-  });
+    ta.style.userSelect  = locked ? 'none' : 'auto';
+  }
 
-  // 工具按鈕列（場景 / 對白 / 動作 / INT. / EXT.）
-  container.querySelectorAll('.ss-tools-wrap').forEach(wrap => {
-    wrap.style.opacity       = locked ? '0.3' : '1';
-    wrap.style.pointerEvents = locked ? 'none' : '';
-  });
-  container.querySelectorAll('.ss-tool-btn').forEach(btn => {
-    btn.tabIndex = locked ? -1 : 0;
-  });
-
-  // sk-legend 標記列：編輯中才顯示
-  container.querySelectorAll('.ss-sk-legend').forEach(leg => {
-    leg.style.display = locked ? 'none' : 'flex';
-  });
+  // 工具列按鈕
+  const toolbar = document.getElementById('script-toolbar');
+  if(toolbar){
+    toolbar.querySelectorAll('.ss-tool-btn').forEach(btn => {
+      btn.style.opacity      = locked ? '0.3' : '1';
+      btn.style.pointerEvents = locked ? 'none' : '';
+      btn.tabIndex           = locked ? -1 : 0;
+    });
+  }
 }
 
 // ── textarea 版本的標記插入（共編頁用）──────────────────────
@@ -7291,31 +7380,20 @@ function ssTaInsert(sceneId, before, after) {
 }
 
 function enableScriptEdit() {
-  // 快照目前內容（取消時用）
+  // 快照
   _scriptSnapshots.clear();
-  const container = document.getElementById('script-all-scenes');
-  if (container) {
-    container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
-      _scriptSnapshots.set(ta.dataset.sceneId, ta.value);
-    });
-  }
+  const ta = document.getElementById('script-main-ta');
+  if(ta) _scriptSnapshots.set('__main__', ta.value);
   _applyScriptLock(false);
-  // 聚焦到第一個 textarea
-  const first = container && container.querySelector('textarea[data-scene-id]');
-  if (first) { first.focus(); first.setSelectionRange(first.value.length, first.value.length); }
+  if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
   toast('劇本已解鎖，可以開始編輯', '✎');
 }
 
 function cancelScriptEdit() {
-  // 還原到快照
-  const container = document.getElementById('script-all-scenes');
-  if (container) {
-    container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
-      if (_scriptSnapshots.has(ta.dataset.sceneId)) {
-        ta.value = _scriptSnapshots.get(ta.dataset.sceneId);
-        ssAutoResize(ta);
-      }
-    });
+  const ta = document.getElementById('script-main-ta');
+  if(ta && _scriptSnapshots.has('__main__')){
+    ta.value = _scriptSnapshots.get('__main__');
+    sbAutoResize(ta);
   }
   _scriptSnapshots.clear();
   _applyScriptLock(true);
@@ -7323,33 +7401,26 @@ function cancelScriptEdit() {
 }
 
 function saveAllScriptsAndLock() {
-  // 把各 textarea 的值寫入 scene.coEditScript（共編專用欄位，不動 sceneScript）
-  const container = document.getElementById('script-all-scenes');
-  if (container) {
-    container.querySelectorAll('textarea[data-scene-id]').forEach(ta => {
-      const s = scenes.find(x => x.id === ta.dataset.sceneId);
-      if (s) {
-        normalizeSceneTextFields(s);
-        s.coEditScript = ta.value;
-      }
-    });
-  }
-  // 記錄編輯紀錄
-  const author = (typeof getEditor === 'function') ? getEditor() : '匿名';
-  const now = new Date();
+  // 把單 textarea 值寫入 project.script
+  const ta = document.getElementById('script-main-ta');
+  const p  = getCurrentProject();
+  if(ta && p) p.script = ta.value;
+
+  // 編輯紀錄
+  const author  = (typeof getEditor === 'function') ? getEditor() : '匿名';
+  const now     = new Date();
   const timeStr = (typeof formatTime === 'function') ? formatTime(now) : now.toLocaleTimeString();
   const dateStr = (typeof formatDate === 'function') ? formatDate(now) : now.toLocaleDateString();
-  if (typeof editLog !== 'undefined') {
-    editLog.unshift({ author, time: timeStr, date: dateStr, note: '共編 — 全部儲存' });
+  if(typeof editLog !== 'undefined'){
+    editLog.unshift({ author, time: timeStr, date: dateStr, note: '共編劇本 — 儲存' });
     const el = document.getElementById('edit-entries');
-    if (el) el.innerHTML = editLog.slice(0, 20).map(e =>
+    if(el) el.innerHTML = editLog.slice(0, 20).map(e =>
       `<div class="edit-entry"><span class="edit-author">${e.author}</span><span class="edit-time">${e.date} ${e.time}</span><span class="edit-note">${e.note}</span></div>`
     ).join('');
   }
-  // 持久化（存 localStorage + Supabase）
-  if (typeof saveCurrentProjectState === 'function') saveCurrentProjectState();
-  scenes.forEach(s => { if (typeof syncSceneToDB === 'function') syncSceneToDB(s); });
-  if (typeof broadcastChange === 'function') broadcastChange('共編 — 儲存劇本');
+
+  if(typeof saveCurrentProjectState === 'function') saveCurrentProjectState();
+  if(typeof broadcastChange === 'function') broadcastChange('共編 — 儲存劇本');
   _scriptSnapshots.clear();
   _applyScriptLock(true);
   toast('共編劇本已儲存', '💾');

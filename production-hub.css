@@ -408,11 +408,46 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
 .shot-check:hover { border-color: var(--green-light); color: var(--green-light); }
 .shot-card.done-shot .shot-check { border-color: rgba(39,174,96,.3); color: var(--green-light); }
 
-/* ── SCRIPT EDITOR ── */
-.script-layout { display: grid; grid-template-columns: 1fr 260px; gap: 16px; }
+/* ── SCRIPT EDITOR (新版單 textarea) ── */
+.script-toolbar {
+  display: flex; align-items: center; gap: 6px; padding: 10px 14px;
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-wrap: wrap; row-gap: 6px;
+}
+.script-toolbar-group { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.script-toolbar-sep { width:1px; height:18px; background:var(--border); margin:0 4px; flex-shrink:0; }
+.script-divider-btn {
+  color: var(--gold-dim) !important;
+  border-color: var(--border-gold) !important;
+}
+.script-divider-btn:hover { color: var(--gold) !important; background: var(--gold-faint) !important; }
+
+.script-body-wrap {
+  display: grid; grid-template-columns: 1fr 240px; gap: 14px;
+  align-items: start;
+}
 .script-editor-wrap {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  overflow: hidden;
+}
+.script-main-textarea {
+  width: 100%; min-height: 420px; padding: 24px 28px;
+  background: transparent; border: none; outline: none;
+  color: #E8E4DA; font-family: var(--font-body);
+  font-size: 15px; line-height: 1.9; resize: none;
+  letter-spacing: .1px; font-weight: 400;
+  display: block;
+}
+.script-main-textarea[readonly] {
+  overflow: hidden; resize: none;
+  touch-action: pan-y; overscroll-behavior: none;
+  pointer-events: none;
+}
+.script-main-textarea:not([readonly]) {
+  overflow-y: auto; touch-action: auto; pointer-events: auto;
 }
 .editor-toolbar {
   display: flex; align-items: center; gap: 8px; padding: 10px 14px;
@@ -433,28 +468,18 @@ button, .nav-item, .tab-item, .home-hero-card, .scene-row, .stat-card {
   font-size: 15px; line-height: 1.85; resize: vertical;
   letter-spacing: .1px; font-weight: 400;
 }
-/* 唯讀狀態：不讓 textarea 自己捲動，讓手指/滑鼠滾輪穿透到外層頁面 */
 .script-textarea[readonly] {
-  overflow: hidden;
-  resize: none;
-  touch-action: pan-y;
-  overscroll-behavior: none;
-  pointer-events: none;   /* 桌機滾輪也穿透 */
+  overflow: hidden; resize: none;
+  touch-action: pan-y; overscroll-behavior: none;
+  pointer-events: none;
 }
-/* 編輯中恢復正常 */
 .script-textarea:not([readonly]) {
-  overflow-y: auto;
-  resize: vertical;
-  touch-action: auto;
-  pointer-events: auto;
+  overflow-y: auto; resize: vertical;
+  touch-action: auto; pointer-events: auto;
 }
 /* 共編頁的 sk-legend 標記列 */
-#script-all-scenes .ss-sk-legend {
-  margin: 2px 0 4px;
-}
-#script-all-scenes .ss-sk-legend .sk-chip {
-  font-size: 12px;
-}
+#script-all-scenes .ss-sk-legend { margin: 2px 0 4px; }
+#script-all-scenes .ss-sk-legend .sk-chip { font-size: 12px; }
 .script-sidebar-panel { display: flex; flex-direction: column; gap: 12px; }
 .script-meta-card, .edit-history-card {
   background: var(--bg-card); border: 1px solid var(--border);
@@ -1039,12 +1064,19 @@ body { font-size: 13px; }
   }
   .crew-card { padding: 12px; }
 
-  /* ── Script layout ── */
-  .script-layout {
-    flex-direction: column !important;
-    gap: 10px;
+  /* ── Script layout (手機) ── */
+  .script-toolbar {
+    padding: 8px 10px; gap: 5px; border-radius: var(--radius) var(--radius) 0 0;
   }
-  .script-textarea { min-height: 240px; font-size: 12px; }
+  .script-toolbar-sep { display: none; }
+  .script-body-wrap {
+    grid-template-columns: 1fr !important;
+  }
+  /* 手機：側欄（編輯紀錄）移到最下面，display order 靠 order */
+  .script-sidebar-panel { order: 2; }
+  .script-editor-wrap { order: 1; }
+  .script-main-textarea { min-height: 260px; font-size: 13px; padding: 16px 16px; }
+  .script-textarea { min-height: 200px; font-size: 12px; }
 
   /* ── Modals ── */
   .modal {
@@ -2991,6 +3023,7 @@ html, body { height: 100dvh; }
   filter:grayscale(1);
 }
 .safe-edit-locked .script-textarea,
+.safe-edit-locked .script-main-textarea,
 .safe-edit-locked .compose-textarea,
 .safe-edit-locked .form-textarea{
   user-select:text;
